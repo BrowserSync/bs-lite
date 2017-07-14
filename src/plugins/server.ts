@@ -27,8 +27,9 @@ export default function Server(address: string, context: IActorContext) {
         if (server) server.close();
         const {port, middleware} = options;
         const app = connect();
+        // console.log('applying', middleware.length, 'middleware items');
         middleware.forEach(mw => {
-            app.use(mw.handle)
+            app.use(mw.route, mw.handle);
         });
         server = http.createServer(app);
         server.listen(port);

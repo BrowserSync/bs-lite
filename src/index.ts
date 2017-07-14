@@ -2,6 +2,8 @@ import {Observable} from 'rxjs';
 import * as actorJS from 'aktor-js';
 import serveStatic from './plugins/serveStatic';
 import server, {IServerOptions, Middleware} from './plugins/server';
+import clientJS from './plugins/clientJS';
+import compression from './plugins/compression';
 
 const {createSystem} = actorJS;
 
@@ -12,32 +14,44 @@ export interface BSCommonOptions {
 
 const pluginWhitelist = {
     'serveStatic': serveStatic,
-    'server': server
+    'server': server,
+    'clientJS': clientJS,
+    'compression': compression
 };
 
-const order = ['serveStatic'];
+const corePlugins = [
+    'compression',
+    'clientJS',
+];
+
+const order = [
+    'serveStatic'
+];
+
+function getActors(order, options) {
+    return order.map(name => {
+        return {
+            name,
+            input: options[name],
+            factory: pluginWhitelist[name],
+        }
+    }).filter(Boolean);
+}
 
 export default function init(options: object) {
 
     const system = createSystem();
     const httpServer = system.actorOf(server, 'server');
 
-    const setupActors = order.map(name => {
-        if (options[name]) {
-            return {
-                name,
-                input: options[name],
-                factory: pluginWhitelist[name],
-            }
-        }
-        return null;
-    }).filter(Boolean);
+    const coreActors = getActors(corePlugins, options);
+    const setupActors = getActors(order, options);
 
     const commonOptions = {
-        cwd: process.cwd()
-    }
+        cwd: process.cwd(),
+        compression: true
+    };
     
-    function createPayload(input = {}) {
+    function createPayload(input?) {
         return {
             options: commonOptions,
             input
@@ -45,7 +59,7 @@ export default function init(options: object) {
     }
 
     Observable
-        .from(setupActors)
+        .from([...coreActors, ...setupActors])
         .flatMap(x => {
             return system
                 .actorOf(x.factory, x.name)
@@ -56,6 +70,7 @@ export default function init(options: object) {
         })
         .pluck('mw')
         .reduce((acc: Middleware[], item: Middleware) => acc.concat(item), [])
+        .do((x: any[]) => console.log('processed', x.length, 'actors'))
         .flatMap(middleware => {
 
             const opts: IServerOptions = {
