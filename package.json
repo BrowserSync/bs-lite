@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "typescript": "^2.4.1"
+  },
+  "dependencies": {
+    "aktor-js": "^1.1.1"
+  }
+}
