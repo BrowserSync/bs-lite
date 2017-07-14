@@ -5,11 +5,22 @@ import {ActorRef} from "aktor-js/dist/ActorRef";
 
 export default function(address: string, context: IActorContext) {
 
+    function createMiddleware(options) {
+        return options.map(dir => {
+            return {
+                route: '',
+                dir,
+                handle: require('serve-static')(dir)
+            }
+        })
+    }
+
     return {
         methods: {
             init: function (stream) {
-                return stream.flatMap(({payload, respond}) => {
-                    return Observable.of(respond('kkk'));
+                return stream.flatMap(({action, respond}) => {
+                    const mw = createMiddleware(action.payload);
+                    return Observable.of(respond({mw}));
                 })
             }
         },
