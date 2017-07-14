@@ -17,7 +17,6 @@ const pluginWhitelist = {
 
 const order = ['serveStatic'];
 
-
 export default function init(options: object) {
 
     const system = createSystem();

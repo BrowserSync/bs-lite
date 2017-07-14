@@ -1,35 +1,52 @@
 import {Observable} from 'rxjs';
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {BSCommonOptions} from "../index";
+import {join, parse, ParsedPath} from "path";
+import {Middleware} from "./server";
 
-import {Actor} from "aktor-js/dist/createActor";
-import {ActorRef} from "aktor-js/dist/ActorRef";
-import {join, parse} from "path";
+type SSIncomingType = string|string[];
 
 interface SSIncoming {
-    input: string|string[]
+    input: SSIncomingType
     options: BSCommonOptions
+}
+
+interface Processed {
+    input: SSIncomingType,
+    parsed: ParsedPath,
+    resolved: string
+}
+
+/**
+ * Serve static options:
+ *
+ *  eg: serveStatic: ['src']
+ *  eg: serveStatic: 'app'
+ */
+function processIncoming(input: string|string[], options: BSCommonOptions): Processed[] {
+    return [].concat(input)
+        .map((input) : Processed => {
+            return {
+                input,
+                parsed: parse(input),
+                resolved: join(options.cwd, input)
+            }
+        })
+}
+
+function createMiddleware(incoming: SSIncoming): Middleware[] {
+    return processIncoming(incoming.input, incoming.options)
+        .map((item: Processed, index): Middleware => {
+            return {
+                id: `Serve Static (${index})`,
+                route: '',
+                handle: require('serve-static')(item.resolved)
+            }
+        });
 }
 
 export default function(address: string, context: IActorContext) {
 
-    function createMiddleware(incoming: SSIncoming) {
-        const input = [].concat(incoming.input);
-        return input
-            .map(input => {
-                return {
-                    input,
-                    parsed: parse(input),
-                    resolved: join(incoming.options.cwd, input)
-                }
-            })
-            .map(item => {
-                return {
-                    route: '',
-                    handle: require('serve-static')(item.resolved)
-                }
-            });
-    }
 
     return {
         methods: {
