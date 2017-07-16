@@ -13,9 +13,9 @@ accepts@~1.3.3:
     mime-types "~2.1.11"
     negotiator "0.6.1"
 
-aktor-js@1.1.2:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/aktor-js/-/aktor-js-1.1.2.tgz#62fb283d182718f3f4fd75b39d13835664fe7b87"
+aktor-js@1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/aktor-js/-/aktor-js-1.2.1.tgz#097d67ef127f5af3bda603ce1a5d72fd0e629147"
   dependencies:
     "@types/node" "^8.0.12"
     anymatch "^1.3.0"

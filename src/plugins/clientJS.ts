@@ -2,6 +2,7 @@ import {Observable} from 'rxjs';
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {BSCommonOptions} from "../index";
 import {Middleware} from "./server";
+import {IRespondableStream} from "aktor-js/dist/patterns/redux-observable";
 
 type ClientJSIncomingType = string|string[]|Processed;
 
@@ -58,9 +59,9 @@ export default function ClientJS(address: string, context: IActorContext) {
 
     return {
         methods: {
-            init: function (stream) {
-                return stream.flatMap(({action, respond}) => {
-                    const mw = createMiddleware(action.payload);
+            init: function (stream: IRespondableStream) {
+                return stream.flatMap(({payload, respond}) => {
+                    const mw = createMiddleware(payload);
                     return Observable.of(respond({mw}));
                 })
             }

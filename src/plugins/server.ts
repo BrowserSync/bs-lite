@@ -4,6 +4,7 @@ import {IActorContext} from "aktor-js/dist/ActorContext";
 import connect = require('connect');
 import http = require('http');
 import {create} from "domain";
+import {IRespondableStream} from "aktor-js/dist/patterns/redux-observable";
 
 export interface MiddlewareResponse {
     mw?: Middleware[]
@@ -38,9 +39,9 @@ export default function Server(address: string, context: IActorContext) {
 
     return {
         methods: {
-            init: function (stream) {
-                return stream.flatMap(({action, respond}) => {
-                    const s = createServer(action.payload);
+            init: function (stream: IRespondableStream) {
+                return stream.flatMap(({payload, respond}) => {
+                    const s = createServer(payload);
                     return Observable.of(respond(s.address()));
                 })
             },

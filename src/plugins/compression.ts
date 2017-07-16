@@ -1,7 +1,8 @@
 import {Middleware} from "./server";
+
 export default function Compression() {
     return {
-        receive(payload, message, sender) {
+        receive(name, payload, respond) {
             try {
                 const mw : Middleware = {
                     id: 'Compression',
@@ -11,7 +12,7 @@ export default function Compression() {
                 const output = {
                     mw: [mw]
                 };
-                sender.reply(output);
+                respond(output);
             } catch (e) {
                 console.log(e);
             }

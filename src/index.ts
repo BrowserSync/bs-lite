@@ -63,10 +63,7 @@ export default function init(options: object) {
         .flatMap(x => {
             return system
                 .actorOf(x.factory, x.name)
-                .ask({
-                    type: 'init',
-                    payload: createPayload(x.input)
-                });
+                .ask('init', createPayload(x.input));
         })
         .pluck('mw')
         .reduce((acc: Middleware[], item: Middleware) => acc.concat(item), [])
@@ -78,10 +75,7 @@ export default function init(options: object) {
                 ...options['server']
             };
 
-            return httpServer.ask({
-                type: 'init',
-                payload: opts
-            });
+            return httpServer.ask('init', opts);
         })
         // .flatMap(actor => actor.ask({type: 'init'}))
         // .toArray()

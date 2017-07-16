@@ -3,7 +3,7 @@
     "typescript": "^2.4.1"
   },
   "dependencies": {
-    "aktor-js": "1.1.2",
+    "aktor-js": "1.2.1",
     "compression": "^1.7.0",
     "connect": "^3.6.2",
     "serve-static": "^1.12.3",
