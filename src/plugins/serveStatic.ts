@@ -3,7 +3,7 @@ import {IActorContext} from "aktor-js/dist/ActorContext";
 import {BSCommonOptions} from "../index";
 import {join, parse, ParsedPath} from "path";
 import {Middleware, MiddlewareResponse} from "./server";
-import {IRespondableStream} from "aktor-js/dist/patterns/redux-observable";
+import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
 
 type SSIncomingType = string|string[];
 

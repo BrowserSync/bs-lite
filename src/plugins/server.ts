@@ -3,8 +3,7 @@ import {IActorContext} from "aktor-js/dist/ActorContext";
 
 import connect = require('connect');
 import http = require('http');
-import {create} from "domain";
-import {IRespondableStream} from "aktor-js/dist/patterns/redux-observable";
+import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
 
 export interface MiddlewareResponse {
     mw?: Middleware[]

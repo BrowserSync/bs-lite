@@ -2,7 +2,7 @@ import {Observable} from 'rxjs';
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {BSCommonOptions} from "../index";
 import {Middleware} from "./server";
-import {IRespondableStream} from "aktor-js/dist/patterns/redux-observable";
+import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
 
 type ClientJSIncomingType = string|string[]|Processed;
 
