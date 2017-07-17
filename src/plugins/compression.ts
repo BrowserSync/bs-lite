@@ -1,7 +1,11 @@
 import {Middleware} from "./server";
+const debug = require('debug')('bs:compression');
 
 export default function Compression() {
     return {
+        postStart() {
+            debug('-> postStart()');
+        },
         receive(name, payload, respond) {
             try {
                 const mw : Middleware = {

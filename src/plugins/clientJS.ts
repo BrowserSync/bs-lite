@@ -6,6 +6,7 @@ import {socketConnector} from "../connect-utils";
 import {Options} from "../index";
 import {readFileSync} from "fs";
 import {client} from "../config";
+const debug = require('debug')('bs:clientJS');
 
 type ClientJSIncomingType = string|string[]|Processed|Processed[];
 
@@ -82,13 +83,15 @@ function createMiddleware(incoming: ClientJSIncoming): Middleware[] {
 export default function ClientJS(address: string, context: IActorContext) {
 
     return {
+        postStart() {
+            debug('-> postStart()');
+        },
         methods: {
             init: function (stream: IRespondableStream) {
                 return stream.flatMap(({payload, respond}) => {
-
                     const mw = createMiddleware(payload);
                     return Observable.of(respond({mw}));
-                })
+                });
             }
         }
     }

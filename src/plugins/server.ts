@@ -5,6 +5,7 @@ import http = require('http');
 import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
 import {Options} from "../index";
 import {Map} from "immutable";
+const debug = require('debug')('bs:server');
 
 export interface MiddlewareResponse {
     mw?: Middleware[]
@@ -46,6 +47,9 @@ export default function Server(address: string, context: IActorContext) {
     }
 
     return {
+        postStart() {
+            debug('-> postStart()');
+        },
         methods: {
             address: function(stream: IRespondableStream) {
                 return stream.flatMap(({payload, respond}) => {

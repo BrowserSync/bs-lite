@@ -4,6 +4,7 @@ import {Options} from "../index";
 import {join, parse, ParsedPath} from "path";
 import {Middleware, MiddlewareResponse} from "./server";
 import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
+const debug = require('debug')('bs:serveStatic');
 
 type SSIncomingType = string|string[];
 
@@ -36,7 +37,8 @@ function processIncoming(input: string|string[], options: Options): Processed[] 
 }
 
 function createMiddleware(incoming: SSIncoming): Middleware[] {
-    return processIncoming(incoming.input, incoming.options)
+    const optionItems = incoming.options.get('serveStatic').toJS();
+    return processIncoming(optionItems, incoming.options)
         .map((item: Processed, index): Middleware => {
             return {
                 id: `Serve Static (${index})`,
@@ -50,6 +52,9 @@ export default function(address: string, context: IActorContext) {
 
 
     return {
+        postStart() {
+            debug('-> postStart()')
+        },
         methods: {
             init: function (stream: IRespondableStream): Observable<MiddlewareResponse> {
                 return stream.flatMap(({payload, respond}) => {
@@ -58,6 +63,5 @@ export default function(address: string, context: IActorContext) {
                 })
             }
         },
-        patterns: ['reduxObservable']
     }
 }

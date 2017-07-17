@@ -9,7 +9,6 @@ const portscanner = require('portscanner').findAPortNotInUse;
 function findPort(start, strict, opts) {
     return Observable.create(obs => {
         portscanner(start, strict, opts, function (err, port) {
-            console.log(err, port);
             if (err) {
                 return obs.error(err);
             }
@@ -54,7 +53,8 @@ export function getPorts(options: Options) {
 
                 return def.map(function(x) {
                     return {
-                        server: {port: x}
+                        server: {port: x},
+                        shane: "Kittie"
                     };
                 });
             }
@@ -77,7 +77,7 @@ export function portsActorFactory() {
                 return stream.switchMap(({payload, respond}) => {
                     return getPorts(payload.options)
                         .map(result => {
-                            return respond(result);
+                            return respond({options: result, mw: []});
                         })
                         .catch(err => {
                             return Observable.empty();

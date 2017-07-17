@@ -48,4 +48,5 @@ export interface BsOptions {
     server: {
         port: number,
     },
+    serveStatic: string|string[]
 }
