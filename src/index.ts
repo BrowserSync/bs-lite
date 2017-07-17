@@ -77,9 +77,7 @@ export default function init(options: object) {
 
             return httpServer.ask('init', opts);
         })
-        // .flatMap(actor => actor.ask({type: 'init'}))
-        // .toArray()
         .subscribe(x => {
             console.log(x);
-        })
+        });
 }

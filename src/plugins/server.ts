@@ -23,6 +23,7 @@ export interface IServerOptions {
 export default function Server(address: string, context: IActorContext) {
 
     let server;
+
     function createServer(options: IServerOptions) {
         if (server) server.close();
         const {port, middleware} = options;
@@ -38,13 +39,20 @@ export default function Server(address: string, context: IActorContext) {
 
     return {
         methods: {
+            address: function(stream: IRespondableStream) {
+                return stream.flatMap(({payload, respond}) => {
+                    if (server && server.listening) {
+                        return Observable.of(respond(server.address()));
+                    }
+                    return Observable.of(respond(null));
+                });
+            },
             init: function (stream: IRespondableStream) {
                 return stream.flatMap(({payload, respond}) => {
                     const s = createServer(payload);
                     return Observable.of(respond(s.address()));
-                })
+                });
             },
         },
-        patterns: ['reduxObservable']
     }
 }

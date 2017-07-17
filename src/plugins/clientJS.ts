@@ -24,17 +24,17 @@ function processIncoming(input: ClientJSIncomingType, options?: BSCommonOptions)
             if (typeof input === 'string') {
                 return {
                     input,
-                    id: `ClientJS (${index})`,
-                    content: `
-;/**
- * ClientJS (${index})
+                    id: `Browsersync ClientJS (${index})`,
+                    content: `;
+/**
+ * Browsersync ClientJS (${index})
  */
 ${input}
 /**
  * ---- ClientJS END (${index}) -----
- */;
- 
-                    `
+ */
+;
+`
                 }
             }
             return input;
@@ -42,6 +42,14 @@ ${input}
 }
 
 function createMiddleware(incoming: ClientJSIncoming): Middleware[] {
+
+    const coreJS = [
+        {
+            id: 'bs-no-conflict',
+            content: 'window.___browserSync___oldSocketIo = window.io;',
+        },
+    ];
+
     return processIncoming(incoming.input)
         .map((processed: Processed, index): Middleware => {
             return {
@@ -65,7 +73,6 @@ export default function ClientJS(address: string, context: IActorContext) {
                     return Observable.of(respond({mw}));
                 })
             }
-        },
-        patterns: ['reduxObservable']
+        }
     }
 }

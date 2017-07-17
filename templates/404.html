@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style type="text/css">
+        * {
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+<h1>Browsersync 404!</h1>
+<h2>You tried to visit <i>{{req.url}}</i>, but it wasn't found :(</h2>
+<p>Perhaps you're looking for one of the following?</p>
+<ul>{{urlList}}</ul>
+<p>Or maybe you'd like to return to a url you have open in another browser/tab?</p>
+<ul>{{clientList}}</ul>
+</body>
+</html>
