@@ -1,11 +1,12 @@
 import {Observable} from 'rxjs';
 import * as actorJS from 'aktor-js';
 import serveStatic from './plugins/serveStatic';
-import server, {IServerOptions, Middleware} from './plugins/server';
+import server, {IServerOptions, Middleware, MiddlewareResponse} from './plugins/server';
 import clientJS from './plugins/clientJS';
 import compression from './plugins/compression';
 import {fromJS, Map} from "immutable";
 import {BsOptions, defaultOptions} from "./options";
+import {getPorts, portsActorFactory} from "./ports";
 
 const {createSystem} = actorJS;
 
@@ -42,6 +43,7 @@ export default function init(options: object) {
 
     const system = createSystem();
     const httpServer = system.actorOf(server, 'server');
+    const ports = system.actorOf(portsActorFactory, 'ports');
 
     const commonOptions = fromJS(defaultOptions)
         .mergeDeep(options)
@@ -66,16 +68,24 @@ export default function init(options: object) {
                 .actorOf(x.factory, x.name)
                 .ask('init', createPayload(x.input));
         })
-        .pluck('mw')
-        .reduce((acc: Middleware[], item: Middleware) => acc.concat(item), [])
-        .do((x: any[]) => console.log('processed', x.length, 'actors'))
-        .flatMap(middleware => {
+        .reduce((acc: Options, item: MiddlewareResponse) => {
+            if (item.mw.length) {
+                return acc.update('middleware', mw => mw.concat(item.mw))
+                    .mergeDeep(item.options || {});
+            }
+        }, commonOptions)
+        .flatMap(options => {
 
             const input = {
-                middleware: middleware,
-            }
+                middleware: options.get('middleware').toJS(),
+            };
 
-            return httpServer.ask('init', {input, options: commonOptions});
+            return ports
+                .ask('init', {options: options})
+                .flatMap(ports => {
+                    const mergedoptions = options.mergeDeep(fromJS(ports));
+                    return httpServer.ask('init', {input, options: mergedoptions});
+                })
         })
         .subscribe(x => {
             console.log(x);

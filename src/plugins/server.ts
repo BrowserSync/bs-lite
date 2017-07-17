@@ -1,13 +1,14 @@
 import {Observable} from 'rxjs';
 import {IActorContext} from "aktor-js/dist/ActorContext";
-
 import connect = require('connect');
 import http = require('http');
 import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
 import {Options} from "../index";
+import {Map} from "immutable";
 
 export interface MiddlewareResponse {
     mw?: Middleware[]
+    options?: Map<string, any>
 }
 
 export interface Middleware {

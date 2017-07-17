@@ -1,5 +1,8 @@
+import {Middleware} from "./plugins/server";
 export const defaultOptions = {
+    strict: true,
     clientJS: [],
+    middleware: [],
     server: {
         port: 9000,
     },
@@ -39,7 +42,9 @@ export const defaultOptions = {
 };
 
 export interface BsOptions {
+    strict: boolean
     cwd?: string,
+    middleware?: Middleware[],
     server: {
         port: number,
     },

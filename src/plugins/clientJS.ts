@@ -68,6 +68,7 @@ function createMiddleware(incoming: ClientJSIncoming): Middleware[] {
     // console.log(incoming.options.get('clientJS'));
     // const joined = coreJS.concat(incoming.input);
     const js = processIncoming(coreJS).map(x => x.content).join(';\n\n\n');
+
     return [{
         id: 'Browsersync ClientJS',
         route: '/bs.js',
