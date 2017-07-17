@@ -4,6 +4,7 @@ import {IActorContext} from "aktor-js/dist/ActorContext";
 import connect = require('connect');
 import http = require('http');
 import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
+import {Options} from "../index";
 
 export interface MiddlewareResponse {
     mw?: Middleware[]
@@ -14,7 +15,12 @@ export interface Middleware {
     route: string
     handle: Function
 }
-
+export interface InitIncoming {
+    input: {
+        middleware: Middleware[]
+    }
+    options: Options
+}
 export interface IServerOptions {
     middleware: Middleware[]
     port: number;
@@ -24,12 +30,13 @@ export default function Server(address: string, context: IActorContext) {
 
     let server;
 
-    function createServer(options: IServerOptions) {
+    function createServer(incoming: InitIncoming) {
         if (server) server.close();
-        const {port, middleware} = options;
+        const {options} = incoming;
+        const port = options.getIn(['server', 'port']);
         const app = connect();
         // console.log('applying', middleware.length, 'middleware items');
-        middleware.forEach(mw => {
+        incoming.input.middleware.forEach(mw => {
             app.use(mw.route, mw.handle);
         });
         server = http.createServer(app);

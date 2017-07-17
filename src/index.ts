@@ -4,13 +4,13 @@ import serveStatic from './plugins/serveStatic';
 import server, {IServerOptions, Middleware} from './plugins/server';
 import clientJS from './plugins/clientJS';
 import compression from './plugins/compression';
+import {fromJS, Map} from "immutable";
+import {BsOptions, defaultOptions} from "./options";
 
 const {createSystem} = actorJS;
 
-export interface BSCommonOptions {
-    cwd: string;
-    string: boolean;
-}
+
+export type Options = Map<keyof BsOptions, any>
 
 const pluginWhitelist = {
     'serveStatic': serveStatic,
@@ -43,14 +43,15 @@ export default function init(options: object) {
     const system = createSystem();
     const httpServer = system.actorOf(server, 'server');
 
+    const commonOptions = fromJS(defaultOptions)
+        .mergeDeep(options)
+        .mergeDeep({
+            cwd: process.cwd(),
+        });
+
     const coreActors = getActors(corePlugins, options);
     const setupActors = getActors(order, options);
 
-    const commonOptions = {
-        cwd: process.cwd(),
-        compression: true
-    };
-    
     function createPayload(input?) {
         return {
             options: commonOptions,
@@ -70,12 +71,11 @@ export default function init(options: object) {
         .do((x: any[]) => console.log('processed', x.length, 'actors'))
         .flatMap(middleware => {
 
-            const opts: IServerOptions = {
+            const input = {
                 middleware: middleware,
-                ...options['server']
-            };
+            }
 
-            return httpServer.ask('init', opts);
+            return httpServer.ask('init', {input, options: commonOptions});
         })
         .subscribe(x => {
             console.log(x);

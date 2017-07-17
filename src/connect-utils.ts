@@ -11,7 +11,6 @@ const scriptTemplate = fs.readFileSync(templates.scriptTag, 'utf-8');
 
 const CONNECTOR_LOCAL    = '"//" + location.host + "{{ns}}"';
 const CONNECTOR_EXTERNAL = '"{{scheme}}://" + location.hostname + ":{{port}}{{ns}}"';
-const cu = exports;
 
 /**
  * Use socket socket client path + config
@@ -36,8 +35,8 @@ export function clientScript(options) {
  * @returns {String}
  */
 export function scriptTags(options) {
-    return cu.snippet(options, [
-        cu.clientScript(options),
+    return snippet(options, [
+        clientScript(options),
         '?v=3.0.0',
     ].join(''));
 }
@@ -50,10 +49,10 @@ export function scriptTags(options) {
  * @param {Map} options
  */
 export function externalScriptTags(options) {
-    return cu.snippet(options, [
+    return snippet(options, [
         options.get('scheme'),
         '://HOST:',
-        cu.clientScript(options),
+        clientScript(options),
         '?v=3.0.0',
     ].join(''));
 }
@@ -79,14 +78,14 @@ export function snippet(options, src) {
 export function socketConnector(options) {
 
     if (options.getIn(['socket', 'port'])) {
-        return cu._socketConnector(options, template(CONNECTOR_EXTERNAL, {
+        return _socketConnector(options, template(CONNECTOR_EXTERNAL, {
             ns: options.getIn(['socket', 'namespace']),
             port: options.getIn(['socket', 'port']),
             scheme: options.get('scheme'),
         }));
     }
 
-    return cu._socketConnector(options, template(CONNECTOR_LOCAL, {
+    return _socketConnector(options, template(CONNECTOR_LOCAL, {
         ns: options.getIn(['socket', 'namespace']),
     }));
 }
@@ -102,7 +101,7 @@ export function socketConnector(options) {
  * @returns {String}
  */
 export function externalSocketConnector(options, opts) {
-    return cu._socketConnector(options, template(CONNECTOR_EXTERNAL, {
+    return _socketConnector(options, template(CONNECTOR_EXTERNAL, {
         scheme: options.get('scheme'),
         port: options.get('port'),
         ns: opts.namespace,

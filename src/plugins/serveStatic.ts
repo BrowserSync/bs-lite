@@ -1,6 +1,6 @@
 import {Observable} from 'rxjs';
 import {IActorContext} from "aktor-js/dist/ActorContext";
-import {BSCommonOptions} from "../index";
+import {Options} from "../index";
 import {join, parse, ParsedPath} from "path";
 import {Middleware, MiddlewareResponse} from "./server";
 import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
@@ -9,7 +9,7 @@ type SSIncomingType = string|string[];
 
 interface SSIncoming {
     input: SSIncomingType
-    options: BSCommonOptions
+    options: Options
 }
 
 interface Processed {
@@ -24,13 +24,13 @@ interface Processed {
  *  eg: serveStatic: ['src']
  *  eg: serveStatic: 'app'
  */
-function processIncoming(input: string|string[], options: BSCommonOptions): Processed[] {
+function processIncoming(input: string|string[], options: Options): Processed[] {
     return [].concat(input)
         .map((input) : Processed => {
             return {
                 input,
                 parsed: parse(input),
-                resolved: join(options.cwd, input)
+                resolved: join(options.get('cwd'), input)
             }
         })
 }

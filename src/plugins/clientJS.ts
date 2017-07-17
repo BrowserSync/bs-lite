@@ -1,66 +1,81 @@
 import {Observable} from 'rxjs';
 import {IActorContext} from "aktor-js/dist/ActorContext";
-import {BSCommonOptions} from "../index";
 import {Middleware} from "./server";
 import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
+import {socketConnector} from "../connect-utils";
+import {Options} from "../index";
+import {readFileSync} from "fs";
+import {client} from "../config";
 
-type ClientJSIncomingType = string|string[]|Processed;
+type ClientJSIncomingType = string|string[]|Processed|Processed[];
 
 interface ClientJSIncoming {
     input: ClientJSIncomingType;
-    options: BSCommonOptions;
+    options: Options;
 }
 
 interface Processed {
-    input: ClientJSIncomingType;
+    input?: ClientJSIncomingType;
     content: string
     id: string
 }
 
-function processIncoming(input: ClientJSIncomingType, options?: BSCommonOptions): Processed[] {
+function createOne(ref: string, content: string): Processed  {
+    return {
+        input: content,
+        id: `Browsersync ClientJS (${ref})`,
+        content: `/**
+ * Browsersync ClientJS (${ref})
+ */
+${content}
+/**
+ * ---- ClientJS END (${ref}) -----
+ */`
+    }
+}
+
+function processIncoming(input: ClientJSIncomingType, options?: Options): Processed[] {
     return [].concat(input)
         .filter(Boolean)
         .map((input, index) : Processed => {
             if (typeof input === 'string') {
-                return {
-                    input,
-                    id: `Browsersync ClientJS (${index})`,
-                    content: `;
-/**
- * Browsersync ClientJS (${index})
- */
-${input}
-/**
- * ---- ClientJS END (${index}) -----
- */
-;
-`
-                }
+                return createOne(String(index), input);
+            }
+            if (input.content) {
+                return createOne(input.id || String(index), input.content);
             }
             return input;
         })
 }
 
 function createMiddleware(incoming: ClientJSIncoming): Middleware[] {
-
+    
     const coreJS = [
         {
             id: 'bs-no-conflict',
             content: 'window.___browserSync___oldSocketIo = window.io;',
         },
+        {
+            id: 'bs-socket-connector',
+            content: socketConnector(incoming.options),
+        },
+        {
+            id: 'browser-sync-client',
+            content: readFileSync(client.mainDist, 'utf8'),
+        },
     ];
 
-    return processIncoming(incoming.input)
-        .map((processed: Processed, index): Middleware => {
-            return {
-                id: processed.id,
-                route: '/bs.js',
-                handle: (req, res) => {
-                    res.setHeader('Content-Type', 'application/javascript');
-                    res.end(processed.content);
-                }
-            }
-        })
+    // console.log(incoming.options.get('clientJS'));
+    // const joined = coreJS.concat(incoming.input);
+    const js = processIncoming(coreJS).map(x => x.content).join(';\n\n\n');
+    return [{
+        id: 'Browsersync ClientJS',
+        route: '/bs.js',
+        handle: (req, res) => {
+            res.setHeader('Content-Type', 'application/javascript');
+            res.end(js);
+        }
+    }]
 }
 
 export default function ClientJS(address: string, context: IActorContext) {
@@ -69,6 +84,7 @@ export default function ClientJS(address: string, context: IActorContext) {
         methods: {
             init: function (stream: IRespondableStream) {
                 return stream.flatMap(({payload, respond}) => {
+
                     const mw = createMiddleware(payload);
                     return Observable.of(respond({mw}));
                 })
