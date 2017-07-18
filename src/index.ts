@@ -26,7 +26,6 @@ const pluginWhitelist = {
 const corePlugins = [
     'compression',
     'clientJS',
-    'ports',
 ];
 
 const order = [

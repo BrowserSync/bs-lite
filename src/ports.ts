@@ -18,7 +18,7 @@ function findPort(start, strict, opts) {
     });
 }
 
-function getPort(start, strict, name) {
+export function getPort(start, strict, name) {
 
     debug(`> trying  ${start} for ${name}`);
 
@@ -75,26 +75,14 @@ export function portsActorFactory(address, context) {
         methods: {
             init: function(stream) {
                 return stream.switchMap(({payload, respond}) => {
-                    const options = payload.options;
-                    return context.actorSelection('../server')[0]
-                        .ask('address')
-                        .flatMap(address => {
-                            if (address && address.port) {
-                                if (address.port === options.getIn(['server', 'port'])) {
-                                    console.log('Skipping port lookup is the same');
-                                    return Observable.of(respond({options: {}, mw: []}));
-                                }
-                            }
-                            return getPorts(payload.options)
-                                .map(result => {
-                                    return respond({options: result, mw: []});
-                                })
-                        })
-                        .catch(err => {
-                            console.error('PORTS', err);
-                            return Observable.empty();
-                        });
+                    return getPort(payload.port, payload.strict, payload.name)
+                        .map(respond)
                 })
+            },
+            stop: function(stream) {
+                return stream.switchMap(({payload, respond}) => {
+                    return Observable.of(respond('done!'));
+                });
             }
         }
     }

@@ -5,6 +5,7 @@ import http = require('http');
 import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
 import {Options} from "../index";
 import {Map} from "immutable";
+import {portsActorFactory} from "../ports";
 const debug = require('debug')('bs:server');
 
 export interface MiddlewareResponse {
@@ -33,17 +34,42 @@ export default function Server(address: string, context: IActorContext) {
     let server;
 
     function createServer(incoming: InitIncoming) {
-        if (server) server.close();
+        if (server) {
+            if (server.listening) {
+                const port = server.address().port;
+                // if the server is already running and
+                // listening on the selected port, there's nothing more to do.
+                if (port === incoming.options.getIn(['server', 'port'])) {
+                    return Observable.of(server);
+                }
+            }
+        }
+
         const {options} = incoming;
         const port = options.getIn(['server', 'port']);
-        const app = connect();
-        // console.log('applying', middleware.length, 'middleware items');
-        incoming.input.middleware.forEach(mw => {
-            app.use(mw.route, mw.handle);
-        });
-        server = http.createServer(app);
-        server.listen(port);
-        return server;
+        const portActor = context.actorOf(portsActorFactory, 'server-port');
+
+        return portActor
+            .ask('init', {port, strict: true, name: 'core'})
+            .flatMap(port => {
+
+                const app = connect();
+
+                incoming.input.middleware.forEach(mw => {
+                    app.use(mw.route, mw.handle);
+                });
+
+                server = http.createServer(app);
+                server.listen(port);
+
+                // stop port actor and return server
+                return context.gracefulStop(portActor)
+                    .mapTo(server);
+            })
+            .catch(err => {
+                console.error(err);
+                return Observable.empty();
+            })
     }
 
     return {
@@ -61,8 +87,13 @@ export default function Server(address: string, context: IActorContext) {
             },
             init: function (stream: IRespondableStream) {
                 return stream.flatMap(({payload, respond}) => {
-                    const s = createServer(payload);
-                    return Observable.of(respond(s.address()));
+                    return createServer(payload)
+                        .flatMap(server => {
+                            return Observable.of(respond(server.address()));
+                        })
+                        .catch(err => {
+                            console.error(err);
+                        })
                 });
             },
         },
