@@ -8,6 +8,8 @@ import {Map} from "immutable";
 import {portsActorFactory} from "../ports";
 const debug = require('debug')('bs:server');
 
+const {of} = Observable;
+
 export interface MiddlewareResponse {
     mw?: Middleware[]
     options?: Map<string, any>
@@ -29,29 +31,22 @@ export interface IServerOptions {
     port: number;
 }
 
-export default function Server(address: string, context: IActorContext) {
+export function Server(address: string, context: IActorContext) {
 
     let server;
 
     function createServer(incoming: InitIncoming) {
-        if (server) {
-            if (server.listening) {
-                const port = server.address().port;
-                // if the server is already running and
-                // listening on the selected port, there's nothing more to do.
-                if (port === incoming.options.getIn(['server', 'port'])) {
-                    return Observable.of(server);
-                }
-            }
-        }
-
         const {options} = incoming;
         const port = options.getIn(['server', 'port']);
-        const portActor = context.actorOf(portsActorFactory, 'server-port');
 
-        return portActor
-            .ask('init', {port, strict: true, name: 'core'})
+        return getMaybePortActor(context, server, incoming.options)
             .flatMap(port => {
+
+                // todo, can we be less brutal here, and perhaps
+                // just replace the app.stack?
+                if (server && server.listening) {
+                    server.close();
+                }
 
                 const app = connect();
 
@@ -63,8 +58,7 @@ export default function Server(address: string, context: IActorContext) {
                 server.listen(port);
 
                 // stop port actor and return server
-                return context.gracefulStop(portActor)
-                    .mapTo(server);
+                return of(server);
             })
             .catch(err => {
                 console.error(err);
@@ -98,4 +92,26 @@ export default function Server(address: string, context: IActorContext) {
             },
         },
     }
+}
+
+function getMaybePortActor(context, server, options) {
+    const optionPort = options.getIn(['server', 'port']);
+    if (server) {
+        if (server.listening) {
+            const serverPort = server.address().port;
+            // if the server is already running and
+            // listening on the selected port, there's nothing more to do.
+            if (serverPort === optionPort) {
+                return Observable.of(optionPort);
+            }
+        }
+    }
+
+
+    return context.actorOf(portsActorFactory, 'server-port')
+        .ask('init', {
+            port: optionPort,
+            strict: options.get('strict'),
+            name: 'core'
+        });
 }

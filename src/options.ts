@@ -1,6 +1,12 @@
+import {Observable} from 'rxjs';
 import {Middleware} from "./plugins/server";
+import {Set, fromJS} from "immutable";
+
+const {of} = Observable;
+
 export const defaultOptions = {
     strict: true,
+    serveStatic: [],
     clientJS: [],
     middleware: [],
     server: {
@@ -49,4 +55,17 @@ export interface BsOptions {
         port: number,
     },
     serveStatic: string|string[]
+}
+
+export function DefaultOptions(address, context) {
+    return {
+        methods: {
+            'merge': function (stream) {
+                return stream.switchMap(({payload, respond}) => {
+                    const output = fromJS(defaultOptions).mergeDeep(payload);
+                    return of(respond(output));
+                })
+            }
+        }
+    }
 }
