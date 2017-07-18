@@ -7,6 +7,13 @@ import {Server} from "./plugins/server";
 
 const {of, concat} = Observable;
 
+export enum Methods {
+    init = 'init',
+    getOption = 'getOption',
+    updateOption = 'updateOption',
+    address = 'address'
+}
+
 export function Browsersync(address: string, context: IActorContext) {
 
     // Internal state of this actor's entire lifespan
@@ -17,7 +24,7 @@ export function Browsersync(address: string, context: IActorContext) {
 
     return {
         methods: {
-            'init': function (stream) {
+            [Methods.init]: function (stream) {
                 return stream.switchMap(({payload, respond}) => {
                     return context.actorOf(DefaultOptions)
                         .ask('merge', payload)
@@ -32,13 +39,13 @@ export function Browsersync(address: string, context: IActorContext) {
                         });
                 })
             },
-            'getOption': function (stream) {
+            [Methods.getOption]: function (stream) {
                 return stream.switchMap(({payload, respond}) => {
                     const path: string[] = payload;
                     return of(respond(state.options.getIn(path)));
                 })
             },
-            'updateOption': function (stream) {
+            [Methods.updateOption]: function (stream) {
                 return stream.switchMap(({payload, respond}) => {
                     const {path, fn} = payload;
                     const updated = state.options.updateIn(path, fn);
@@ -46,7 +53,7 @@ export function Browsersync(address: string, context: IActorContext) {
                     return of(respond(state.options.getIn(path)));
                 })
             },
-            address: function (stream) {
+            [Methods.address]: function (stream) {
                 return stream.switchMap(({payload, respond}) => {
                     return state.server.ask('address')
                         .map(respond);

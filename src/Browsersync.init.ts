@@ -4,12 +4,10 @@ import {IServerOptions, Middleware, MiddlewareResponse} from './plugins/server';
 import clientJS from './plugins/clientJS';
 import compression from './plugins/compression';
 import {fromJS, Map} from "immutable";
-import {BsOptions, defaultOptions} from "./options";
 import {getPorts, portsActorFactory} from "./ports";
 import {IActorContext} from "aktor-js/dist/ActorContext";
+import {Options} from "./index";
 const debug = require('debug')('bs:system');
-
-export type Options = Map<keyof BsOptions, any>
 
 const pluginWhitelist = {
     'serveStatic': serveStatic,
