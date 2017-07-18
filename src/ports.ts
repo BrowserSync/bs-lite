@@ -70,18 +70,30 @@ export function getPorts(options: Options) {
         });
 }
 
-export function portsActorFactory() {
+export function portsActorFactory(address, context) {
     return {
         methods: {
             init: function(stream) {
                 return stream.switchMap(({payload, respond}) => {
-                    return getPorts(payload.options)
-                        .map(result => {
-                            return respond({options: result, mw: []});
+                    const options = payload.options;
+                    return context.actorSelection('../server')[0]
+                        .ask('address')
+                        .flatMap(address => {
+                            if (address && address.port) {
+                                if (address.port === options.getIn(['server', 'port'])) {
+                                    console.log('Skipping port lookup is the same');
+                                    return Observable.of(respond({options: {}, mw: []}));
+                                }
+                            }
+                            return getPorts(payload.options)
+                                .map(result => {
+                                    return respond({options: result, mw: []});
+                                })
                         })
                         .catch(err => {
+                            console.error('PORTS', err);
                             return Observable.empty();
-                        })
+                        });
                 })
             }
         }

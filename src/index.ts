@@ -1,12 +1,13 @@
 import {Observable, BehaviorSubject} from 'rxjs';
 import * as actorJS from 'aktor-js';
 import serveStatic from './plugins/serveStatic';
-import server, {IServerOptions, Middleware, MiddlewareResponse} from './plugins/server';
+import {IServerOptions, Middleware, MiddlewareResponse} from './plugins/server';
 import clientJS from './plugins/clientJS';
 import compression from './plugins/compression';
 import {fromJS, Map} from "immutable";
 import {BsOptions, defaultOptions} from "./options";
 import {getPorts, portsActorFactory} from "./ports";
+import Server from "./plugins/server";
 const debug = require('debug')('bs:system');
 
 const {createSystem} = actorJS;
@@ -16,7 +17,7 @@ export type Options = Map<keyof BsOptions, any>
 
 const pluginWhitelist = {
     'serveStatic': serveStatic,
-    'server': server,
+    'server': Server,
     'clientJS': clientJS,
     'compression': compression,
     'ports': portsActorFactory
@@ -45,6 +46,7 @@ function getActors(order, options) {
 export default function init(options: object) {
 
     const system = createSystem();
+    const serverActor = system.actorOf(Server, 'server');
 
     const commonOptions = fromJS(defaultOptions)
         .mergeDeep(options)
@@ -60,24 +62,32 @@ export default function init(options: object) {
             bsoptions.next(options);
             serverInfo.next(server);
         })
-        .subscribe(x => {
+        .subscribe(([server, options]) => {
             setTimeout(() => {
-                createWithOptions(system, bsoptions.getValue().setIn(['server', 'port'], 9001))
+                createWithOptions(system, bsoptions.getValue().update('serveStatic', ss => ss.concat('src')))
                     .subscribe(([server, options]) => {
-                        console.log(options.toJS());
+                        console.log('SECOND ->', server);
+                        setTimeout(() => {
+                            createWithOptions(system, bsoptions.getValue().update('serveStatic', ss => {
+                                return ss.filter(x => x !== 'src');
+                            }))
+                                .subscribe(([server, options]) => {
+                                    console.log('3rd ->', server);
+                                }, err => console.log(err));
+                        }, 5000);
                     }, err => console.log(err));
             }, 1000);
+            console.log('FIRST ->', server);
         }, (err) => {
             console.error('Error in setup', err);
         });
-
-
 }
 
 function createWithOptions(system, options: Options) {
 
     const coreActors = getActors(corePlugins, options);
     const setupActors = getActors(order, options);
+    const server = system.actorSelection('server')[0];
 
     function createPayload(input, options) {
         return {
@@ -103,37 +113,32 @@ function createWithOptions(system, options: Options) {
             return actor
                 .ask('init', createPayload(item.input, options))
                 .map((resp: MiddlewareResponse) => {
-                    if (resp.mw.length) {
-                        return options.update('middleware', mw => mw.concat(resp.mw))
-                            .mergeDeep(fromJS(resp.options) || {});
-                    }
-                    return options.mergeDeep(fromJS(resp.options) || {});
+                    opts.next(options.mergeDeep(fromJS(resp.options) || {}));
+                    return resp.mw || [];
                 })
                 .catch(err => {
                     console.error(err);
                     return Observable.empty();
                 })
         })
-        .do(x => opts.next(x))
-        .last()
-        .flatMap(options => {
+        .reduce((acc: Middleware[], mw: Middleware[]) => {
+            return acc.concat(mw);
+        }, [])
+        .flatMap((middleware: Middleware[]) => {
 
-            // console.log(options.toJS());
             const current = opts.getValue();
 
-            const input = {
-                middleware: current.get('middleware').toJS(),
+            const payload = {
+                input: {
+                    middleware,
+                },
+                options: current,
             };
 
-            const existing = system.actorSelection('server');
-            const actor = existing.length
-                ? existing[0]
-                : system.actorOf(server, 'server');
-
-
-            return actor.ask('init', {input, options: current})
+            return server
+                .ask('init', payload)
                 .map(server => {
                     return [server, options];
-                })
+                });
         })
 }
