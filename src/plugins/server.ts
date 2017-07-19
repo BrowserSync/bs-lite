@@ -90,6 +90,14 @@ export function Server(address: string, context: IActorContext) {
                         })
                 });
             },
+            stop: function(stream: IRespondableStream) {
+                return stream.flatMap(({payload, respond}) => {
+                    if (server && server.listening) {
+                        server.close();
+                    }
+                    return Observable.of(respond('Done!'));
+                })
+            }
         },
     }
 }

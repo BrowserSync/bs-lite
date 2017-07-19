@@ -9,6 +9,7 @@ const {of, concat} = Observable;
 
 export enum Methods {
     init = 'init',
+    stop = 'stop',
     getOption = 'getOption',
     updateOption = 'updateOption',
     address = 'address'
@@ -57,6 +58,12 @@ export function Browsersync(address: string, context: IActorContext) {
                 return stream.switchMap(({payload, respond}) => {
                     return state.server.ask('address')
                         .map(respond);
+                });
+            },
+            [Methods.stop]: function(stream) {
+                return stream.switchMap(({payload, respond}) => {
+                    return context.gracefulStop(state.server)
+                        .map(() => respond('All done!'));
                 });
             }
         }
