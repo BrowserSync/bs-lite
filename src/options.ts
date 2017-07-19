@@ -14,6 +14,7 @@ export const defaultOptions = {
     },
     scheme: 'http',
     socket: {
+        enabled: true,
         socketIoOptions: {
             log: false,
             pingInterval: 5000,
@@ -54,7 +55,8 @@ export interface BsOptions {
     server: {
         port: number,
     },
-    serveStatic: string|string[]
+    serveStatic: string|string[];
+    clientJS: string|string[];
 }
 
 export function DefaultOptions(address, context) {
