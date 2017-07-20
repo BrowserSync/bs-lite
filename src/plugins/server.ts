@@ -31,6 +31,30 @@ export interface IServerOptions {
     port: number;
 }
 
+function getServer(middleware, port) {
+    const app = connect();
+
+    middleware.forEach(mw => {
+        app.use(mw.route, mw.handle);
+    });
+
+    const server = http.createServer(app);
+    server.listen(port);
+    return Observable.of(server);
+}
+
+function closeServer(server) {
+    if (server && server.listening) {    
+        return Observable.create(obs => {
+            server.close(() => {
+                obs.next(true);
+                obs.complete(true);
+            })
+        })
+    }
+    return Observable.of(true);
+}
+
 export function Server(address: string, context: IActorContext) {
 
     let server;
@@ -41,24 +65,9 @@ export function Server(address: string, context: IActorContext) {
 
         return getMaybePortActor(context, server, incoming.options)
             .flatMap(port => {
-
-                // todo, can we be less brutal here, and perhaps
-                // just replace the app.stack?
-                if (server && server.listening) {
-                    server.close();
-                }
-
-                const app = connect();
-
-                incoming.input.middleware.forEach(mw => {
-                    app.use(mw.route, mw.handle);
-                });
-
-                server = http.createServer(app);
-                server.listen(port);
-
-                // stop port actor and return server
-                return of(server);
+                return closeServer(server)
+                    .flatMap(() => getServer(incoming.input.middleware, port))
+                    .do(serverInstance => { server = serverInstance });
             })
             .catch(err => {
                 console.error(err);
@@ -83,7 +92,7 @@ export function Server(address: string, context: IActorContext) {
                 return stream.flatMap(({payload, respond}) => {
                     return createServer(payload)
                         .flatMap(server => {
-                            return Observable.of(respond(server.address()));
+                            return Observable.of(respond(server));
                         })
                         .catch(err => {
                             console.error(err);
@@ -114,7 +123,6 @@ function getMaybePortActor(context, server, options) {
             }
         }
     }
-
 
     return context.actorOf(portsActorFactory, 'server-port')
         .ask('init', {

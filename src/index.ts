@@ -22,5 +22,5 @@ export default function init(options: object): {bs: ActorRef, system: SystemActo
 
 export {
     updateOption,
-    getOptionsJS
+    getOptionsJS,
 };

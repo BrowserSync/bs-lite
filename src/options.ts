@@ -57,6 +57,21 @@ export interface BsOptions {
     },
     serveStatic: string|string[];
     clientJS: string|string[];
+    socket: BsSocketOptions
+}
+
+export interface BsSocketOptions {
+    enabled: boolean;
+    socketIoOptions: {
+        log: boolean;
+        pingInterval: number;
+        path: string;
+    },
+    socketIoClientConfig: {
+        reconnectionAttempts: number;
+    },
+    clientPath: string;
+    namespace: string;
 }
 
 export function DefaultOptions(address, context) {
