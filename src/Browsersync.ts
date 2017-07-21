@@ -17,53 +17,50 @@ export enum Methods {
 
 export function Browsersync(address: string, context: IActorContext) {
 
-    // Internal state of this actor's entire lifespan
-    const state = {
-        options: Map({}),
-        server: context.actorOf(Server, 'server')
-    };
-
     return {
+        initialState: {
+            options: Map({}),
+            server: context.actorOf(Server, 'server')
+        },
         methods: {
             [Methods.init]: function (stream) {
-                return stream.switchMap(({payload, respond}) => {
+                return stream.switchMap(({payload, respond, state}) => {
                     return context.actorOf(DefaultOptions)
                         .ask('merge', payload)
-                        .do(merged => {
-                            // save each processed state side effect
-                            // console.log(merged);
-                            state.options = merged;
-                        })
                         .flatMap((mergedOptions) => {
+                            const nextState = {
+                                server: state.server,
+                                options: mergedOptions,
+                            }
                             return createWithOptions(context, mergedOptions)
-                                .map(respond);
+                                .map((output) => respond(output, nextState));
                         });
                 })
             },
             [Methods.getOption]: function (stream) {
-                return stream.switchMap(({payload, respond}) => {
+                return stream.switchMap(({payload, respond, state}) => {
                     const path: string[] = payload;
-                    return of(respond(state.options.getIn(path)));
+                    return of(respond(state.options.getIn(path), state));
                 })
             },
             [Methods.updateOption]: function (stream) {
-                return stream.switchMap(({payload, respond}) => {
+                return stream.switchMap(({payload, respond, state}) => {
                     const {path, fn} = payload;
                     const updated = state.options.updateIn(path, fn);
                     state.options = updated;
-                    return of(respond(state.options.getIn(path)));
+                    return of(respond(state.options.getIn(path), state));
                 })
             },
             [Methods.address]: function (stream) {
-                return stream.switchMap(({payload, respond}) => {
+                return stream.switchMap(({payload, respond, state}) => {
                     return state.server.ask('address')
-                        .map(respond);
+                        .map((address) => respond(address, state));
                 });
             },
             [Methods.stop]: function(stream) {
-                return stream.switchMap(({payload, respond}) => {
+                return stream.switchMap(({payload, respond, state}) => {
                     return context.gracefulStop(state.server)
-                        .map(() => respond('All done!'));
+                        .map(() => respond('All done!', state));
                 });
             }
         }

@@ -8,6 +8,7 @@ import {getPorts, portsActorFactory} from "./ports";
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {Options} from "./index";
 import {Sockets, SocketsInitPayload} from "./sockets";
+
 const debug = require('debug')('bs:system');
 
 const pluginWhitelist = {
@@ -88,21 +89,9 @@ export function createWithOptions(context: IActorContext, options: Options) {
                 options: current,
             };
 
-            // Create server
+            // Create server or renew middleware
             return server
                 .ask('init', payload)
-                .flatMap((server) => {
-
-                    // now create sockets
-                    const socketPayload: SocketsInitPayload = {
-                        server,
-                        options: options.get('socket').toJS()
-                    };
-
-                    return context.actorOf(Sockets, 'sockets')
-                        .ask('init', socketPayload)
-                        .mapTo(server);
-                })
                 .map(server => {
                     return [server, options];
                 });

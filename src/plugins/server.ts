@@ -7,6 +7,7 @@ import {Options} from "../index";
 import {Map} from "immutable";
 import {portsActorFactory} from "../ports";
 import {Server} from "http";
+import {Sockets, SocketsInitPayload} from "../sockets";
 
 const debug = require('debug')('bs:server');
 
@@ -33,7 +34,7 @@ export interface IServerOptions {
     port: number;
 }
 
-function getServer(middleware, port) {
+function getNewServer(middleware, port) {
     const app = connect();
 
     middleware.forEach(mw => {
@@ -42,7 +43,18 @@ function getServer(middleware, port) {
 
     const server = http.createServer(app);
     server.listen(port);
-    return Observable.of(server);
+    return Observable.of([server, app]);
+}
+
+function replaceMiddleware(middleware, app) {
+    return Observable.create(obs => {
+        app.stack = [];
+        middleware.forEach(mw => {
+            app.use(mw.route, mw.handle);
+        });
+        obs.next(app);
+        obs.complete();
+    });
 }
 
 function closeServer(server) {
@@ -58,55 +70,78 @@ function closeServer(server) {
     return Observable.of(true);
 }
 
+export interface ServerState { 
+    server: any
+    app: any
+}
+
 export function Server(address: string, context: IActorContext) {
-
-    function createServer(incoming: InitIncoming, server) {
-        const {options} = incoming;
-        const port = options.getIn(['server', 'port']);
-
-        return getMaybePortActor(context, server, incoming.options)
-            .flatMap(([port, server]) => {
-                return closeServer(server)
-                    .flatMap(() => getServer(incoming.input.middleware, port));
-            })
-            .catch(err => {
-                return Observable.empty();
-            })
-    }
 
     return {
         postStart() {
             debug('-> postStart()');
         },
-        initialState: null,
+        initialState: {server: null, app: null},
         methods: {
-            address: function(stream: IMethodStream<void, any, Server>) {
+            address: function(stream: IMethodStream<void, any, ServerState>) {
                 return stream.flatMap(({payload, respond, state}) => {
-                    const server = state;
+                    const {server} = state;
                     if (server && server.listening) {
                         return Observable.of(respond(server.address(), state));
                     }
                     return Observable.of(respond(null, state));
                 });
             },
-            init: function (stream: IMethodStream<InitIncoming, Server, Server>) {
+            init: function (stream: IMethodStream<InitIncoming, Server, ServerState>) {
                 return stream.flatMap(({payload, respond, state}) => {
-                    return createServer(payload, state)
-                        .flatMap(server => {
-                            return Observable.of(respond(server, server));
-                        })
-                        .catch(err => {
-                            console.error(err);
-                        })
+                    const {options, input} = payload;
+                    const port = options.getIn(['server', 'port']);
+
+                    return getMaybePortActor(context, state.server, options)
+                        .flatMap(([port, server]) => {
+                            // if server is already running?
+                            if (server && server.listening) {
+                                // check if the port matches the desired
+                                if (server.address().port === port) {
+                                    // just re-apply the middleware
+                                    return replaceMiddleware(input.middleware, state.app)
+                                        .do(x => console.log('replacing middleware'))
+                                        .map((app) => {
+                                            return respond(server, {server, app});
+                                        })
+                                }   
+                            }
+                            // at this point, the PORT has changed so we close the server
+                            return closeServer(server)
+                                // Now we recreate a new server
+                                .flatMap(() => getNewServer(input.middleware, port))
+                                // we use that new server to add socket support
+                                .flatMap(([server, app]) => {
+
+                                    // this is the payload for the Socket actors init message
+                                    const socketPayload: SocketsInitPayload = {
+                                        server,
+                                        options: options.get('socket').toJS()
+                                    };
+
+                                    // create the sockets actor and send it an init method
+                                    return context.actorOf(Sockets, 'sockets')
+                                        .ask('init', socketPayload)
+                                        .mapTo([server, app]);
+                                })
+                                .map(([server, app]) => {
+                                    return respond(server, {server, app});
+                                })
+                        });
                 });
             },
-            stop: function(stream: IMethodStream<InitIncoming, string, Server>) {
+            stop: function(stream: IMethodStream<InitIncoming, string, ServerState>) {
                 return stream.flatMap(({payload, respond, state}) => {
-                    const server = state;
+                    const {server} = state;
                     if (server && server.listening) {
                         server.close();
                     }
-                    return Observable.of(respond('Done!', null));
+                    return Observable.of(respond('Done!', {server: null, app: null}));
                 })
             }
         },
