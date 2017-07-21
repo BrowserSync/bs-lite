@@ -2,9 +2,19 @@
 # yarn lockfile v1
 
 
+"@types/node@*":
+  version "8.0.14"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.14.tgz#4a19dc6bb61d16c01cbadc7b30ac23518fff176b"
+
 "@types/node@^8.0.13":
   version "8.0.13"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.13.tgz#530f0f9254209b0335bf5cc6387822594ef47093"
+
+"@types/socket.io@2":
+  version "1.4.29"
+  resolved "https://registry.yarnpkg.com/@types/socket.io/-/socket.io-1.4.29.tgz#86a6b3a9ab78cf9a900ceef85b9b68b6bea86712"
+  dependencies:
+    "@types/node" "*"
 
 accepts@1.3.3, accepts@~1.3.3:
   version "1.3.3"
@@ -17,9 +27,9 @@ after@0.8.2:
   version "0.8.2"
   resolved "https://registry.yarnpkg.com/after/-/after-0.8.2.tgz#fedb394f9f0e02aa9768e702bda23b505fae7e1f"
 
-aktor-js@1.2.3:
-  version "1.2.3"
-  resolved "https://registry.yarnpkg.com/aktor-js/-/aktor-js-1.2.3.tgz#f955e28f28f625092570d2c54aa9b8ffbede8c41"
+aktor-js@1.2.5:
+  version "1.2.5"
+  resolved "https://registry.yarnpkg.com/aktor-js/-/aktor-js-1.2.5.tgz#abde0428772934e81d32c01dcfede6b9b1d604b5"
   dependencies:
     anymatch "^1.3.0"
     debug "^2.6.3"

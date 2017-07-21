@@ -2,10 +2,12 @@ import {Observable} from 'rxjs';
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import connect = require('connect');
 import http = require('http');
-import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
+import {IRespondableStream, IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {Options} from "../index";
 import {Map} from "immutable";
 import {portsActorFactory} from "../ports";
+import {Server} from "http";
+
 const debug = require('debug')('bs:server');
 
 const {of} = Observable;
@@ -45,32 +47,29 @@ function getServer(middleware, port) {
 
 function closeServer(server) {
     if (server && server.listening) {    
-        return Observable.create(obs => {
+        const closer = Observable.create(obs => {
             server.close(() => {
                 obs.next(true);
                 obs.complete(true);
             })
-        })
+        });
+        return Observable.merge(closer, Observable.timer(1000)).take(1);
     }
     return Observable.of(true);
 }
 
 export function Server(address: string, context: IActorContext) {
 
-    let server;
-
-    function createServer(incoming: InitIncoming) {
+    function createServer(incoming: InitIncoming, server) {
         const {options} = incoming;
         const port = options.getIn(['server', 'port']);
 
         return getMaybePortActor(context, server, incoming.options)
-            .flatMap(port => {
+            .flatMap(([port, server]) => {
                 return closeServer(server)
-                    .flatMap(() => getServer(incoming.input.middleware, port))
-                    .do(serverInstance => { server = serverInstance });
+                    .flatMap(() => getServer(incoming.input.middleware, port));
             })
             .catch(err => {
-                console.error(err);
                 return Observable.empty();
             })
     }
@@ -79,32 +78,35 @@ export function Server(address: string, context: IActorContext) {
         postStart() {
             debug('-> postStart()');
         },
+        initialState: null,
         methods: {
-            address: function(stream: IRespondableStream) {
-                return stream.flatMap(({payload, respond}) => {
+            address: function(stream: IMethodStream<void, any, Server>) {
+                return stream.flatMap(({payload, respond, state}) => {
+                    const server = state;
                     if (server && server.listening) {
-                        return Observable.of(respond(server.address()));
+                        return Observable.of(respond(server.address(), state));
                     }
-                    return Observable.of(respond(null));
+                    return Observable.of(respond(null, state));
                 });
             },
-            init: function (stream: IRespondableStream) {
-                return stream.flatMap(({payload, respond}) => {
-                    return createServer(payload)
+            init: function (stream: IMethodStream<InitIncoming, Server, Server>) {
+                return stream.flatMap(({payload, respond, state}) => {
+                    return createServer(payload, state)
                         .flatMap(server => {
-                            return Observable.of(respond(server));
+                            return Observable.of(respond(server, server));
                         })
                         .catch(err => {
                             console.error(err);
                         })
                 });
             },
-            stop: function(stream: IRespondableStream) {
-                return stream.flatMap(({payload, respond}) => {
+            stop: function(stream: IMethodStream<InitIncoming, string, Server>) {
+                return stream.flatMap(({payload, respond, state}) => {
+                    const server = state;
                     if (server && server.listening) {
                         server.close();
                     }
-                    return Observable.of(respond('Done!'));
+                    return Observable.of(respond('Done!', null));
                 })
             }
         },
@@ -119,7 +121,7 @@ function getMaybePortActor(context, server, options) {
             // if the server is already running and
             // listening on the selected port, there's nothing more to do.
             if (serverPort === optionPort) {
-                return Observable.of(optionPort);
+                return Observable.of([optionPort, server]);
             }
         }
     }
@@ -129,5 +131,6 @@ function getMaybePortActor(context, server, options) {
             port: optionPort,
             strict: options.get('strict'),
             name: 'core'
-        });
+        })
+        .map(port => ([port, server]));
 }
