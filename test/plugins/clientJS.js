@@ -5,12 +5,17 @@ const {fromJS, Map} = require('immutable');
 
 it('converts incoming options into a payload', function (done) {
     const system = createSystem();
-    const client = system.actorOf(ClientJS);
+    const clientJSActor = system.actorOf(ClientJS);
     const opts = system.actorOf(DefaultOptions)
         .ask('merge', {
-            clientJS: ['console.log("kittenez")']
+            cwd: process.cwd(),
+            clientJS: [
+                'console.log("kittens 1")',
+                () => 'console.log("kittens 2")',
+                'file:./fixtures/test.js'
+            ]
         })
-        .flatMap(merged => client.ask('init', merged))
+        .flatMap(merged => clientJSActor.ask('init', merged))
         .subscribe(({mw}) => {
             mw[0].handle({}, {
                 setHeader: () => {},
