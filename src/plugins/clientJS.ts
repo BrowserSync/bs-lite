@@ -4,9 +4,8 @@ import {Middleware} from "./server";
 import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
 import {socketConnector} from "../connect-utils";
 import {Options} from "../index";
-import {readFileSync} from "fs";
 import {client} from "../config";
-import {join} from "path";
+import {readFileSafe} from "../utils";
 const debug = require('debug')('bs:clientJS');
 
 export type ClientJSIncomingType = string|string[]|Processed|Processed[];
@@ -15,7 +14,7 @@ export interface Processed {
     input?: ClientJSIncomingType;
     content: (options: Options, item?: Processed, req?: any, res?: any) => string;
     id: string
-    via?: string
+    via: string
 }
 
 function createOne(ref: string, content: string, via: string): string  {
@@ -33,24 +32,20 @@ export function processIncomingOptions(input: ClientJSIncomingType, cwd: string)
     return [].concat(input)
         .filter(Boolean)
         .map((input, index) : Processed => {
+            const id = `bs-user-client-js-${index}`;
             if (typeof input === 'string') {
                 if (input.slice(0, 5) === 'file:') {
                     return {
-                        id: `bs-user-client-js-${index}`,
+                        id,
                         via: 'User Options [file:path]',
                         content: () => {
-                            const maybePath = join(cwd, input.slice(5));
-                            try {
-                                return readFileSync(maybePath, 'utf8');
-                            } catch (e) {
-                                return `console.log("File not found ${maybePath}")`;
-                            }
+                            return readFileSafe(input.slice(5), cwd)
                         },
                         input,
                     }
                 }
                 return {
-                    id: `bs-user-client-js-${index}`,
+                    id,
                     via: 'User Options [string]',
                     content: () => input,
                     input,
@@ -58,14 +53,14 @@ export function processIncomingOptions(input: ClientJSIncomingType, cwd: string)
             }
             if (typeof input === 'function') {
                 return {
-                    id: `bs-user-client-js-${index}`,
+                    id,
                     via: 'User Options [function]',
                     content: input,
                     input,
                 }
             }
             return {
-                id: `bs-user-client-js-${index}`,
+                id,
                 via: 'User Options',
                 content: () => input,
                 input,
@@ -84,7 +79,7 @@ function createMiddleware(options: Options): Middleware[] {
         },
         {
             id: 'browser-sync-client',
-            content: (options, item) => readFileSync(client.mainDist, 'utf8'),
+            content: (options, item) => readFileSafe(client.mainDist, options.get('cwd')),
             via: 'Browsersync Core'
         },
     ];
@@ -96,9 +91,6 @@ function createMiddleware(options: Options): Middleware[] {
         return [];
     })();
 
-    // console.log(incoming.options.get('clientJS'));
-    // const joined = coreJS.concat(incoming.input);
-    // const js = processIncoming(joined);
     const userjs = processIncomingOptions(options.get('clientJS').toJS(), options.get('cwd'));
 
     return [{

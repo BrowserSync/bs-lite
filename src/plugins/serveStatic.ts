@@ -6,12 +6,7 @@ import {Middleware, MiddlewareResponse} from "./server";
 import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
 const debug = require('debug')('bs:serveStatic');
 
-type SSIncomingType = string|string[];
-
-interface SSIncoming {
-    input: SSIncomingType
-    options: Options
-}
+type SSIncomingType = string|string[]|Processed|Processed[];
 
 interface Processed {
     input: SSIncomingType,
@@ -53,7 +48,7 @@ export default function(address: string, context: IActorContext) {
 
     return {
         postStart() {
-            debug('-> postStart()')
+            debug('-> postStart()');
         },
         methods: {
             init: function (stream: IRespondableStream): Observable<MiddlewareResponse> {
