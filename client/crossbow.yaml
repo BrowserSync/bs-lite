@@ -1,0 +1,5 @@
+tasks:
+  dev: '@npm webpack --watch'
+  (webpack):
+    dev: '@npm webpack'
+    prod: '@npm webpack --config webpack.config.prod.js'

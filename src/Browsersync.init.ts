@@ -15,7 +15,6 @@ const pluginWhitelist = {
     'serveStatic': serveStatic,
     'clientJS': clientJS,
     'compression': compression,
-    'ports': portsActorFactory
 };
 
 const corePlugins = [
@@ -65,7 +64,7 @@ export function createWithOptions(context: IActorContext, options: Options) {
                 : context.actorOf(item.factory, item.name);
 
             return actor
-                .ask('init', createPayload(item.input, options))
+                .ask('init', {input: item.input, options})
                 .map((resp: MiddlewareResponse) => {
                     opts.next(options.mergeDeep(fromJS(resp.options) || {}));
                     return resp.mw || [];
@@ -78,22 +77,22 @@ export function createWithOptions(context: IActorContext, options: Options) {
         .reduce((acc: Middleware[], mw: Middleware[]) => {
             return acc.concat(mw);
         }, [])
-        .flatMap((middleware: Middleware[]) => {
-
-            const current = opts.getValue();
-
+        .withLatestFrom(opts)
+        .flatMap((incoming) => {
+            const middleware = incoming[0];
+            const options = incoming[1];
             const payload = {
                 input: {
                     middleware,
                 },
-                options: current,
+                options,
             };
 
-            // Create server or renew middleware
             return server
                 .ask('init', payload)
                 .map(server => {
                     return [server, options];
                 });
+            // Create server or renew middleware
         })
 }
