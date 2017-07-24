@@ -8,25 +8,21 @@ import {readFileSync} from "fs";
 import {client} from "../config";
 const debug = require('debug')('bs:clientJS');
 
-type ClientJSIncomingType = string|string[]|Processed|Processed[];
+export type ClientJSIncomingType = string|string[]|Processed|Processed[];
 
-interface ClientJSIncoming {
-    input: ClientJSIncomingType;
+export interface ClientJSIncoming {
     options: Options;
 }
 
-interface Processed {
+export interface Processed {
     input?: ClientJSIncomingType;
-    content: string
+    content: (options: Options, item?: Processed) => string;
     id: string
     via?: string
 }
 
-function createOne(ref: string, content: string, via: string): Processed  {
-    return {
-        input: content,
-        id: `Browsersync ClientJS (${ref})`,
-        content: `/**
+function createOne(ref: string, content: string, via: string): string  {
+    return `/**
  * Browsersync ClientJS (${ref})
  * VIA: ${via}
  */
@@ -34,41 +30,46 @@ ${content}
 /**
  * ---- ClientJS END (${ref}) -----
  */`
-    }
 }
 
-function processIncoming(input: ClientJSIncomingType): Processed[] {
+export function processIncomingOptions(input: ClientJSIncomingType): Processed[] {
     return [].concat(input)
         .filter(Boolean)
         .map((input, index) : Processed => {
             if (typeof input === 'string') {
-                return createOne(String(index), input, 'User Provided (options)');
+                return {
+                    id: `bs-user-client-js-${index}`,
+                    via: 'User Options',
+                    content: () => input,
+                    input,
+                }
             }
-            if (input.content) {
-                return createOne(input.id || String(index), input.content, input.via);
+            return {
+                id: `bs-user-client-js-${index}`,
+                via: 'User Options',
+                content: () => input,
+                input,
+                ...input
             }
-            return input;
         })
 }
 
-function createMiddleware(incoming: ClientJSIncoming): Middleware[] {
+function createMiddleware(options: Options): Middleware[] {
 
-    const {options} = incoming;
-    
     const coreJS = [
         {
             id: 'bs-no-conflict',
-            content: 'window.___browserSync___oldSocketIo = window.io;',
+            content: () => 'window.___browserSync___oldSocketIo = window.io;',
             via: 'Browsersync Core'
         },
         {
             id: 'bs-socket-connector',
-            content: socketConnector(incoming.options),
+            content: (options, item) => socketConnector(options),
             via: 'Browsersync Core'
         },
         {
             id: 'browser-sync-client',
-            content: readFileSync(client.mainDist, 'utf8'),
+            content: (options, item) => readFileSync(client.main, 'utf8'),
             via: 'Browsersync Core'
         },
     ];
@@ -82,21 +83,24 @@ function createMiddleware(incoming: ClientJSIncoming): Middleware[] {
 
     // console.log(incoming.options.get('clientJS'));
     // const joined = coreJS.concat(incoming.input);
-    const js = processIncoming(joined);
-    const userjs = processIncoming(options.get('clientJS').toJS());
-    const output = [...js, ...userjs].map(x => x.content).join(';\n\n\n');
+    // const js = processIncoming(joined);
+    const userjs = processIncomingOptions(options.get('clientJS').toJS());
 
     return [{
         id: 'Browsersync ClientJS',
         route: '/bs.js',
         handle: (req, res) => {
             res.setHeader('Content-Type', 'application/javascript');
-            res.end(output);
+            const output = [...joined, ...userjs]
+                .map((item: Processed) => {
+                    return createOne(item.id, item.content(options, item), item.via)
+                });
+            res.end(output.join('\n\n'));
         }
     }]
 }
 
-export default function ClientJS(address: string, context: IActorContext) {
+export function ClientJS(address: string, context: IActorContext) {
 
     return {
         postStart() {
@@ -112,3 +116,4 @@ export default function ClientJS(address: string, context: IActorContext) {
         }
     }
 }
+export default ClientJS;

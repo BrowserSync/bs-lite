@@ -42,13 +42,6 @@ export function createWithOptions(context: IActorContext, options: Options) {
     const setupActors = getActors(order, options);
     const server = context.actorSelection('server')[0];
 
-    function createPayload(input, options) {
-        return {
-            options,
-            input
-        }
-    }
-
     const opts = new BehaviorSubject(options);
 
     return Observable
@@ -64,7 +57,7 @@ export function createWithOptions(context: IActorContext, options: Options) {
                 : context.actorOf(item.factory, item.name);
 
             return actor
-                .ask('init', {input: item.input, options})
+                .ask('init', options)
                 .map((resp: MiddlewareResponse) => {
                     opts.next(options.mergeDeep(fromJS(resp.options) || {}));
                     return resp.mw || [];

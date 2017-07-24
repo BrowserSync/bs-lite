@@ -36,9 +36,9 @@ function processIncoming(input: string|string[], options: Options): Processed[] 
         })
 }
 
-function createMiddleware(incoming: SSIncoming): Middleware[] {
-    const optionItems = incoming.options.get('serveStatic').toJS();
-    return processIncoming(optionItems, incoming.options)
+function createMiddleware(options: Options): Middleware[] {
+    const optionItems = options.get('serveStatic').toJS();
+    return processIncoming(optionItems, options)
         .map((item: Processed, index): Middleware => {
             return {
                 id: `Serve Static (${index})`,
