@@ -8,7 +8,6 @@ it('converts incoming options into a payload', function (done) {
     const clientJSActor = system.actorOf(ClientJS);
     const opts = system.actorOf(DefaultOptions)
         .ask('merge', {
-            cwd: process.cwd(),
             clientJS: [
                 'console.log("kittens 1")',
                 () => 'console.log("kittens 2")',

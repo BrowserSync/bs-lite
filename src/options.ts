@@ -5,6 +5,7 @@ import {Set, fromJS} from "immutable";
 const {of} = Observable;
 
 export const defaultOptions = {
+    cwd: process.cwd(),
     strict: true,
     serveStatic: [],
     clientJS: [],
