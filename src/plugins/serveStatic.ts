@@ -88,15 +88,24 @@ function fromObject(incoming: SSIncomingObject, id: string, cwd): Processed {
 function createMiddleware(options: Options): Middleware[] {
 
     const optionItems = options.get('serveStatic').toJS();
+    const processed = processIncoming(optionItems, options);
+    const withErrors = processed.filter(x => x.dirs.some(dir => dir.errors.length > 0));
+    const withoutErrors = processed.filter(x => x.dirs.every(dir => dir.errors.length === 0));
 
-    return processIncoming(optionItems, options)
-        .map((item: Processed, index): Middleware => {
-            return {
-                id: `Serve Static (${index})`,
-                route: item.routes[0],
-                handle: require('serve-static')(item.dirs[0].resolved)
-            }
-        });
+    const mw = withoutErrors
+        .reduce((acc, item: Processed, index): Middleware[] => {
+            return acc.concat(item.routes.reduce((acc, route, routeIndex): Middleware[] => {
+                return acc.concat(item.dirs.map((dir, dirIndex): Middleware => {
+                    return {
+                        id: `Serve Static (${index}-${routeIndex}-${dirIndex})`,
+                        route,
+                        handle: require('serve-static')(dir.resolved)
+                    }
+                }));
+            }, []));
+        }, []);
+
+    return mw;
 }
 
 export function ServeStatic (address: string, context: IActorContext) {

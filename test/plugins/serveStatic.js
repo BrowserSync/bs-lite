@@ -12,7 +12,7 @@ it.only('serveStatic', function (done) {
             './fixtures',
             {
                 route: '/static',
-                dir: ['./fixtures', () => {}]
+                dir: ['./fixtures', './src']
             }
         ]
     })

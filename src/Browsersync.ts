@@ -1,6 +1,6 @@
 import {Observable} from 'rxjs';
 import {IActorContext} from "aktor-js/dist/ActorContext";
-import {DefaultOptions} from "./options";
+import {DefaultOptions, DefaultOptionsMethods} from "./options";
 import {Map} from "immutable";
 import {createWithOptions} from "./Browsersync.init";
 import {Server} from "./plugins/server";
@@ -26,7 +26,7 @@ export function Browsersync(address: string, context: IActorContext) {
             [Methods.init]: function (stream) {
                 return stream.switchMap(({payload, respond, state}) => {
                     return context.actorOf(DefaultOptions)
-                        .ask('merge', payload)
+                        .ask(DefaultOptionsMethods.Merge, payload)
                         .flatMap((mergedOptions) => {
                             const nextState = {
                                 server: state.server,
