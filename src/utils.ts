@@ -6,9 +6,17 @@ export function template(string, obj) {
     });
 }
 
+export function abs(path) {
+    return tryCatch(() => isAbsolute(path));
+}
+
 export function normPath (maybe, cwd) {
     return Right(maybe)
-        .chain(path => isAbsolute(path) ? Right(path) : tryCatch(() => join(cwd, maybe)))
+        .chain(path => abs(path).chain(isAbs => {
+            return isAbs
+                ? Right(path)
+                : tryCatch(() => join(cwd, maybe))
+        }))
 }
 
 export function readFileSafe(maybePath: string, cwd: string): string {

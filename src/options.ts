@@ -75,10 +75,14 @@ export interface BsSocketOptions {
     namespace: string;
 }
 
+export enum DefaultOptionsMethods {
+    Merge = 'Merge'
+}
+
 export function DefaultOptions(address, context) {
     return {
         methods: {
-            'merge': function (stream) {
+            [DefaultOptionsMethods.Merge]: function (stream) {
                 return stream.switchMap(({payload, respond}) => {
                     const output = fromJS(defaultOptions).mergeDeep(payload);
                     return of(respond(output));

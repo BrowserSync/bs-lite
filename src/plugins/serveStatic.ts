@@ -4,14 +4,29 @@ import {Options} from "../index";
 import {join, parse, ParsedPath} from "path";
 import {Middleware, MiddlewareResponse} from "./server";
 import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
+import {normPath, Right} from "../utils";
 const debug = require('debug')('bs:serveStatic');
 
-type SSIncomingType = string|string[]|Processed|Processed[];
+export type SSIncomingType = string|string[]|SSIncomingObject|SSIncomingObject[];
 
-interface Processed {
+export interface SSIncomingObject {
+    id?: string
+    dir?: string|string[];
+    route?: string|string[];
+}
+
+export interface SSDir {
+    userInput: string;
+    parsed: ParsedPath|null;
+    resolved: string|null;
+    errors: Error[];
+}
+
+export interface Processed {
     input: SSIncomingType,
-    parsed: ParsedPath,
-    resolved: string
+    id: string,
+    dirs: SSDir[]
+    routes: string[]
 }
 
 /**
@@ -20,31 +35,71 @@ interface Processed {
  *  eg: serveStatic: ['src']
  *  eg: serveStatic: 'app'
  */
-function processIncoming(input: string|string[], options: Options): Processed[] {
+export function processIncoming(input: string|string[], options: Options): Processed[] {
     return [].concat(input)
-        .map((input) : Processed => {
+        .map((input, index) : Processed => {
+            const id = `serve-static-${index}`;
+            if (typeof input === 'string') {
+                return {
+                    id,
+                    input,
+                    dirs: [createDir(input, options.get('cwd'))],
+                    routes: [''],
+                }
+            }
+            return fromObject(input, id, options.get('cwd'));
+        })
+}
+
+function createDir(dir: string, cwd): SSDir {
+    return normPath(dir, cwd)
+        .fold((err): SSDir => {
             return {
-                input,
-                parsed: parse(input),
-                resolved: join(options.get('cwd'), input)
+                userInput: dir,
+                errors: [err],
+                parsed: null,
+                resolved: null
+            }
+        }, (path): SSDir => {
+            return {
+                userInput: dir,
+                errors: [],
+                resolved: path,
+                parsed: parse(path)
             }
         })
 }
 
+function fromObject(incoming: SSIncomingObject, id: string, cwd): Processed {
+    const dirs = [].concat(incoming.dir)
+        .filter(Boolean)
+        .map(d => createDir(d, cwd));
+
+    const routes = [].concat(incoming.route).filter(Boolean);
+
+    return {
+        input: incoming,
+        dirs,
+        routes,
+        id,
+    }
+}
+
 function createMiddleware(options: Options): Middleware[] {
+
     const optionItems = options.get('serveStatic').toJS();
+
     return processIncoming(optionItems, options)
         .map((item: Processed, index): Middleware => {
             return {
                 id: `Serve Static (${index})`,
-                route: '',
-                handle: require('serve-static')(item.resolved)
+                route: item.routes[0],
+                handle: require('serve-static')(item.dirs[0].resolved)
             }
         });
 }
 
-export default function(address: string, context: IActorContext) {
-
+export function ServeStatic (address: string, context: IActorContext) {
 
     return {
         postStart() {
@@ -60,3 +115,5 @@ export default function(address: string, context: IActorContext) {
         },
     }
 }
+
+export default ServeStatic;

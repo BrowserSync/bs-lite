@@ -2,6 +2,7 @@ const {ClientJS} = require('../../dist/plugins/clientJS');
 const {DefaultOptions} = require('../../dist/options');
 const {createSystem} = require('../../dist');
 const {fromJS, Map} = require('immutable');
+const assert = require('assert');
 
 it('converts incoming options into a payload', function (done) {
     const system = createSystem();
@@ -19,7 +20,9 @@ it('converts incoming options into a payload', function (done) {
             mw[0].handle({}, {
                 setHeader: () => {},
                 end: (output) => {
-                    console.log(output);
+
+                    assert.equal(output.indexOf(`console.log('Another thing');`) > -1, true, 'fixtures/test.js');
+                    assert.equal(output.indexOf(`console.log("kittens 2")`) > -1, true, 'inline function');
                     done();
                 }
             })
