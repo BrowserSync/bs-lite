@@ -89,8 +89,23 @@ function createMiddleware(options: Options): Middleware[] {
 
     const optionItems = options.get('serveStatic').toJS();
     const processed = processIncoming(optionItems, options);
+
     const withErrors = processed.filter(x => x.dirs.some(dir => dir.errors.length > 0));
     const withoutErrors = processed.filter(x => x.dirs.every(dir => dir.errors.length === 0));
+
+    // todo propagate these errors to allow strict mode to fail
+    if (withErrors.length) {
+        console.log(`${withErrors.length} Error(s) from ServeStatic`);
+        withErrors.forEach(withError => {
+            withError.dirs.forEach(dir => {
+                if (dir.errors.length) {
+                    dir.errors.forEach(err => {
+                        console.log(err.message);
+                    });
+                }
+            });
+        });
+    }
 
     const mw = withoutErrors
         .reduce((acc, item: Processed, index): Middleware[] => {
@@ -119,7 +134,7 @@ export function ServeStatic (address: string, context: IActorContext) {
                 return stream.flatMap(({payload, respond}) => {
                     const mw = createMiddleware(payload);
                     return Observable.of(respond({mw}));
-                })
+                });
             }
         },
     }
