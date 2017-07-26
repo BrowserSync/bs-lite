@@ -9,6 +9,12 @@
     "@types/socket.io": "2",
     "mocha": "^3.4.2"
   },
+  "files": [
+    "dist",
+    "src",
+    "templates",
+    "client"
+  ],
   "dependencies": {
     "aktor-js": "1.2.5",
     "compression": "^1.7.0",
