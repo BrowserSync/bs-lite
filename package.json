@@ -4,17 +4,17 @@
   "main": "dist/index",
   "typings": "dist/*.d.ts",
   "devDependencies": {
-    "typescript": "^2.4.1"
-  },
-  "dependencies": {
+    "typescript": "^2.4.1",
     "@types/node": "^8.0.13",
     "@types/socket.io": "2",
+    "mocha": "^3.4.2"
+  },
+  "dependencies": {
     "aktor-js": "1.2.5",
     "compression": "^1.7.0",
     "connect": "^3.6.2",
     "debug": "^2.6.8",
     "immutable": "^3.8.1",
-    "mocha": "^3.4.2",
     "portscanner": "^2.1.1",
     "serve-static": "^1.12.3",
     "socket.io": "^2.0.3",
