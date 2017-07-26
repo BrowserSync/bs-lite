@@ -3,6 +3,10 @@
   "version": "0.0.3",
   "main": "dist/index",
   "typings": "dist/*.d.ts",
+  "scripts": {
+    "test": "tsc && mocha test/**",
+    "prepublish": "npm test"
+  },
   "devDependencies": {
     "typescript": "^2.4.1",
     "@types/node": "^8.0.13",

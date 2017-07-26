@@ -18,7 +18,7 @@ it.only('serveStatic', function (done) {
     })
         .flatMap(merged => serveStaticActor.ask('init', merged))
         .subscribe(({mw}) => {
-            console.log(mw);
+            // console.log(mw);
             done();
             // mw[0].handle({}, {
             //     setHeader: () => {},
