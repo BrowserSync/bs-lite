@@ -1,5 +1,8 @@
 {
+  "name": "bs-lite",
+  "version": "0.0.1",
   "main": "dist/index",
+  "typings": "dist/*.d.ts",
   "devDependencies": {
     "typescript": "^2.4.1"
   },
