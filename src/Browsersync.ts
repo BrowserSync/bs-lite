@@ -4,6 +4,9 @@ import {DefaultOptions, DefaultOptionsMethods} from "./options";
 import {Map} from "immutable";
 import {createWithOptions} from "./Browsersync.init";
 import {Server} from "./plugins/server";
+import {Options} from "./index";
+import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
+import * as http from "http";
 
 const {of, concat} = Observable;
 
@@ -15,6 +18,18 @@ export enum Methods {
     address = 'address'
 }
 
+interface BrowserSyncState {
+    server: http.Server|null
+    options: Options
+}
+
+declare namespace BrowsersyncInit {
+    export interface Response {
+        output: [http.Server|null, Options]
+        errors: Error[]
+    }
+}
+
 export function Browsersync(address: string, context: IActorContext) {
 
     return {
@@ -23,7 +38,7 @@ export function Browsersync(address: string, context: IActorContext) {
             server: context.actorOf(Server, 'server')
         },
         methods: {
-            [Methods.init]: function (stream) {
+            [Methods.init]: function (stream: IMethodStream<any, BrowsersyncInit.Response, BrowserSyncState>) {
                 return stream.switchMap(({payload, respond, state}) => {
                     return context.actorOf(DefaultOptions)
                         .ask(DefaultOptionsMethods.Merge, payload)
@@ -33,7 +48,14 @@ export function Browsersync(address: string, context: IActorContext) {
                                 options: mergedOptions,
                             }
                             return createWithOptions(context, mergedOptions)
-                                .map((output) => respond(output, nextState));
+                                .map((output: any) => respond({output, errors: []}, nextState))
+                                .catch(err => {
+                                    const nextState = {
+                                        server: null,
+                                        options: mergedOptions,
+                                    }
+                                    return of(respond({errors: [err], output: null}, nextState));
+                                })
                         });
                 })
             },

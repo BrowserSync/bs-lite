@@ -15,7 +15,7 @@ export interface SocketsState {
 }
 
 export enum SocketsMessages {
-    Init = 'Init',
+    Init = 'Detect',
     State = 'State',
 }
 

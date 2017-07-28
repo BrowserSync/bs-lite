@@ -1,14 +1,14 @@
 const {ClientJS} = require('../../dist/plugins/clientJS');
-const {DefaultOptions} = require('../../dist/options');
+const {DefaultOptions, DefaultOptionsMethods} = require('../../dist/options');
 const {createSystem} = require('../../dist');
 const {fromJS, Map} = require('immutable');
 const assert = require('assert');
 
-it('converts incoming options into a payload', function (done) {
+it('converts ClientJS incoming options into a mw', function (done) {
     const system = createSystem();
     const clientJSActor = system.actorOf(ClientJS);
     const opts = system.actorOf(DefaultOptions)
-        .ask('merge', {
+        .ask(DefaultOptionsMethods.Merge, {
             clientJS: [
                 'console.log("kittens 1")',
                 () => 'console.log("kittens 2")',
@@ -20,7 +20,6 @@ it('converts incoming options into a payload', function (done) {
             mw[0].handle({}, {
                 setHeader: () => {},
                 end: (output) => {
-
                     assert.equal(output.indexOf(`console.log('Another thing');`) > -1, true, 'fixtures/test.js');
                     assert.equal(output.indexOf(`console.log("kittens 2")`) > -1, true, 'inline function');
                     done();

@@ -2,6 +2,7 @@
 
 import {Observable} from 'rxjs/Observable';
 import {Options} from "./index";
+import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 const {of, zip} = Observable;
 const debug = require('debug')('bs:ports');
 const portscanner = require('portscanner').findAPortNotInUse;
@@ -24,59 +25,43 @@ export function getPort(start, strict, name) {
 
     return findPort(start, undefined, {host: 'localhost', timeout: 1000})
 
-        .flatMap(function(x) {
+        .flatMap(function(port) {
 
-            debug(`+ success ${x} for ${name}`);
+            debug(`+ success ${port} for ${name}`);
 
-            if (strict && start !== x) {
-                return Observable.throw('Strict Mode: Port ' + start + ' not available');
+            return Observable.throw('Strict Mode: Port ' + start + ' not available');
+            if (strict && start !== port) {
             }
 
-            return of(x);
+            return of(port);
         });
 }
 
-export function getPorts(options: Options) {
+export enum PortMessages {
+    Detect = 'Detect',
+    Stop = 'Stop',
+}
 
-    const strict = options.get('strict');
-    const port1 = options.getIn(['server', 'port']);
-
-    return getPort(port1, strict, 'core')
-
-        .flatMap(function(defaultPort) {
-
-            const def = of(defaultPort);
-
-            if (!options.getIn(['proxy', 'ws'])) {
-
-                debug(`no WS, using single port/server at ${defaultPort}`);
-
-                return def.map(function(x) {
-                    return {
-                        server: {port: x},
-                        shane: "Kittie"
-                    };
-                });
-            }
-
-            return zip(def, getPort(options.getIn(['socket', 'port']) || defaultPort + 1, strict, 'socket'), function(first, second) {
-                return {
-                    server: {port: first},
-                    socket: {
-                        port: second,
-                    },
-                };
-            });
-        });
+export interface PortDetectResponse {
+    errors: Error[],
+    port: number|null
+}
+export interface PortDetectPayload {
+    strict: boolean
+    port: number
+    name: string
 }
 
 export function portsActorFactory(address, context) {
     return {
         methods: {
-            init: function(stream) {
+            [PortMessages.Detect]: function(stream: IMethodStream<PortDetectPayload, PortDetectResponse, any>) {
                 return stream.switchMap(({payload, respond}) => {
                     return getPort(payload.port, payload.strict, payload.name)
-                        .map(respond)
+                        .map(port => respond({port, errors: []}))
+                        .catch(err => {
+                            return Observable.of(respond({errors: [err], port: null}))
+                        });
                 })
             },
             stop: function(stream) {

@@ -5,7 +5,7 @@ import http = require('http');
 import {IRespondableStream, IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {Options} from "../index";
 import {Map} from "immutable";
-import {portsActorFactory} from "../ports";
+import {PortDetectPayload, PortDetectResponse, PortMessages, portsActorFactory} from "../ports";
 import {Server} from "http";
 import {Sockets, SocketsInitPayload, SocketsMessages} from "../sockets";
 
@@ -76,7 +76,14 @@ export interface ServerState {
 }
 
 export enum ServerMessages {
-    Init = 'Init'
+    Init = 'Detect'
+}
+
+export namespace ServerInit {
+    export interface Response  {
+        server: Server|null,
+        errors: Error[]
+    }
 }
 
 export function Server(address: string, context: IActorContext) {
@@ -96,7 +103,7 @@ export function Server(address: string, context: IActorContext) {
                     return Observable.of(respond(null, state));
                 });
             },
-            [ServerMessages.Init]: function (stream: IMethodStream<InitIncoming, Server, ServerState>) {
+            [ServerMessages.Init]: function (stream: IMethodStream<InitIncoming, ServerInit.Response, ServerState>) {
                 return stream.flatMap(({payload, respond, state}) => {
                     const {options, input} = payload;
                     const port = options.getIn(['server', 'port']);
@@ -111,7 +118,7 @@ export function Server(address: string, context: IActorContext) {
                                     return replaceMiddleware(input.middleware, state.app)
                                         .do(x => console.log('replacing middleware'))
                                         .map((app) => {
-                                            return respond(server, {server, app});
+                                            return respond({server, errors: []}, {server, app});
                                         })
                                 }   
                             }
@@ -134,8 +141,11 @@ export function Server(address: string, context: IActorContext) {
                                         .mapTo([server, app]);
                                 })
                                 .map(([server, app]) => {
-                                    return respond(server, {server, app});
+                                    return respond({server, errors: []}, {server, app});
                                 })
+                        })
+                        .catch(err => {
+                            return of(respond({server: null, errors: [err]}, state));
                         });
                 });
             },
@@ -165,11 +175,19 @@ function getMaybePortActor(context, server, options) {
         }
     }
 
-    return context.actorOf(portsActorFactory, 'server-port')
-        .ask('init', {
-            port: optionPort,
-            strict: options.get('strict'),
-            name: 'core'
-        })
-        .map(port => ([port, server]));
+    const portActor = context.actorOf(portsActorFactory);
+    const payload: PortDetectPayload = {
+        port: optionPort,
+        strict: options.get('strict'),
+        name: 'core'
+    };
+
+    return portActor
+        .ask(PortMessages.Detect, payload)
+        .flatMap((resp: PortDetectResponse) => {
+            if (resp.errors.length) {
+                return Observable.throw(resp.errors[0]);
+            }
+            return of(([resp.port, server]))
+        });
 }

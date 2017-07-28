@@ -4,7 +4,7 @@ const {createSystem, fromOptions} = require('../../dist');
 const {fromJS, Map} = require('immutable');
 const assert = require('assert');
 
-it.only('serveStatic', function (done) {
+it('serveStatic', function (done) {
     const system = createSystem();
     const serveStaticActor = system.actorOf(ServeStatic);
     const opts = fromOptions({
@@ -18,13 +18,7 @@ it.only('serveStatic', function (done) {
     })
         .flatMap(merged => serveStaticActor.ask('init', merged))
         .subscribe(({mw}) => {
-            // console.log(mw);
+            assert.equal(mw.length, 3);
             done();
-            // mw[0].handle({}, {
-            //     setHeader: () => {},
-            //     end: (output) => {
-            //         done();
-            //     }
-            // })
         });
 });

@@ -1,6 +1,6 @@
 import {Observable, BehaviorSubject} from 'rxjs';
 import serveStatic from './plugins/serveStatic';
-import {IServerOptions, Middleware, MiddlewareResponse, ServerMessages} from './plugins/server';
+import {IServerOptions, Middleware, MiddlewareResponse, ServerInit, ServerMessages} from './plugins/server';
 import clientJS from './plugins/clientJS';
 import compression from './plugins/compression';
 import {fromJS, Map} from "immutable";
@@ -81,9 +81,11 @@ export function createWithOptions(context: IActorContext, options: Options) {
 
             return server
                 .ask(ServerMessages.Init, payload)
-                .map(server => {
-                    return [server, options];
+                .flatMap((resp: ServerInit.Response) => {
+                    if (resp.errors.length) {
+                        return Observable.throw(resp.errors[0]);
+                    }
+                    return Observable.of({server: resp.server, options});
                 });
-            // Create server or renew middleware
         })
 }
