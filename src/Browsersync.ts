@@ -24,8 +24,13 @@ interface BrowserSyncState {
     options: Options
 }
 
+export interface BrowsersyncInitOutput {
+    server: http.Server|null
+    options: Options
+}
+
 export interface BrowsersyncInitResponse {
-    output: [http.Server|null, Options]
+    output: BrowsersyncInitOutput
     errors: Error[]
 }
 
@@ -47,7 +52,7 @@ export function Browsersync(address: string, context: IActorContext) {
                                 options: mergedOptions,
                             }
                             return createWithOptions(context, mergedOptions)
-                                .map((output: any) => respond({output, errors: []}, nextState))
+                                .map((output) => respond({output, errors: []}, nextState))
                                 .catch(err => {
                                     const nextState = {
                                         server: null,

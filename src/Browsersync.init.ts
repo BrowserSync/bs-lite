@@ -6,6 +6,7 @@ import compression from './plugins/compression';
 import {fromJS, Map} from "immutable";
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {Options} from "./index";
+import {BrowsersyncInitOutput, BrowsersyncInitResponse} from "./Browsersync";
 
 const debug = require('debug')('bs:system');
 
@@ -34,7 +35,7 @@ function getActors(order, options) {
     }).filter(Boolean);
 }
 
-export function createWithOptions(context: IActorContext, options: Options) {
+export function createWithOptions(context: IActorContext, options: Options): Observable<BrowsersyncInitOutput> {
 
     const coreActors = getActors(corePlugins, options);
     const setupActors = getActors(order, options);
@@ -85,7 +86,8 @@ export function createWithOptions(context: IActorContext, options: Options) {
                     if (resp.errors.length) {
                         return Observable.throw(resp.errors[0]);
                     }
-                    return Observable.of({server: resp.server, options});
+                    const output: BrowsersyncInitOutput = {server: resp.server, options};
+                    return Observable.of(output);
                 });
         })
 }
