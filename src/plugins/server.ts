@@ -76,7 +76,10 @@ export interface ServerState {
 }
 
 export enum ServerMessages {
-    Init = 'Detect'
+    Init = 'Detect',
+    Listening = 'Listening',
+    Stop = 'Stop',
+    Address = 'Address',
 }
 
 export namespace ServerInit {
@@ -94,13 +97,13 @@ export function Server(address: string, context: IActorContext) {
         },
         initialState: {server: null, app: null},
         methods: {
-            address: function(stream: IMethodStream<void, any, ServerState>) {
-                return stream.flatMap(({payload, respond, state}) => {
+            [ServerMessages.Address]: function(stream: IMethodStream<void, any, ServerState>) {
+                return stream.map(({payload, respond, state}) => {
                     const {server} = state;
                     if (server && server.listening) {
-                        return Observable.of(respond(server.address(), state));
+                        return respond(server.address(), state);
                     }
-                    return Observable.of(respond(null, state));
+                    return respond(null, state);
                 });
             },
             [ServerMessages.Init]: function (stream: IMethodStream<InitIncoming, ServerInit.Response, ServerState>) {
@@ -129,13 +132,13 @@ export function Server(address: string, context: IActorContext) {
                                 // we use that new server to add socket support
                                 .flatMap(([server, app]) => {
 
-                                    // this is the payload for the Socket actors init message
+                                    // this is the payload for the Socket actors Init message
                                     const socketPayload: SocketsInitPayload = {
                                         server,
                                         options: options.get('socket').toJS()
                                     };
 
-                                    // create the sockets actor and send it an init method
+                                    // create the sockets actor and send it an Init method
                                     return context.actorOf(Sockets, 'sockets')
                                         .ask(SocketsMessages.Init, socketPayload)
                                         .mapTo([server, app]);
@@ -149,7 +152,7 @@ export function Server(address: string, context: IActorContext) {
                         });
                 });
             },
-            stop: function(stream: IMethodStream<InitIncoming, string, ServerState>) {
+            [ServerMessages.Stop]: function(stream: IMethodStream<InitIncoming, string, ServerState>) {
                 return stream.flatMap(({payload, respond, state}) => {
                     const {server} = state;
                     if (server && server.listening) {
@@ -157,6 +160,14 @@ export function Server(address: string, context: IActorContext) {
                     }
                     return Observable.of(respond('Done!', {server: null, app: null}));
                 })
+            },
+            [ServerMessages.Listening]: function(stream) {
+                return stream.flatMap(({state, respond}) => {
+                    if (state.server) {
+                        return Observable.of(respond(state.server.listening, state));
+                    }
+                    return Observable.of(respond(false, state));
+                });
             }
         },
     }

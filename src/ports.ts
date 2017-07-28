@@ -29,8 +29,8 @@ export function getPort(start, strict, name) {
 
             debug(`+ success ${port} for ${name}`);
 
-            return Observable.throw('Strict Mode: Port ' + start + ' not available');
             if (strict && start !== port) {
+                return Observable.throw('Strict Mode: Port ' + start + ' not available');
             }
 
             return of(port);

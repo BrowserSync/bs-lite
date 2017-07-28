@@ -2,7 +2,7 @@ import * as actorJS from 'aktor-js';
 import {fromJS, Map} from "immutable";
 import {BsOptions, defaultOptions, DefaultOptions, DefaultOptionsMethods} from "./options";
 import {ActorRef} from "aktor-js/dist/ActorRef";
-import {Browsersync} from "./Browsersync";
+import {Browsersync, Methods} from "./Browsersync";
 import {updateOption, getOptionsJS} from "./Browsersync.patterns";
 import {SystemActor} from "aktor-js/dist/SystemActor";
 const debug = require('debug')('bs:system');
@@ -31,4 +31,5 @@ export {
     updateOption,
     getOptionsJS,
     createSystem,
+    Methods,
 };

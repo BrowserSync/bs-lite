@@ -7,7 +7,7 @@ import {Methods} from "./Browsersync";
  * Update an option via a path
  */
 export function updateOption (bs: ActorRef, path: string|string[], fn): Observable<any> {
-    return bs.ask(Methods.updateOption, {
+    return bs.ask(Methods.UpdateOption, {
         path: [].concat(path).filter(Boolean),
         fn,
     });
@@ -17,6 +17,6 @@ export function updateOption (bs: ActorRef, path: string|string[], fn): Observab
  * Get all Browsersync Options as a POJO
  */
 export function getOptionsJS(bs: ActorRef): Observable<BsOptions> {
-    return bs.ask(Methods.getOption, [])
+    return bs.ask(Methods.GetOption, [])
         .map(x => x.toJS())
 }

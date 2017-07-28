@@ -3,7 +3,7 @@ import {IActorContext} from "aktor-js/dist/ActorContext";
 import {DefaultOptions, DefaultOptionsMethods} from "./options";
 import {Map} from "immutable";
 import {createWithOptions} from "./Browsersync.init";
-import {Server} from "./plugins/server";
+import {Server, ServerMessages} from "./plugins/server";
 import {Options} from "./index";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import * as http from "http";
@@ -11,11 +11,12 @@ import * as http from "http";
 const {of, concat} = Observable;
 
 export enum Methods {
-    init = 'init',
-    stop = 'stop',
-    getOption = 'getOption',
-    updateOption = 'updateOption',
-    address = 'address'
+    Init = 'init',
+    Stop = 'stop',
+    GetOption = 'GetOption',
+    UpdateOption = 'UpdateOption',
+    Address = 'address',
+    Listening = 'Listening'
 }
 
 interface BrowserSyncState {
@@ -23,11 +24,9 @@ interface BrowserSyncState {
     options: Options
 }
 
-declare namespace BrowsersyncInit {
-    export interface Response {
-        output: [http.Server|null, Options]
-        errors: Error[]
-    }
+export interface BrowsersyncInitResponse {
+    output: [http.Server|null, Options]
+    errors: Error[]
 }
 
 export function Browsersync(address: string, context: IActorContext) {
@@ -38,7 +37,7 @@ export function Browsersync(address: string, context: IActorContext) {
             server: context.actorOf(Server, 'server')
         },
         methods: {
-            [Methods.init]: function (stream: IMethodStream<any, BrowsersyncInit.Response, BrowserSyncState>) {
+            [Methods.Init]: function (stream: IMethodStream<any, BrowsersyncInitResponse, BrowserSyncState>) {
                 return stream.switchMap(({payload, respond, state}) => {
                     return context.actorOf(DefaultOptions)
                         .ask(DefaultOptionsMethods.Merge, payload)
@@ -53,19 +52,19 @@ export function Browsersync(address: string, context: IActorContext) {
                                     const nextState = {
                                         server: null,
                                         options: mergedOptions,
-                                    }
+                                    };
                                     return of(respond({errors: [err], output: null}, nextState));
                                 })
                         });
                 })
             },
-            [Methods.getOption]: function (stream) {
+            [Methods.GetOption]: function (stream) {
                 return stream.switchMap(({payload, respond, state}) => {
                     const path: string[] = payload;
                     return of(respond(state.options.getIn(path), state));
                 })
             },
-            [Methods.updateOption]: function (stream) {
+            [Methods.UpdateOption]: function (stream) {
                 return stream.switchMap(({payload, respond, state}) => {
                     const {path, fn} = payload;
                     const updated = state.options.updateIn(path, fn);
@@ -73,16 +72,22 @@ export function Browsersync(address: string, context: IActorContext) {
                     return of(respond(state.options.getIn(path), state));
                 })
             },
-            [Methods.address]: function (stream) {
+            [Methods.Address]: function (stream) {
                 return stream.switchMap(({payload, respond, state}) => {
-                    return state.server.ask('address')
+                    return state.server.ask(ServerMessages.Address)
                         .map((address) => respond(address, state));
                 });
             },
-            [Methods.stop]: function(stream) {
+            [Methods.Stop]: function(stream) {
                 return stream.switchMap(({payload, respond, state}) => {
-                    return context.gracefulStop(state.server)
+                    return state.server.ask(ServerMessages.Stop)
                         .map(() => respond('All done!', state));
+                });
+            },
+            [Methods.Listening]: function(stream) {
+                return stream.flatMap(({payload, respond, state}) => {
+                    return state.server.ask(ServerMessages.Listening)
+                        .map(listening => respond(listening, state));
                 });
             }
         }
