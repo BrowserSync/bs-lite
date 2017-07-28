@@ -7,7 +7,7 @@ import {Options} from "../index";
 import {Map} from "immutable";
 import {portsActorFactory} from "../ports";
 import {Server} from "http";
-import {Sockets, SocketsInitPayload} from "../sockets";
+import {Sockets, SocketsInitPayload, SocketsMessages} from "../sockets";
 
 const debug = require('debug')('bs:server');
 
@@ -75,6 +75,10 @@ export interface ServerState {
     app: any
 }
 
+export enum ServerMessages {
+    Init = 'Init'
+}
+
 export function Server(address: string, context: IActorContext) {
 
     return {
@@ -92,7 +96,7 @@ export function Server(address: string, context: IActorContext) {
                     return Observable.of(respond(null, state));
                 });
             },
-            init: function (stream: IMethodStream<InitIncoming, Server, ServerState>) {
+            [ServerMessages.Init]: function (stream: IMethodStream<InitIncoming, Server, ServerState>) {
                 return stream.flatMap(({payload, respond, state}) => {
                     const {options, input} = payload;
                     const port = options.getIn(['server', 'port']);
@@ -126,7 +130,7 @@ export function Server(address: string, context: IActorContext) {
 
                                     // create the sockets actor and send it an init method
                                     return context.actorOf(Sockets, 'sockets')
-                                        .ask('init', socketPayload)
+                                        .ask(SocketsMessages.Init, socketPayload)
                                         .mapTo([server, app]);
                                 })
                                 .map(([server, app]) => {

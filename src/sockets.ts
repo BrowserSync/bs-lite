@@ -14,6 +14,10 @@ export interface SocketsState {
     clients: any
 }
 
+export enum SocketsMessages {
+    Init = 'Init',
+    State = 'State',
+}
 
 export function Sockets(address, context) {
     return {
@@ -22,7 +26,12 @@ export function Sockets(address, context) {
             clients: null,
         },
         methods: {
-            'init': function(stream: IMethodStream<SocketsInitPayload, string, SocketsState>) {
+            [SocketsMessages.State]: function(stream: IMethodStream<SocketsInitPayload, SocketsState, SocketsState>) {
+                return stream.switchMap(({payload, respond, state}) => {
+                    return Observable.of(respond(state, state));
+                });
+            },
+            [SocketsMessages.Init]: function(stream: IMethodStream<SocketsInitPayload, string, SocketsState>) {
 
                 return stream.switchMap(({payload, respond, state}) => {
 

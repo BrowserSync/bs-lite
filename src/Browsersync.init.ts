@@ -1,13 +1,11 @@
 import {Observable, BehaviorSubject} from 'rxjs';
 import serveStatic from './plugins/serveStatic';
-import {IServerOptions, Middleware, MiddlewareResponse} from './plugins/server';
+import {IServerOptions, Middleware, MiddlewareResponse, ServerMessages} from './plugins/server';
 import clientJS from './plugins/clientJS';
 import compression from './plugins/compression';
 import {fromJS, Map} from "immutable";
-import {getPorts, portsActorFactory} from "./ports";
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {Options} from "./index";
-import {Sockets, SocketsInitPayload} from "./sockets";
 
 const debug = require('debug')('bs:system');
 
@@ -82,7 +80,7 @@ export function createWithOptions(context: IActorContext, options: Options) {
             };
 
             return server
-                .ask('init', payload)
+                .ask(ServerMessages.Init, payload)
                 .map(server => {
                     return [server, options];
                 });
