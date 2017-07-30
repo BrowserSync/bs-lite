@@ -64,7 +64,7 @@ export function externalScriptTags(options) {
  * @returns {*}
  */
 export function snippet(options, src) {
-    const async    = options.getIn(['snippetOptions', 'async']);
+    const async = options.getIn(['snippetOptions', 'async']);
     return template(scriptTemplate, {
         src,
         async: async ? 'async' : '',

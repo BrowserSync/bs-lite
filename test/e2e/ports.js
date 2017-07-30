@@ -1,7 +1,4 @@
-const {ServeStatic} = require('../../dist/plugins/serveStatic');
-const {DefaultOptions} = require('../../dist/options');
-const {createSystem, fromOptions, init, Methods} = require('../../dist');
-const {fromJS, Map} = require('immutable');
+const {Methods} = require('../../dist');
 const assert = require('assert');
 const {Observable} = require('rxjs');
 
@@ -20,25 +17,5 @@ it('will provide server and options output', function (done) {
             done();
         }, err => {
             done(err);
-        })
-    // const opts = fromOptions({
-    //     serveStatic: [
-    //         './fixtures',
-    //         {
-    //             route: '/static',
-    //             dir: ['./fixtures', './src']
-    //         }
-    //     ]
-    // })
-    //     .flatMap(merged => serveStaticActor.ask('init', merged))
-    //     .subscribe(({mw}) => {
-    //         // console.log(mw);
-    //         done();
-    //         // mw[0].handle({}, {
-    //         //     setHeader: () => {},
-    //         //     end: (output) => {
-    //         //         done();
-    //         //     }
-    //         // })
-    //     });
+        });
 });

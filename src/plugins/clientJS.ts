@@ -2,7 +2,7 @@ import {Observable} from 'rxjs';
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {Middleware} from "./server";
 import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
-import {socketConnector} from "../connect-utils";
+import {clientScript, socketConnector} from "../connect-utils";
 import {Options} from "../index";
 import {client} from "../config";
 import {readFileSafe} from "../utils";
@@ -95,7 +95,7 @@ function createMiddleware(options: Options): Middleware[] {
 
     return [{
         id: 'Browsersync ClientJS',
-        route: '/bs.js',
+        route: clientScript(options),
         handle: (req, res) => {
             res.setHeader('Content-Type', 'application/javascript');
             const output = [...joined, ...userjs]

@@ -25,5 +25,5 @@ it('converts ClientJS incoming options into a mw', function (done) {
                     done();
                 }
             })
-        });
+        }, err => done(err));
 });

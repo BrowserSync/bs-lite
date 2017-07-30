@@ -20,6 +20,7 @@ export interface MiddlewareResponse {
 
 export interface Middleware {
     id?: string
+    via?: string
     route: string
     handle: Function
 }

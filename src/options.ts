@@ -1,6 +1,8 @@
 import {Observable} from 'rxjs';
 import {Middleware} from "./plugins/server";
 import {Set, fromJS} from "immutable";
+import {RewriteRule} from "./rewrite-rules";
+import {clientScript, scriptTags} from "./connect-utils";
 
 const {of} = Observable;
 
@@ -10,6 +12,8 @@ export const defaultOptions = {
     serveStatic: [],
     clientJS: [],
     middleware: [],
+    rewriteRules: [],
+    snippet: '',
     server: {
         port: 9000,
     },
@@ -58,7 +62,10 @@ export interface BsOptions {
     },
     serveStatic: string|string[];
     clientJS: string|string[];
-    socket: BsSocketOptions
+    socket: BsSocketOptions;
+    snippetOptions: RewriteRule;
+    rewriteRules: RewriteRule[];
+    snippet: string;
 }
 
 export interface BsSocketOptions {
@@ -90,4 +97,16 @@ export function DefaultOptions(address, context) {
             }
         }
     }
+}
+
+/**
+ * @param options
+ * @returns {Cursor|List<T>|Map<K, V>|Map<string, V>|*}
+ */
+export function addMissingOptions(options) {
+    return options.mergeDeep({
+        snippet:     scriptTags(options),
+        scriptPath:  clientScript(options),
+        sessionId:   new Date().getTime(),
+    });
 }

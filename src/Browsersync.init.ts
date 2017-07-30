@@ -7,6 +7,9 @@ import {fromJS, Map} from "immutable";
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {Options} from "./index";
 import {BrowsersyncInitOutput, BrowsersyncInitResponse} from "./Browsersync";
+import {RespModifier} from "./resp-modifier";
+import {addMissingOptions} from "./options";
+import {clientScript, scriptTags} from "./connect-utils";
 
 const debug = require('debug')('bs:system');
 
@@ -14,11 +17,13 @@ const pluginWhitelist = {
     'serveStatic': serveStatic,
     'clientJS': clientJS,
     'compression': compression,
+    'rewriteRules': RespModifier
 };
 
 const corePlugins = [
     'compression',
     'clientJS',
+    'rewriteRules'
 ];
 
 const order = [
@@ -41,7 +46,7 @@ export function createWithOptions(context: IActorContext, options: Options): Obs
     const setupActors = getActors(order, options);
     const server = context.actorSelection('server')[0];
 
-    const opts = new BehaviorSubject(options);
+    const opts = new BehaviorSubject(addMissingOptions(options));
 
     return Observable
         .from([...coreActors, ...setupActors])
@@ -72,7 +77,7 @@ export function createWithOptions(context: IActorContext, options: Options): Obs
         .withLatestFrom(opts)
         .flatMap((incoming) => {
             const middleware = incoming[0];
-            const options = incoming[1];
+            const options    = incoming[1];
             const payload = {
                 input: {
                     middleware,
@@ -91,3 +96,5 @@ export function createWithOptions(context: IActorContext, options: Options): Obs
                 });
         })
 }
+
+
