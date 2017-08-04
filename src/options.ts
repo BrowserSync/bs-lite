@@ -37,13 +37,24 @@ export const defaultOptions = {
         blacklist: [],
         id: 'bs-snippet',
         via: 'Browsersync Core',
-        predicates: [function(req) {
-            const acceptHeader = req.headers['accept'];
-            if (!acceptHeader) {
-                return false;
+        predicates: [
+            function headerHasHtmlAccept(req) {
+                const acceptHeader = req.headers['accept'];
+                if (!acceptHeader) {
+                    return false;
+                }
+                return acceptHeader.indexOf('html') > -1;
+            },
+            function doesNotContainDisableParam(req) {
+                const [before, ...after] = req.url.split('?');
+                if (after.length) {
+                    if (after[0].indexOf('_bs_disable') > -1) {
+                        return false;
+                    }
+                }
+                return true;
             }
-            return acceptHeader.indexOf('html') > -1;
-        }],
+        ],
         fn: function(req, res, html, options) {
             const snippet = options.get('snippet');
             return html.replace(/<body[^>]*>/i, function(match) {
