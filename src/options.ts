@@ -6,7 +6,16 @@ import {clientScript, scriptTags} from "./connect-utils";
 
 const {of} = Observable;
 
-export const defaultOptions = {
+export enum DefaultOptionsMethods {
+    Merge = 'Merge'
+}
+
+export enum Scheme {
+    http = 'http',
+    https = 'https',
+}
+
+export const defaultOptions: BsOptions = {
     cwd: process.cwd(),
     strict: true,
     serveStatic: [],
@@ -17,7 +26,7 @@ export const defaultOptions = {
     server: {
         port: 9000,
     },
-    scheme: 'http',
+    scheme: Scheme.http,
     socket: {
         enabled: true,
         socketIoOptions: {
@@ -32,35 +41,37 @@ export const defaultOptions = {
         namespace: '/browser-sync',
     },
     snippetOptions: {
-        async: true,
-        whitelist: [],
-        blacklist: [],
-        id: 'bs-snippet',
-        via: 'Browsersync Core',
-        predicates: [
-            function headerHasHtmlAccept(req) {
-                const acceptHeader = req.headers['accept'];
-                if (!acceptHeader) {
-                    return false;
-                }
-                return acceptHeader.indexOf('html') > -1;
-            },
-            function doesNotContainDisableParam(req) {
-                const [before, ...after] = req.url.split('?');
-                if (after.length) {
-                    if (after[0].indexOf('_bs_disable') > -1) {
+        rewriteRule: {
+            // whitelist: [],
+            // blacklist: [],
+            id: 'bs-snippet',
+            via: 'Browsersync Core',
+            predicates: [
+                function headerHasHtmlAccept(req) {
+                    const acceptHeader = req.headers['accept'];
+                    if (!acceptHeader) {
                         return false;
                     }
+                    return acceptHeader.indexOf('html') > -1;
+                },
+                function doesNotContainDisableParam(req) {
+                    const [before, ...after] = req.url.split('?');
+                    if (after.length) {
+                        if (after[0].indexOf('_bs_disable') > -1) {
+                            return false;
+                        }
+                    }
+                    return true;
                 }
-                return true;
-            }
-        ],
-        fn: function(req, res, html, options) {
-            const snippet = options.get('snippet');
-            return html.replace(/<body[^>]*>/i, function(match) {
-                return match + snippet;
-            });
+            ],
+            fn: function(req, res, html, options) {
+                const snippet = options.get('snippet');
+                return html.replace(/<body[^>]*>/i, function(match) {
+                    return match + snippet;
+                });
+            },
         },
+        async: true,
     },
 };
 
@@ -74,9 +85,13 @@ export interface BsOptions {
     serveStatic: string|string[];
     clientJS: string|string[];
     socket: BsSocketOptions;
-    snippetOptions: RewriteRule;
+    snippetOptions: {
+        async: boolean
+        rewriteRule: RewriteRule
+    };
     rewriteRules: RewriteRule[];
     snippet: string;
+    scheme: Scheme;
 }
 
 export interface BsSocketOptions {
@@ -91,10 +106,6 @@ export interface BsSocketOptions {
     },
     clientPath: string;
     namespace: string;
-}
-
-export enum DefaultOptionsMethods {
-    Merge = 'Merge'
 }
 
 export function DefaultOptions(address, context) {

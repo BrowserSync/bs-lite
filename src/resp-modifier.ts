@@ -192,7 +192,7 @@ export function RespModifier(address, context) {
                 return stream.map(({payload, respond}) => {
                     const options = payload;
 
-                    const snippetRule = options.get('snippetOptions').toJS();
+                    const snippetRule: RewriteRule = options.getIn(['snippetOptions', 'rewriteRule']).toJS();
                     const optionRules = options.get('rewriteRules').toJS().map(createOne);
                     const rules = [snippetRule, ...optionRules].filter(Boolean);
 
