@@ -3,7 +3,7 @@ import {IActorContext} from "aktor-js/dist/ActorContext";
 import {DefaultOptions, DefaultOptionsMethods} from "./options";
 import {Map} from "immutable";
 import {createWithOptions} from "./Browsersync.init";
-import {Server, ServerMessages} from "./plugins/server";
+import {BrowserSyncServer, ServerMessages} from "./plugins/server";
 import {Options} from "./index";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import * as http from "http";
@@ -39,7 +39,7 @@ export function Browsersync(address: string, context: IActorContext) {
     return {
         initialState: {
             options: Map({}),
-            server: context.actorOf(Server, 'server')
+            server: context.actorOf(BrowserSyncServer, 'server')
         },
         methods: {
             [Methods.Init]: function (stream: IMethodStream<any, BrowsersyncInitResponse, BrowserSyncState>) {

@@ -2,12 +2,16 @@ import {Observable} from 'rxjs';
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import connect = require('connect');
 import http = require('http');
+import https = require('https');
 import {IRespondableStream, IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {Options} from "../index";
 import {Map} from "immutable";
 import {PortDetectPayload, PortDetectResponse, PortMessages, portsActorFactory} from "../ports";
 import {Server} from "http";
+import {Server as HttpsServer} from "https";
 import {Sockets, SocketsInitPayload, SocketsMessages} from "../sockets";
+import {Scheme} from "../options";
+import {getHttpsOptions} from "./server-utils";
 
 const debug = require('debug')('bs:server');
 
@@ -35,14 +39,26 @@ export interface IServerOptions {
     port: number;
 }
 
-function getNewServer(middleware, port) {
+function createNewServer(options: Options, app): Server|HttpsServer {
+    const scheme = options.get('scheme');
+
+    if (scheme === Scheme.http) {
+        return http.createServer(app);
+    }
+    const httpsOptions = getHttpsOptions(options);
+    return https.createServer(httpsOptions.toJS(), app);
+}
+
+function getNewServer(middleware: Middleware[], port: number, options: Options) {
+
     const app = connect();
 
     middleware.forEach(mw => {
         app.use(mw.route, mw.handle);
     });
 
-    const server = http.createServer(app);
+    const server = createNewServer(options, app);
+
     server.listen(port);
     return Observable.of([server, app]);
 }
@@ -90,7 +106,7 @@ export namespace ServerInit {
     }
 }
 
-export function Server(address: string, context: IActorContext) {
+export function BrowserSyncServer(address: string, context: IActorContext) {
 
     return {
         postStart() {
@@ -111,6 +127,7 @@ export function Server(address: string, context: IActorContext) {
                 return stream.flatMap(({payload, respond, state}) => {
                     const {options, input} = payload;
                     const port = options.getIn(['server', 'port']);
+                    const scheme: Scheme = options.get('scheme');
 
                     return getMaybePortActor(context, state.server, options)
                         .flatMap(([port, server]) => {
@@ -129,7 +146,7 @@ export function Server(address: string, context: IActorContext) {
                             // at this point, the PORT has changed so we close the server
                             return closeServer(server)
                                 // Now we recreate a new server
-                                .flatMap(() => getNewServer(input.middleware, port))
+                                .flatMap(() => getNewServer(input.middleware, port, options))
                                 // we use that new server to add socket support
                                 .flatMap(([server, app]) => {
 
