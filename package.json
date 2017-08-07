@@ -24,6 +24,7 @@
     "compression": "^1.7.0",
     "connect": "^3.6.2",
     "debug": "^2.6.8",
+    "http-proxy": "^1.16.2",
     "immutable": "^3.8.1",
     "portscanner": "^2.1.1",
     "serve-static": "^1.12.3",

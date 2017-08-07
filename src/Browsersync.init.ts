@@ -10,6 +10,7 @@ import {BrowsersyncInitOutput, BrowsersyncInitResponse} from "./Browsersync";
 import {RespModifier} from "./resp-modifier";
 import {addMissingOptions} from "./options";
 import {clientScript, scriptTags} from "./connect-utils";
+import {BrowsersyncProxy} from "./plugins/proxy";
 
 const debug = require('debug')('bs:system');
 
@@ -17,13 +18,15 @@ const pluginWhitelist = {
     'serveStatic': serveStatic,
     'clientJS': clientJS,
     'compression': compression,
-    'rewriteRules': RespModifier
+    'rewriteRules': RespModifier,
+    'proxy': BrowsersyncProxy,
 };
 
 const corePlugins = [
     'compression',
     'clientJS',
-    'rewriteRules'
+    'rewriteRules',
+    'proxy'
 ];
 
 const order = [

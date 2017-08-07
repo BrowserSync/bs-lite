@@ -3,6 +3,7 @@ import {Middleware} from "./plugins/server";
 import {Set, fromJS} from "immutable";
 import {RewriteRule} from "./rewrite-rules";
 import {clientScript, scriptTags} from "./connect-utils";
+import {ProxyOptionsInput} from "./plugins/proxy";
 
 const {of} = Observable;
 
@@ -92,6 +93,7 @@ export interface BsOptions {
     rewriteRules: RewriteRule[];
     snippet: string;
     scheme: Scheme;
+    proxy?: ProxyOptionsInput;
 }
 
 export interface BsSocketOptions {

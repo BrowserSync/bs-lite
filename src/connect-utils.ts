@@ -125,8 +125,8 @@ export function _socketConnector(options, url) {
         .merge({path: socket.getIn(['socketIoOptions', 'path'])});
 
     return template(socketTemplate, {
-        config: JSON.stringify(clientConfig.toJS()),
+        config: JSON.stringify(clientConfig.toJS(), null, 2),
         url,
-        options: JSON.stringify(options)
+        options: JSON.stringify(options, null, 2)
     });
 }
