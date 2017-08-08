@@ -20,6 +20,7 @@
     "client"
   ],
   "dependencies": {
+    "@types/http-proxy": "^1.12.0",
     "aktor-js": "1.2.5",
     "compression": "^1.7.0",
     "connect": "^3.6.2",
