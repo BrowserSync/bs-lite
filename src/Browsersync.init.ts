@@ -18,19 +18,19 @@ const pluginWhitelist = {
     'serveStatic': serveStatic,
     'clientJS': clientJS,
     'compression': compression,
-    'rewriteRules': RespModifier,
     'proxy': BrowsersyncProxy,
+    'rewriteRules': RespModifier,
 };
 
 const corePlugins = [
     'compression',
+    'proxy',
     'clientJS',
     'rewriteRules',
-    'proxy'
 ];
 
 const order = [
-    'serveStatic'
+    'serveStatic',
 ];
 
 function getActors(order, options) {

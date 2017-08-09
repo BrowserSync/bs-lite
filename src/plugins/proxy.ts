@@ -5,6 +5,8 @@ import NodeURL  = require('url');
 import * as http from "http";
 import ErrorCallback = require("http-proxy");
 import {parse} from "url";
+import {rewriteLinks} from "./proxy-utils";
+import {fromJS} from "immutable";
 
 const defaultHttpProxyOptions: ServerOptions = {
     changeOrigin: true,
@@ -13,13 +15,13 @@ const defaultHttpProxyOptions: ServerOptions = {
     ws: true,
 };
 
-export type ProxyOptionsInput = string|ProxyOption;
+export type ProxyOptionsInput = string|ProxyItem;
 
 export interface CookieOptions {
     stripDomain: boolean;
 }
 
-export interface ProxyOption {
+export interface ProxyItem {
     options?: ServerOptions;
     route?: string;
     target?: string;
@@ -39,13 +41,13 @@ export type ProxyResFn = (proxyRes: http.IncomingMessage,
                           req: http.IncomingMessage,
                           res: http.ServerResponse) => void;
 
-export function createItemFromString(input: string): ProxyOption {
+export function createItemFromString(input: string): ProxyItem {
     const url = parse(input);
     const target = [url.protocol, '//', url.host].join('');
     return createItem({url, target});
 }
 
-export function createItem(incoming: ProxyOption): ProxyOption {
+export function createItem(incoming: ProxyItem): ProxyItem {
     return {
         ...incoming,
         proxyReq: [].concat(incoming.proxyReq).filter(Boolean),
@@ -59,15 +61,15 @@ export function createItem(incoming: ProxyOption): ProxyOption {
 }
 
 export function createFromString(input: string): Middleware {
-    const opts = createItemFromString(input);
-    const proxy = httpProxy.createProxyServer(opts);
+    const proxyItem: ProxyItem = createItemFromString(input);
+    const proxy = httpProxy.createProxyServer(proxyItem.options);
 
     return {
         id: `Browsersync proxy for ${input}`,
         via: `Browsersync core`,
         route: '',
         handle: (req, res) => {
-            proxy.web(req, res, {target: opts.target});
+            proxy.web(req, res, {target: proxyItem.target});
         }
     }
 }
@@ -88,8 +90,15 @@ export function BrowsersyncProxy(address, context) {
         receive(name, options, respond: (resp: MiddlewareResponse) => void) {
             const option = options.get('proxy');
             if (typeof option === 'string') {
+                const mw   = getMiddleware(option);
+                const item = createItemFromString(option);
+                const rwr  = rewriteLinks(item.url);
+
                 respond({
-                    mw: getMiddleware(option)
+                    mw: getMiddleware(option),
+                    options: fromJS({
+                        rewriteRules: [rwr]
+                    })
                 });
             }
         }
