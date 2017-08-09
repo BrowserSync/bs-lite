@@ -69,7 +69,7 @@ export function processIncomingOptions(input: ClientJSIncomingType, cwd: string)
         })
 }
 
-function createMiddleware(options: Options): Middleware[] {
+function createMiddleware(options: Options): Middleware {
 
     const coreJS = [
         {
@@ -93,7 +93,7 @@ function createMiddleware(options: Options): Middleware[] {
 
     const userjs = processIncomingOptions(options.get('clientJS').toJS(), options.get('cwd'));
 
-    return [{
+    return {
         id: 'Browsersync ClientJS',
         route: clientScript(options),
         handle: (req, res) => {
@@ -108,7 +108,7 @@ function createMiddleware(options: Options): Middleware[] {
             const header = `/**\n` + brandhead + headerList + '\n */';
             res.end([header, joinedOutput].join('\n\n'));
         }
-    }]
+    }
 }
 
 export function ClientJS(address: string, context: IActorContext) {
@@ -118,10 +118,10 @@ export function ClientJS(address: string, context: IActorContext) {
             debug('-> postStart()');
         },
         methods: {
-            init: function (stream: IRespondableStream) {
+            middleware: function (stream: IRespondableStream) {
                 return stream.flatMap(({payload, respond}) => {
                     const mw = createMiddleware(payload);
-                    return Observable.of(respond({mw}));
+                    return Observable.of(respond(mw));
                 });
             }
         }

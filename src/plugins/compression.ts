@@ -7,18 +7,19 @@ export default function Compression() {
             debug('-> postStart()');
         },
         receive(name, payload, respond) {
-            try {
-                const mw : Middleware = {
-                    id: 'Compression',
-                    route: '',
-                    handle: require('compression')()
-                };
-                const output = {
-                    mw: [mw]
-                };
-                respond(output);
-            } catch (e) {
-                console.log(e);
+            if (name === 'middleware') {
+                try {
+                    const mw : Middleware = {
+                        id: 'Compression',
+                        route: '',
+                        handle: require('compression')()
+                    };
+                    respond(mw);
+                } catch (e) {
+                    console.log(e);
+                }
+            } else {
+                respond(':)');
             }
         }
     }
