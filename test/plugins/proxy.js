@@ -1,3 +1,4 @@
+require('source-map-support').install();
 const {BrowsersyncProxy, createFromString, createItemFromString} = require('../../dist/plugins/proxy');
 const {DefaultOptions} = require('../../dist/options');
 const {createSystem, fromOptions} = require('../../dist');
@@ -16,7 +17,7 @@ it.only('proxy', function (done) {
       return createWithOptions(system, opts);
     })
     .subscribe((output) => {
-      console.log('ype', output[1].toJS().rewriteRules);
+
       done();
     }, err => done(err))
   // bs.ask(Methods.Init)

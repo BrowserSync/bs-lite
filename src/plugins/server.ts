@@ -29,9 +29,7 @@ export interface Middleware {
     handle: Function
 }
 export interface InitIncoming {
-    input: {
-        middleware: Middleware[]
-    }
+    middleware: Middleware[]
     options: Options
 }
 export interface IServerOptions {
@@ -125,7 +123,7 @@ export function BrowserSyncServer(address: string, context: IActorContext) {
             },
             [ServerMessages.Init]: function (stream: IMethodStream<InitIncoming, ServerInit.Response, ServerState>) {
                 return stream.flatMap(({payload, respond, state}) => {
-                    const {options, input} = payload;
+                    const {options, middleware} = payload;
                     const port = options.getIn(['server', 'port']);
                     const scheme: Scheme = options.get('scheme');
 
@@ -136,7 +134,7 @@ export function BrowserSyncServer(address: string, context: IActorContext) {
                                 // check if the port matches the desired
                                 if (server.address().port === port) {
                                     // just re-apply the middleware
-                                    return replaceMiddleware(input.middleware, state.app)
+                                    return replaceMiddleware(middleware, state.app)
                                         .do(x => console.log('replacing middleware'))
                                         .map((app) => {
                                             return respond({server, errors: []}, {server, app});
@@ -146,7 +144,7 @@ export function BrowserSyncServer(address: string, context: IActorContext) {
                             // at this point, the PORT has changed so we close the server
                             return closeServer(server)
                                 // Now we recreate a new server
-                                .flatMap(() => getNewServer(input.middleware, port, options))
+                                .flatMap(() => getNewServer(middleware, port, options))
                                 // we use that new server to add socket support
                                 .flatMap(([server, app]) => {
 

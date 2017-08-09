@@ -87,9 +87,9 @@ function getMiddleware(input: ProxyOptionsInput): Middleware[] {
 
 export function BrowsersyncProxy(address, context) {
     return {
-        receive(name, options, respond) {
+        receive(name, option, respond) {
             if (name === 'options') {
-                const item = createItemFromString(options);
+                const item = createItemFromString(option);
                 const rwr  = rewriteLinks(item.url);
                 respond({
                     rewriteRules: [rwr]
@@ -97,10 +97,6 @@ export function BrowsersyncProxy(address, context) {
                 return;
             }
             if (name === 'middleware') {
-                const option = options.get('proxy');
-                if (!option) {
-                    return respond([]);
-                }
                 const mw   = getMiddleware(option);
                 const item = createItemFromString(option);
                 const rwr  = rewriteLinks(item.url);

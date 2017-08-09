@@ -55,83 +55,45 @@ function _getActor(context) {
     }
 }
 
-export function createWithOptions(context: IActorContext, options: Options) {
+export function createWithOptions(context: IActorContext, options: Options): Observable<BrowsersyncInitOutput> {
 
     const getActor = _getActor(context);
-    // const coreActors = getActors(corePlugins, options);
-    // const setupActors = getActors(optionals, options);
-    // const server = context.actorSelection('server')[0];
+    const server   = context.actorSelection('server')[0];
+    const opts     = addMissingOptions(options);
 
-    const opts = addMissingOptions(options);
-
-    const optionResponses = Observable.zip<any, any>(
-        // getActor('compression', compression).ask('options', opts.get('compression')),
-        // getActor('clientJS', clientJS).ask('options', opts.get('compression')),
+    return Observable.zip<any>(
         getActor('proxy', BrowsersyncProxy).ask('options', opts.get('proxy')),
-    ).map(([proxyResp]) => {
-        return opts.updateIn(['rewriteRules'], prev => {
-            if (proxyResp.rewriteRules.length) {
-                return prev.concat(fromJS(proxyResp.rewriteRules));
-            }
-            return prev;
-        });
+        ((proxyResp) => {
+            return opts.updateIn(['rewriteRules'], prev => {
+                if (proxyResp.rewriteRules.length) {
+                    return prev.concat(fromJS(proxyResp.rewriteRules));
+                }
+                return prev;
+            });
+        })
+    )
+    .flatMap(opts => {
+        return Observable.zip(
+            Observable.zip(
+                getActor('compression', compression).ask('middleware', opts.get('compression')),
+                getActor('clientJS', clientJS).ask('middleware', opts),
+                getActor('proxy', BrowsersyncProxy).ask('middleware', opts.get('proxy')),
+            ).map(mws => mws.reduce((acc: Middleware[], item: Middleware[]) => acc.concat(item), [])),
+            Observable.of(opts)
+        )
+    })
+    .flatMap(([middleware, options]) => {
+        const payload = {middleware, options};
+        return server
+            .ask(ServerMessages.Init, payload)
+            .flatMap((resp: ServerInit.Response) => {
+                if (resp.errors.length) {
+                    return Observable.throw(resp.errors[0]);
+                }
+                const output: BrowsersyncInitOutput = {server: resp.server, options};
+                return Observable.of(output);
+            });
     });
-
-    const middlewareResponses = Observable.zip(
-        getActor('compression', compression).ask('middleware', opts.get('compression')),
-        getActor('clientJS', clientJS).ask('middleware', opts),
-        getActor('proxy', BrowsersyncProxy).ask('middleware', opts.get('proxy')),
-    ).withLatestFrom(optionResponses);
-
-    return middlewareResponses;
-
-    // return Observable
-    //     .from([...coreActors, ...setupActors])
-    //     .do(x => debug(`++ incoming actor (${x.name})`))
-    //     .concatMap((item) => {
-    //
-    //         const options = opts.getValue();
-    //         const current = context.actorSelection(item.name);
-    //
-    //         const actor = current.length
-    //             ? current[0]
-    //             : context.actorOf(item.factory, item.name);
-    //
-    //         return actor
-    //             .ask('init', options)
-    //             .map((resp: MiddlewareResponse) => {
-    //                 opts.next(options.mergeDeep(fromJS(resp.options) || {}));
-    //                 return resp.mw || [];
-    //             })
-    //             .catch(err => {
-    //                 console.error(err);
-    //                 return Observable.empty();
-    //             })
-    //     })
-    //     .reduce((acc: Middleware[], mw: Middleware[]) => {
-    //         return acc.concat(mw);
-    //     }, [])
-    //     .withLatestFrom(opts)
-        // .flatMap((incoming) => {
-        //     const middleware = incoming[0];
-        //     const options    = incoming[1];
-        //     const payload = {
-        //         input: {
-        //             middleware,
-        //         },
-        //         options,
-        //     };
-        //
-        //     return server
-        //         .ask(ServerMessages.Init, payload)
-        //         .flatMap((resp: ServerInit.Response) => {
-        //             if (resp.errors.length) {
-        //                 return Observable.throw(resp.errors[0]);
-        //             }
-        //             const output: BrowsersyncInitOutput = {server: resp.server, options};
-        //             return Observable.of(output);
-        //         });
-        // })
 }
 
 
