@@ -7,10 +7,11 @@ import {fromJS, Map} from "immutable";
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {Options} from "./index";
 import {BrowsersyncInitOutput, BrowsersyncInitResponse} from "./Browsersync";
-import {RespModifier} from "./resp-modifier";
+import {RespModifier, RespModifierMiddlewareInput} from "./resp-modifier";
 import {addMissingOptions} from "./options";
 import {clientScript, scriptTags} from "./connect-utils";
 import {BrowsersyncProxy} from "./plugins/proxy";
+import {RewriteRule} from "./rewrite-rules";
 
 const debug = require('debug')('bs:system');
 
@@ -55,7 +56,7 @@ function _getActor(context) {
     }
 }
 
-export function createWithOptions(context: IActorContext, options: Options): Observable<BrowsersyncInitOutput> {
+export function getOptionsAndMiddleware(context: IActorContext, options: Options): Observable<{middleware: Middleware[], options: Options}> {
 
     const getActor = _getActor(context);
     const server   = context.actorSelection('server')[0];
@@ -72,28 +73,28 @@ export function createWithOptions(context: IActorContext, options: Options): Obs
             });
         })
     )
-    .flatMap(opts => {
+    .flatMap((opts): any => {
+
+        const snippetRule: RewriteRule = opts.getIn(['snippetOptions', 'rewriteRule']).toJS();
+        const optionRules = opts.get('rewriteRules').toJS();
+
+        const rules = [snippetRule, ...optionRules];
+        const respInput: RespModifierMiddlewareInput = {
+            rules,
+            options: opts,
+        };
+
         return Observable.zip(
             Observable.zip(
                 getActor('compression', compression).ask('middleware', opts.get('compression')),
                 getActor('clientJS', clientJS).ask('middleware', opts),
+                getActor('resp-mod', RespModifier).ask('middleware', respInput),
                 getActor('proxy', BrowsersyncProxy).ask('middleware', opts.get('proxy')),
             ).map(mws => mws.reduce((acc: Middleware[], item: Middleware[]) => acc.concat(item), [])),
-            Observable.of(opts)
+            Observable.of(opts),
+            (middleware, options) => ({middleware, options})
         )
     })
-    .flatMap(([middleware, options]) => {
-        const payload = {middleware, options};
-        return server
-            .ask(ServerMessages.Init, payload)
-            .flatMap((resp: ServerInit.Response) => {
-                if (resp.errors.length) {
-                    return Observable.throw(resp.errors[0]);
-                }
-                const output: BrowsersyncInitOutput = {server: resp.server, options};
-                return Observable.of(output);
-            });
-    });
 }
 
 

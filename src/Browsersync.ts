@@ -2,11 +2,12 @@ import {Observable} from 'rxjs';
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {DefaultOptions, DefaultOptionsMethods} from "./options";
 import {Map} from "immutable";
-import {createWithOptions} from "./Browsersync.init";
-import {BrowserSyncServer, ServerMessages} from "./plugins/server";
+import {getOptionsAndMiddleware} from "./Browsersync.init";
+import {BrowserSyncServer, ServerInit, ServerMessages} from "./plugins/server";
 import {Options} from "./index";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import * as http from "http";
+import {ActorRef} from "aktor-js/dist/ActorRef";
 
 const {of, concat} = Observable;
 
@@ -20,7 +21,7 @@ export enum Methods {
 }
 
 interface BrowserSyncState {
-    server: http.Server|null
+    server: ActorRef
     options: Options
 }
 
@@ -51,16 +52,30 @@ export function Browsersync(address: string, context: IActorContext) {
                                 server: state.server,
                                 options: mergedOptions,
                             }
-                            return createWithOptions(context, mergedOptions)
-                                .map((output) => respond({output, errors: []}, nextState))
+                            return getOptionsAndMiddleware(context, mergedOptions)
+                                .flatMap(({middleware, options}) => {
+                                    const payload = {middleware, options};
+                                    return state.server
+                                        .ask(ServerMessages.Init, payload)
+                                        .flatMap((resp: ServerInit.Response) => {
+                                            if (resp.errors.length) {
+                                                return Observable.throw(resp.errors[0]);
+                                            }
+                                            const output: BrowsersyncInitOutput = {server: resp.server, options};
+                                            return Observable.of(output);
+                                        });
+                                })
+                                .map((output) => {
+                                    return respond({output, errors: []}, nextState);
+                                })
                                 .catch(err => {
                                     const nextState = {
-                                        server: null,
+                                        server: state.server,
                                         options: mergedOptions,
                                     };
                                     return of(respond({errors: [err], output: null}, nextState));
                                 })
-                        });
+                        })
                 })
             },
             [Methods.GetOption]: function (stream) {

@@ -5,7 +5,7 @@ import {MiddlewareFn, RewriteRule, TransformFn, createOne} from './rewrite-rules
 import debug = require('debug');
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {Options} from "./index";
-import {MiddlewareResponse} from "./plugins/server";
+import {Middleware} from "./plugins/server";
 const respModDebug = debug('bs:resp-mod');
 
 export function isHtml(str) {
@@ -181,29 +181,30 @@ function hasAcceptHeaders(req) {
     return acceptHeader.indexOf('html') > -1;
 }
 
+export interface RespModifierMiddlewareInput {
+    rules: RewriteRule[]
+    options: Options
+}
+
 export enum RespModifierMessages {
-    init = 'init'
+    middleware = 'middleware'
 }
 
 export function RespModifier(address, context) {
     return {
         methods: {
-            [RespModifierMessages.init]: function(stream: IMethodStream<Options, MiddlewareResponse, any>) {
+            [RespModifierMessages.middleware]: function(stream: IMethodStream<{rules: RewriteRule[], options: Options}, Middleware[], any>) {
                 return stream.map(({payload, respond}) => {
-                    const options = payload;
 
-                    const snippetRule: RewriteRule = options.getIn(['snippetOptions', 'rewriteRule']).toJS();
-                    const optionRules = options.get('rewriteRules').toJS().map(createOne);
-                    const rules = [snippetRule, ...optionRules].filter(Boolean);
+                    const {rules, options} = payload;
+                    const _rules = rules.map(createOne);
 
-                    return respond({
-                        mw: [{
+                    return respond([{
                             route: '',
                             via: 'Core',
                             id: 'bs-rewrite-rules',
-                            handle: respModifier(rules, options),
-                        }]
-                    });
+                            handle: respModifier(_rules, options),
+                        }]);
                 });
             }
         }
