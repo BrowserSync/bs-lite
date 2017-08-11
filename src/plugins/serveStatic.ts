@@ -3,11 +3,20 @@ import {IActorContext} from "aktor-js/dist/ActorContext";
 import {Options} from "../index";
 import {join, parse, ParsedPath} from "path";
 import {Middleware, MiddlewareResponse} from "./server";
-import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
+import {IMethodStream, IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
 import {normPath, Right} from "../utils";
 const debug = require('debug')('bs:serveStatic');
 
 export type SSIncomingType = string|string[]|SSIncomingObject|SSIncomingObject[];
+
+export enum SSMesagges {
+    Middleware = 'middleware'
+}
+
+export interface SSMiddlewarePayload {
+    cwd: string
+    options: SSIncomingType
+}
 
 export interface SSIncomingObject {
     id?: string
@@ -35,7 +44,7 @@ export interface Processed {
  *  eg: serveStatic: ['src']
  *  eg: serveStatic: 'app'
  */
-export function processIncoming(input: string|string[], options: Options): Processed[] {
+export function processIncoming(input: SSIncomingType, cwd: string): Processed[] {
     return [].concat(input)
         .map((input, index) : Processed => {
             const id = `serve-static-${index}`;
@@ -43,11 +52,11 @@ export function processIncoming(input: string|string[], options: Options): Proce
                 return {
                     id,
                     input,
-                    dirs: [createDir(input, options.get('cwd'))],
+                    dirs: [createDir(input, cwd)],
                     routes: [''],
                 }
             }
-            return fromObject(input, id, options.get('cwd'));
+            return fromObject(input, id, cwd);
         })
 }
 
@@ -85,10 +94,9 @@ function fromObject(incoming: SSIncomingObject, id: string, cwd): Processed {
     }
 }
 
-function createMiddleware(options: Options): Middleware[] {
+function createMiddleware(options: SSIncomingType, cwd: string): Middleware[] {
 
-    const optionItems = options.get('serveStatic').toJS();
-    const processed = processIncoming(optionItems, options);
+    const processed = processIncoming(options, cwd);
 
     const withErrors = processed.filter(x => x.dirs.some(dir => dir.errors.length > 0));
     const withoutErrors = processed.filter(x => x.dirs.every(dir => dir.errors.length === 0));
@@ -130,10 +138,11 @@ export function ServeStatic (address: string, context: IActorContext) {
             debug('-> postStart()');
         },
         methods: {
-            init: function (stream: IRespondableStream): Observable<MiddlewareResponse> {
-                return stream.flatMap(({payload, respond}) => {
-                    const mw = createMiddleware(payload);
-                    return Observable.of(respond({mw}));
+            [SSMesagges.Middleware]: function (stream: IMethodStream<SSMiddlewarePayload, Middleware[], any>) {
+                return stream.map(({payload, respond}) => {
+                    const {cwd, options} = payload;
+                    const mw = createMiddleware(options, cwd);
+                    return respond(mw);
                 });
             }
         },

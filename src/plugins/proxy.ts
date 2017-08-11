@@ -60,12 +60,12 @@ export function createItem(incoming: ProxyItem): ProxyItem {
     }
 }
 
-export function createFromString(input: string): Middleware {
-    const proxyItem: ProxyItem = createItemFromString(input);
+export function createOneMiddleware(proxyItem: ProxyItem): Middleware {
+
     const proxy = httpProxy.createProxyServer(proxyItem.options);
 
     return {
-        id: `Browsersync proxy for ${input}`,
+        id: `Browsersync proxy for ${proxyItem.target}`,
         via: `Browsersync core`,
         route: '',
         handle: (req, res) => {
@@ -78,7 +78,7 @@ function getMiddleware(input: ProxyOptionsInput): Middleware[] {
     return [].concat(input).filter(Boolean)
         .map(input => {
             if (typeof input === "string") {
-                return createFromString(input);
+                return createOneMiddleware(createItemFromString(input));
             }
             // return createFromObject(input);
             return input;
@@ -97,10 +97,6 @@ export function BrowsersyncProxy(address, context) {
                 return;
             }
             if (name === 'middleware') {
-                const mw   = getMiddleware(option);
-                const item = createItemFromString(option);
-                const rwr  = rewriteLinks(item.url);
-
                 respond(getMiddleware(option));
             }
         }

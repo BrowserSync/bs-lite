@@ -1,5 +1,5 @@
 import {Observable, BehaviorSubject} from 'rxjs';
-import serveStatic from './plugins/serveStatic';
+import serveStatic, {SSMiddlewarePayload} from './plugins/serveStatic';
 import {IServerOptions, Middleware, MiddlewareResponse, ServerInit, ServerMessages} from './plugins/server';
 import clientJS from './plugins/clientJS';
 import compression from './plugins/compression';
@@ -79,9 +79,15 @@ export function getOptionsAndMiddleware(context: IActorContext, options: Options
         const optionRules = opts.get('rewriteRules').toJS();
 
         const rules = [snippetRule, ...optionRules];
+
         const respInput: RespModifierMiddlewareInput = {
             rules,
             options: opts,
+        };
+
+        const ssInput: SSMiddlewarePayload = {
+            cwd: opts.get('cwd'),
+            options: opts.get('serveStatic').toJS()
         };
 
         return Observable.zip(
@@ -89,6 +95,7 @@ export function getOptionsAndMiddleware(context: IActorContext, options: Options
                 getActor('compression', compression).ask('middleware', opts.get('compression')),
                 getActor('clientJS', clientJS).ask('middleware', opts),
                 getActor('resp-mod', RespModifier).ask('middleware', respInput),
+                getActor('serveStatic', serveStatic).ask('middleware', ssInput),
                 getActor('proxy', BrowsersyncProxy).ask('middleware', opts.get('proxy')),
             ).map(mws => mws.reduce((acc: Middleware[], item: Middleware[]) => acc.concat(item), [])),
             Observable.of(opts),
