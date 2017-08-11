@@ -50,7 +50,6 @@ function createNewServer(options: Options, app): Server|HttpsServer {
 function getNewServer(middleware: Middleware[], port: number, options: Options) {
 
     const app = connect();
-
     middleware.forEach(mw => {
         app.use(mw.route, mw.handle);
     });

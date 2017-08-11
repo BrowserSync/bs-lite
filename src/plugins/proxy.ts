@@ -89,10 +89,12 @@ export function BrowsersyncProxy(address, context) {
     return {
         receive(name, option, respond) {
             if (name === 'options') {
-                const item = createItemFromString(option);
-                const rwr  = rewriteLinks(item.url);
+                const items = option.map(option => {
+                    const item = createItemFromString(option);
+                    return rewriteLinks(item.url);
+                });
                 respond({
-                    rewriteRules: [rwr]
+                    rewriteRules: items
                 });
                 return;
             }

@@ -3,7 +3,7 @@ import serveStatic, {SSMiddlewarePayload} from './plugins/serveStatic';
 import {IServerOptions, Middleware, MiddlewareResponse, ServerInit, ServerMessages} from './plugins/server';
 import clientJS from './plugins/clientJS';
 import compression from './plugins/compression';
-import {fromJS, Map} from "immutable";
+import {fromJS, List, Map} from "immutable";
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {Options} from "./index";
 import {BrowsersyncInitOutput, BrowsersyncInitResponse} from "./Browsersync";
@@ -62,8 +62,10 @@ export function getOptionsAndMiddleware(context: IActorContext, options: Options
     const server   = context.actorSelection('server')[0];
     const opts     = addMissingOptions(options);
 
+    const proxyOption = List([]).concat(opts.get('proxy')).toJS();
+
     return Observable.zip<any>(
-        getActor('proxy', BrowsersyncProxy).ask('options', opts.get('proxy')),
+        getActor('proxy', BrowsersyncProxy).ask('options', proxyOption),
         ((proxyResp) => {
             return opts.updateIn(['rewriteRules'], prev => {
                 if (proxyResp.rewriteRules.length) {
@@ -90,13 +92,15 @@ export function getOptionsAndMiddleware(context: IActorContext, options: Options
             options: opts.get('serveStatic').toJS()
         };
 
+        const proxyInput = List([]).concat(opts.get('proxy')).toJS();
+
         return Observable.zip(
             Observable.zip(
                 getActor('compression', compression).ask('middleware', opts.get('compression')),
                 getActor('clientJS', clientJS).ask('middleware', opts),
                 getActor('resp-mod', RespModifier).ask('middleware', respInput),
                 getActor('serveStatic', serveStatic).ask('middleware', ssInput),
-                getActor('proxy', BrowsersyncProxy).ask('middleware', opts.get('proxy')),
+                getActor('proxy', BrowsersyncProxy).ask('middleware', proxyInput),
             ).map(mws => mws.reduce((acc: Middleware[], item: Middleware[]) => acc.concat(item), [])),
             Observable.of(opts),
             (middleware, options) => ({middleware, options})
