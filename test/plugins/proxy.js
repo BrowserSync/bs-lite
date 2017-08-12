@@ -4,10 +4,43 @@ const {DefaultOptions} = require('../../dist/options');
 const {createSystem, fromOptions} = require('../../dist');
 const {fromJS, Map} = require('immutable');
 const assert = require('assert');
+const http = require("http");
+const connect = require("connect");
+const serverAssert = require("../utils").serverAssert;
 const {init, Methods} = require('../../');
-
 const {createWithOptions} = require('../../dist/Browsersync.init');
 
-it.skip('proxy', function (done) {
-  // todo get proxy e2e tests up and running
+it('proxy', function (done) {
+    const app = connect();
+
+    const server = http.createServer(app);
+    server.listen();
+
+    const url = `http://localhost:${server.address().port}`;
+
+    app.use('/', function(req, res) {
+        // language=HTML
+        res.end(`<!doctype html>
+<html lang="en">
+<head>
+    <title>Document</title>
+</head>
+<body>
+    <h1><a href="${url}/about">About</a></h1>
+</body>
+</html>`)
+    });
+
+    const asserts = (resp, options) => {
+        const bsPort = options.getIn(['server', 'port']);
+        assert.equal(resp.text.indexOf(`<h1><a href="//127.0.0.1:${bsPort}/about">About</a></h1>`) > -1, true)
+    }
+
+    serverAssert({
+        proxy: [url]
+    }, '/', asserts)
+        .do(() => server.close())
+        .subscribe(() => {
+            done();
+        }, err => done(err));
 });
