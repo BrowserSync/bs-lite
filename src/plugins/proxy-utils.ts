@@ -1,5 +1,6 @@
 import {createOne, RewriteRule} from "../rewrite-rules";
 import NodeURL = require('url');
+import * as http from "http";
 const url = require('url');
 
 export function rewriteLinks(userServer: NodeURL.Url): RewriteRule {
@@ -93,9 +94,9 @@ export function rewriteLinks(userServer: NodeURL.Url): RewriteRule {
  * Remove 'domain' from any cookies
  * @param {Object} res
  */
-export function checkCookies(res) {
-    if (typeof(res.headers['set-cookie']) !== 'undefined') {
-        res.headers['set-cookie'] = res.headers['set-cookie'].map(function(item) {
+export function checkCookies(proxyRes: http.IncomingMessage) {
+    if (typeof(proxyRes.headers['set-cookie']) !== 'undefined') {
+        proxyRes.headers['set-cookie'] = (proxyRes.headers['set-cookie'] as any).map(function(item) {
             return rewriteCookies(item);
         });
     }

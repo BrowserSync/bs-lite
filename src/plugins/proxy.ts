@@ -5,7 +5,7 @@ import NodeURL  = require('url');
 import * as http from "http";
 import ErrorCallback = require("http-proxy");
 import {parse} from "url";
-import {rewriteLinks} from "./proxy-utils";
+import {checkCookies, rewriteLinks} from "./proxy-utils";
 import {fromJS} from "immutable";
 
 const defaultHttpProxyOptions: ServerOptions = {
@@ -20,6 +20,10 @@ export type ProxyOptionsInput = string|ProxyItem;
 export interface CookieOptions {
     stripDomain: boolean;
 }
+
+const defaultCookieOptions: CookieOptions = {
+    stripDomain: true
+};
 
 export interface ProxyItem {
     options?: ServerOptions;
@@ -56,6 +60,10 @@ export function createItem(incoming: ProxyItem): ProxyItem {
         options: {
             ...defaultHttpProxyOptions,
             ...incoming.options,
+        },
+        cookies: {
+            ...defaultCookieOptions,
+            ...incoming.cookies
         }
     }
 }
@@ -63,6 +71,10 @@ export function createItem(incoming: ProxyItem): ProxyItem {
 export function createOneMiddleware(proxyItem: ProxyItem): Middleware {
 
     const proxy = httpProxy.createProxyServer(proxyItem.options);
+
+    if (proxyItem.cookies.stripDomain) {
+        proxy.on('proxyRes', checkCookies);
+    }
 
     return {
         id: `Browsersync proxy for ${proxyItem.target}`,
