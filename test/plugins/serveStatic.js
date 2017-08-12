@@ -1,24 +1,17 @@
-const {ServeStatic} = require('../../dist/plugins/serveStatic');
-const {DefaultOptions} = require('../../dist/options');
-const {createSystem, fromOptions} = require('../../dist');
-const {fromJS, Map} = require('immutable');
+const {Observable} = require('rxjs');
+const {Methods} = require('../../dist');
 const assert = require('assert');
+const request = require('supertest-as-promised');
+const serverAssert = require("../utils").serverAssert;
 
 it('serveStatic', function (done) {
-    const system = createSystem();
-    const serveStaticActor = system.actorOf(ServeStatic);
-    const opts = fromOptions({
-        serveStatic: [
-            './fixtures',
-            {
-                route: '/static',
-                dir: ['./fixtures', './src']
-            }
-        ]
-    })
-        .flatMap(merged => serveStaticActor.ask('init', merged))
-        .subscribe(({mw}) => {
-            assert.equal(mw.length, 3);
-            done();
-        });
+
+    const req = '/';
+    const asserts = (resp, options) => {
+        assert.equal(resp.text.indexOf(`<h1>Test from './fixtures/index.html'</h1>`) > -1, true, 'fixtures/index.html');
+        assert.equal(resp.text.indexOf(options.get('snippet')) > -1, true, 'Snippet');
+    };
+
+    serverAssert({serveStatic: ['fixtures']}, req, asserts)
+        .subscribe(() => done(), err => done(err));
 });

@@ -21,6 +21,7 @@ export const defaultOptions: BsOptions = {
     strict: true,
     serveStatic: [],
     clientJS: [],
+    compression: true,
     middleware: [],
     rewriteRules: [],
     snippet: '',
@@ -93,6 +94,7 @@ export interface BsOptions {
     rewriteRules: RewriteRule[];
     snippet: string;
     scheme: Scheme;
+    compression: boolean;
     proxy?: ProxyOptionsInput;
 }
 

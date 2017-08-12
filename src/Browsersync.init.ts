@@ -10,8 +10,9 @@ import {BrowsersyncInitOutput, BrowsersyncInitResponse} from "./Browsersync";
 import {RespModifier, RespModifierMiddlewareInput} from "./resp-modifier";
 import {addMissingOptions} from "./options";
 import {clientScript, scriptTags} from "./connect-utils";
-import {BrowsersyncProxy} from "./plugins/proxy";
+import {BrowsersyncProxy, askForProxyMiddleware, getProxyOption, askForProxyOptions} from "./plugins/proxy";
 import {RewriteRule} from "./rewrite-rules";
+import {ActorRef} from "aktor-js/dist/ActorRef";
 
 const debug = require('debug')('bs:system');
 
@@ -44,7 +45,8 @@ function getActors(order, options) {
     }).filter(Boolean);
 }
 
-function _getActor(context) {
+export type GetActorFn = (name: string, factory: Function) => ActorRef;
+function _getActor(context): GetActorFn {
     return (name, factory) => {
         const current = context.actorSelection(name);
 
@@ -58,23 +60,27 @@ function _getActor(context) {
 
 export function getOptionsAndMiddleware(context: IActorContext, options: Options): Observable<{middleware: Middleware[], options: Options}> {
 
-    const getActor = _getActor(context);
-    const server   = context.actorSelection('server')[0];
-    const opts     = addMissingOptions(options);
+    const getActor    = _getActor(context);
+    const opts        = addMissingOptions(options);
+    const proxyOption = getProxyOption(opts.get('proxy'));
+    const proxyActor  = askForProxyOptions(getActor, proxyOption);
 
-    const proxyOption = List([]).concat(opts.get('proxy')).toJS();
-
-    return Observable.zip<any>(
-        getActor('proxy', BrowsersyncProxy).ask('options', proxyOption),
-        ((proxyResp) => {
-            return opts.updateIn(['rewriteRules'], prev => {
-                if (proxyResp.rewriteRules.length) {
-                    return prev.concat(fromJS(proxyResp.rewriteRules));
-                }
-                return prev;
-            });
-        })
-    )
+    return Observable.of(opts).flatMap((opts) => {
+        if (!proxyOption.length) {
+            return Observable.of(opts);
+        }
+        return Observable.zip(
+            proxyActor,
+            ((proxyResp) => {
+                return opts.updateIn(['rewriteRules'], prev => {
+                    if (proxyResp.rewriteRules.length) {
+                        return prev.concat(fromJS(proxyResp.rewriteRules));
+                    }
+                    return prev;
+                });
+            })
+        )
+    })
     .flatMap((opts): any => {
 
         const snippetRule: RewriteRule = opts.getIn(['snippetOptions', 'rewriteRule']).toJS();
@@ -92,7 +98,8 @@ export function getOptionsAndMiddleware(context: IActorContext, options: Options
             options: opts.get('serveStatic').toJS()
         };
 
-        const proxyInput = List([]).concat(opts.get('proxy')).toJS();
+        const proxyOption = getProxyOption(opts.get('proxy'));
+        const proxyActor = askForProxyMiddleware(getActor, proxyOption);
 
         return Observable.zip(
             Observable.zip(
@@ -100,8 +107,10 @@ export function getOptionsAndMiddleware(context: IActorContext, options: Options
                 getActor('clientJS', clientJS).ask('middleware', opts),
                 getActor('resp-mod', RespModifier).ask('middleware', respInput),
                 getActor('serveStatic', serveStatic).ask('middleware', ssInput),
-                getActor('proxy', BrowsersyncProxy).ask('middleware', proxyInput),
-            ).map(mws => mws.reduce((acc: Middleware[], item: Middleware[]) => acc.concat(item), [])),
+                proxyActor,
+            ).map(mws => {
+                return mws.reduce((acc: Middleware[], item: Middleware[]) => acc.concat(item), [])
+            }),
             Observable.of(opts),
             (middleware, options) => ({middleware, options})
         )

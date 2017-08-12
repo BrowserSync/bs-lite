@@ -1,3 +1,4 @@
+import {Observable} from 'rxjs/Observable';
 import {Middleware, MiddlewareResponse} from "./server";
 import httpProxy = require('http-proxy');
 import {ServerOptions} from 'http-proxy';
@@ -6,7 +7,8 @@ import * as http from "http";
 import ErrorCallback = require("http-proxy");
 import {parse} from "url";
 import {checkCookies, rewriteLinks} from "./proxy-utils";
-import {fromJS} from "immutable";
+import {fromJS, List} from "immutable";
+import {GetActorFn} from "../Browsersync.init";
 
 const defaultHttpProxyOptions: ServerOptions = {
     changeOrigin: true,
@@ -115,4 +117,24 @@ export function BrowsersyncProxy(address, context) {
             }
         }
     }
+}
+
+export function getProxyOption(input: any): ProxyOptionsInput[] {
+    return List([]).concat(input).toJS().filter(Boolean);
+}
+
+export function askForProxyMiddleware (getActor: GetActorFn, proxyOption: ProxyOptionsInput[]) {
+    if (proxyOption.length) {
+        return getActor('proxy', BrowsersyncProxy)
+            .ask('middleware', proxyOption)
+    }
+    return Observable.of([]);
+}
+
+export function askForProxyOptions(getActor: GetActorFn, proxyOption: ProxyOptionsInput[]) {
+    if (proxyOption.length) {
+        return getActor('proxy', BrowsersyncProxy)
+            .ask('options', proxyOption)
+    }
+    return Observable.empty();
 }
