@@ -4,6 +4,7 @@ import {Set, fromJS} from "immutable";
 import {RewriteRule} from "./rewrite-rules";
 import {clientScript, scriptTags} from "./connect-utils";
 import {ProxyOptionsInput} from "./plugins/proxy";
+import {doesNotContainDisableParam, headerHasHtmlAccept} from "./utils";
 
 const {of} = Observable;
 
@@ -49,22 +50,8 @@ export const defaultOptions: BsOptions = {
             id: 'bs-snippet',
             via: 'Browsersync Core',
             predicates: [
-                function headerHasHtmlAccept(req) {
-                    const acceptHeader = req.headers['accept'];
-                    if (!acceptHeader) {
-                        return false;
-                    }
-                    return acceptHeader.indexOf('html') > -1;
-                },
-                function doesNotContainDisableParam(req) {
-                    const [before, ...after] = req.url.split('?');
-                    if (after.length) {
-                        if (after[0].indexOf('_bs_disable') > -1) {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
+                headerHasHtmlAccept,
+                doesNotContainDisableParam
             ],
             fn: function(req, res, html, options) {
                 const snippet = options.get('snippet');

@@ -84,7 +84,7 @@ export function getOptionsAndMiddleware(context: IActorContext, options: Options
     .flatMap((opts): any => {
 
         const snippetRule: RewriteRule = opts.getIn(['snippetOptions', 'rewriteRule']).toJS();
-        const optionRules = opts.get('rewriteRules').toJS();
+        const optionRules = opts.get('rewriteRules').toJS().filter(Boolean);
 
         const rules = [snippetRule, ...optionRules];
 

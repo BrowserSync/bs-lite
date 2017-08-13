@@ -6,7 +6,7 @@ import NodeURL  = require('url');
 import * as http from "http";
 import ErrorCallback = require("http-proxy");
 import {parse} from "url";
-import {checkCookies, rewriteLinks} from "./proxy-utils";
+import {checkCookies, proxyRewriteLinks} from "./proxy-utils";
 import {fromJS, List} from "immutable";
 import {GetActorFn} from "../Browsersync.init";
 
@@ -105,7 +105,7 @@ export function BrowsersyncProxy(address, context) {
             if (name === 'options') {
                 const items = option.map(option => {
                     const item = createItemFromString(option);
-                    return rewriteLinks(item.url);
+                    return proxyRewriteLinks(item.url);
                 });
                 respond({
                     rewriteRules: items

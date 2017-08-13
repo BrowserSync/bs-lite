@@ -1,9 +1,10 @@
 import {createOne, RewriteRule} from "../rewrite-rules";
 import NodeURL = require('url');
 import * as http from "http";
+import {doesNotContainDisableParam, headerHasHtmlAccept} from "../utils";
 const url = require('url');
 
-export function rewriteLinks(userServer: NodeURL.Url): RewriteRule {
+export function proxyRewriteLinks(userServer: NodeURL.Url): RewriteRule {
 
     const host = userServer.hostname;
     let string = host;
@@ -22,9 +23,7 @@ export function rewriteLinks(userServer: NodeURL.Url): RewriteRule {
         id: `Browsersync Proxy for ${userServer.href}`,
         via: 'Browsersync Proxy',
         fn: rewriter,
-        predicates: [() => {
-            return true
-        }]
+        predicates: [headerHasHtmlAccept, doesNotContainDisableParam]
     };
 
     function rewriter(req, res, data) {

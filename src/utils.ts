@@ -50,3 +50,21 @@ export const tryCatch = f => {
         return Left(e)
     }
 };
+
+export function headerHasHtmlAccept(req) {
+    const acceptHeader = req.headers['accept'];
+    if (!acceptHeader) {
+        return false;
+    }
+    return acceptHeader.indexOf('html') > -1;
+}
+
+export function doesNotContainDisableParam(req) {
+    const [before, ...after] = req.url.split('?');
+    if (after.length) {
+        if (after[0].indexOf('_bs_disable') > -1) {
+            return false;
+        }
+    }
+    return true;
+}

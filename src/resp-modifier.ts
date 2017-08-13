@@ -6,17 +6,19 @@ import debug = require('debug');
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {Options} from "./index";
 import {Middleware} from "./plugins/server";
+import {headerHasHtmlAccept} from "./utils";
 const respModDebug = debug('bs:resp-mod');
 
 export function isHtml(str) {
     if (!str) {
         return false;
     }
+    return true
     // Test to see if start of file contents matches:
     // - Optional byte-order mark (BOM)
     // - Zero or more spaces
     // - Any sort of HTML tag, comment, or doctype tag (basically, <...>)
-    return /^(\uFEFF|\uFFFE)?\s*<[^>]+>/i.test(str);
+    // return /^(\uFEFF|\uFFFE)?\s*<[^>]+>/i.test(str);
 }
 
 export function respModifier(rules: RewriteRule[], options: Map<string, any>): MiddlewareFn {
@@ -34,23 +36,25 @@ export function respModifier(rules: RewriteRule[], options: Map<string, any>): M
 
         const toApply = rules
             .filter((rule) => {
+
                 if (rule.predicates.length) {
                     return rule.predicates.every((x) => x.call(null, req, res, options));
                 }
+
+                if (!headerHasHtmlAccept(req)) {
+                    respModDebug('- no text/html headers', req.url);
+                    return false;
+                }
+
+                if (defaultIgnoreTypes.some((x) => new RegExp(x).test(path))) {
+                    respModDebug('- In default ignore types', req.url);
+                    return false;
+                }
+
                 return true;
             });
 
         const path = req.url.split('?')[0];
-
-        if (!hasAcceptHeaders(req)) {
-            respModDebug('- no text/html headers', req.url);
-            return next();
-        }
-
-        if (defaultIgnoreTypes.some((x) => new RegExp(x).test(path))) {
-            respModDebug('- In default ignore types', req.url);
-            return next();
-        }
 
         if (toApply.length) {
             respModDebug(`+ modifying: ${req.url} with ${toApply.length} rules`);
@@ -173,14 +177,6 @@ export const defaultIgnoreTypes = [
     return '\\.' + ext + '(\\?.*)?$';
 });
 
-function hasAcceptHeaders(req) {
-    const acceptHeader = req.headers['accept'];
-    if (!acceptHeader) {
-        return false;
-    }
-    return acceptHeader.indexOf('html') > -1;
-}
-
 export interface RespModifierMiddlewareInput {
     rules: RewriteRule[]
     options: Options
@@ -200,11 +196,11 @@ export function RespModifier(address, context) {
                     const _rules = rules.map(createOne);
 
                     return respond([{
-                            route: '',
-                            via: 'Core',
-                            id: 'bs-rewrite-rules',
-                            handle: respModifier(_rules, options),
-                        }]);
+                        route: '',
+                        via: 'Core',
+                        id: 'bs-rewrite-rules',
+                        handle: respModifier(_rules, options),
+                    }]);
                 });
             }
         }
