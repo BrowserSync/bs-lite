@@ -87,6 +87,7 @@ function closeServer(server) {
 export interface ServerState { 
     server: any
     app: any
+    scheme: Scheme
 }
 
 export enum ServerMessages {
@@ -123,20 +124,19 @@ export function BrowserSyncServer(address: string, context: IActorContext) {
             [ServerMessages.Init]: function (stream: IMethodStream<InitIncoming, ServerInit.Response, ServerState>) {
                 return stream.flatMap(({payload, respond, state}) => {
                     const {options, middleware} = payload;
-                    const port = options.getIn(['server', 'port']);
                     const scheme: Scheme = options.get('scheme');
 
                     return getMaybePortActor(context, state.server, options)
                         .flatMap(([port, server]) => {
                             // if server is already running?
                             if (server && server.listening) {
-                                // check if the port matches the desired
-                                if (server.address().port === port) {
-                                    // just re-apply the middleware
+                                // check if the port matches the desired + scheme is the same
+                                if (server.address().port === port && state.scheme === scheme) {
+                                    // if so, just re-apply the middleware to avoid rebinding a port
                                     return replaceMiddleware(middleware, state.app)
                                         .do(x => console.log('replacing middleware'))
                                         .map((app) => {
-                                            return respond({server, errors: []}, {server, app});
+                                            return respond({server, errors: []}, {server, app, scheme});
                                         })
                                 }   
                             }
@@ -159,7 +159,7 @@ export function BrowserSyncServer(address: string, context: IActorContext) {
                                         .mapTo([server, app]);
                                 })
                                 .map(([server, app]) => {
-                                    return respond({server, errors: []}, {server, app});
+                                    return respond({server, errors: []}, {server, app, scheme});
                                 })
                         })
                         .catch(err => {
@@ -173,7 +173,7 @@ export function BrowserSyncServer(address: string, context: IActorContext) {
                     if (server && server.listening) {
                         server.close();
                     }
-                    return Observable.of(respond('Done!', {server: null, app: null}));
+                    return Observable.of(respond('Done!', {server: null, app: null, scheme: null}));
                 })
             },
             [ServerMessages.Listening]: function(stream) {
