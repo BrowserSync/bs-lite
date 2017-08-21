@@ -90,7 +90,7 @@ export function createOneMiddleware(proxyItem: ProxyItem): Middleware {
     }
 
     if (proxyItem.proxyRes.length) {
-        // proxyItem.proxyRes.forEach(resFn => proxy.on('proxyRes', resFn));
+        proxyItem.proxyRes.forEach(resFn => proxy.on('proxyRes', resFn));
     }
 
     return {
