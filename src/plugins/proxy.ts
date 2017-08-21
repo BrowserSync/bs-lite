@@ -53,6 +53,17 @@ export function createItemFromString(input: string): ProxyItem {
     return createItem({url, target});
 }
 
+export function createItemFromObject(incoming: ProxyItem): ProxyItem {
+    const url = parse(incoming.target);
+    const target = [url.protocol, '//', url.host].join('');
+    const temp = {
+        ...incoming,
+        target,
+        url,
+    };
+    return createItem(temp);
+}
+
 export function createItem(incoming: ProxyItem): ProxyItem {
     return {
         ...incoming,
@@ -78,6 +89,10 @@ export function createOneMiddleware(proxyItem: ProxyItem): Middleware {
         proxy.on('proxyRes', checkCookies);
     }
 
+    if (proxyItem.proxyRes.length) {
+        // proxyItem.proxyRes.forEach(resFn => proxy.on('proxyRes', resFn));
+    }
+
     return {
         id: `Browsersync proxy for ${proxyItem.target}`,
         via: `Browsersync core`,
@@ -94,9 +109,9 @@ function getMiddleware(input: ProxyOptionsInput): Middleware[] {
             if (typeof input === "string") {
                 return createOneMiddleware(createItemFromString(input));
             }
-            // return createFromObject(input);
-            return input;
+            return createOneMiddleware(createItemFromObject(input));
         })
+        .filter(Boolean)
 }
 
 export function BrowsersyncProxy(address, context) {
@@ -104,9 +119,18 @@ export function BrowsersyncProxy(address, context) {
         receive(name, option, respond) {
             if (name === 'options') {
                 const items = option.map(option => {
-                    const item = createItemFromString(option);
-                    return proxyRewriteLinks(item.url);
-                });
+                    if (typeof option === 'string') {
+                        const item = createItemFromString(option);
+                        return proxyRewriteLinks(item.url);
+                    } else {
+                        if (!option.target || typeof option.target !== 'string') {
+                            console.log('Incoming proxy option must contain at least a `target` property');
+                            return null;
+                        }
+                        const item = createItemFromObject(option);
+                        return proxyRewriteLinks(item.url);
+                    }
+                }).filter(Boolean);
                 respond({
                     rewriteRules: items
                 });
