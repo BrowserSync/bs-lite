@@ -13,8 +13,8 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.13.tgz#530f0f9254209b0335bf5cc6387822594ef47093"
 
 "@types/socket.io@2":
-  version "1.4.30"
-  resolved "https://registry.yarnpkg.com/@types/socket.io/-/socket.io-1.4.30.tgz#8d27e595ed488f80ae475ceea612a2afd3f22106"
+  version "1.4.31"
+  resolved "https://registry.yarnpkg.com/@types/socket.io/-/socket.io-1.4.31.tgz#7a928518a35516fccd90431f94538ed3fddaba19"
   dependencies:
     "@types/node" "*"
 

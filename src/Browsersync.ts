@@ -3,7 +3,7 @@ import {IActorContext} from "aktor-js/dist/ActorContext";
 import {DefaultOptions, DefaultOptionsMethods} from "./options";
 import {Map} from "immutable";
 import {getOptionsAndMiddleware} from "./Browsersync.init";
-import {BrowserSyncServer, ServerInit, ServerMessages} from "./plugins/server";
+import {BrowserSyncServer, ServerInit, ServerListeningResponse, ServerMessages} from "./plugins/server";
 import {Options} from "./index";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import * as http from "http";
@@ -30,10 +30,9 @@ export interface BrowsersyncInitOutput {
     options: Options
 }
 
-export interface BrowsersyncInitResponse {
-    output: BrowsersyncInitOutput
-    errors: Error[]
-}
+export type BrowsersyncInitResponse = [null|Error[], null|BrowsersyncInitOutput];
+export type BrowsersyncStopResponse = [null, string];
+export type BrowsersyncListeningResponse = [null, boolean];
 
 export function Browsersync(address: string, context: IActorContext) {
 
@@ -66,14 +65,14 @@ export function Browsersync(address: string, context: IActorContext) {
                                         });
                                 })
                                 .map((output) => {
-                                    return respond({output, errors: []}, nextState);
+                                    return respond([null, output], nextState);
                                 })
                                 .catch(err => {
                                     const nextState = {
                                         server: state.server,
                                         options: mergedOptions,
                                     };
-                                    return of(respond({errors: [err], output: null}, nextState));
+                                    return of(respond([[err], null], nextState));
                                 })
                         })
                 })
@@ -101,13 +100,13 @@ export function Browsersync(address: string, context: IActorContext) {
             [Methods.Stop]: function(stream) {
                 return stream.switchMap(({payload, respond, state}) => {
                     return state.server.ask(ServerMessages.Stop)
-                        .map(() => respond('All done!', state));
+                        .map(() => respond(<BrowsersyncStopResponse>[null, 'All done!'], state));
                 });
             },
             [Methods.Listening]: function(stream) {
-                return stream.flatMap(({payload, respond, state}) => {
+                return stream.flatMap(({respond, state}) => {
                     return state.server.ask(ServerMessages.Listening)
-                        .map(listening => respond(listening, state));
+                        .map((listening: ServerListeningResponse) => respond(<BrowsersyncListeningResponse>listening, state));
                 });
             }
         }

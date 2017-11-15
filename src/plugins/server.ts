@@ -104,6 +104,8 @@ export namespace ServerInit {
     }
 }
 
+export type ServerListeningResponse = [null, boolean];
+
 export function BrowserSyncServer(address: string, context: IActorContext) {
 
     return {
@@ -179,9 +181,9 @@ export function BrowserSyncServer(address: string, context: IActorContext) {
             [ServerMessages.Listening]: function(stream) {
                 return stream.flatMap(({state, respond}) => {
                     if (state.server) {
-                        return Observable.of(respond(state.server.listening, state));
+                        return Observable.of(respond(<ServerListeningResponse>[null, state.server.listening], state));
                     }
-                    return Observable.of(respond(false, state));
+                    return Observable.of(respond(<ServerListeningResponse>[null, false], state));
                 });
             }
         },
