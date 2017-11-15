@@ -1,11 +1,12 @@
 import * as actorJS from 'aktor-js';
-import {fromJS, Map} from "immutable";
-import {BsOptions, defaultOptions, DefaultOptions, DefaultOptionsMethods} from "./options";
+import {Map} from "immutable";
+import {BsOptions, DefaultOptions, DefaultOptionsMethods} from "./options";
 import {ActorRef} from "aktor-js/dist/ActorRef";
-import {Browsersync, Methods, BrowsersyncInitResponse} from "./Browsersync";
+import {Browsersync, Methods} from "./Browsersync";
 import {updateOption, getOptionsJS} from "./Browsersync.patterns";
 import {SystemActor} from "aktor-js/dist/SystemActor";
 import {Observable} from "rxjs";
+import {BrowsersyncInit} from "./Browsersync/Init.message";
 
 const debug = require('debug')('bs:system');
 
@@ -17,7 +18,7 @@ export interface CreateReturn {
     bs: ActorRef,
     system: SystemActor,
     name: string,
-    init(options: object): Observable<BrowsersyncInitResponse>
+    init(options: object): Observable<BrowsersyncInit.Response>
     stop(): Observable<string>
 }
 

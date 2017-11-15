@@ -6,7 +6,6 @@ import compression from './plugins/compression';
 import {fromJS, List, Map} from "immutable";
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {Options} from "./index";
-import {BrowsersyncInitOutput, BrowsersyncInitResponse} from "./Browsersync";
 import {RespModifier, RespModifierMiddlewareInput} from "./resp-modifier";
 import {addMissingOptions} from "./options";
 import {clientScript, scriptTags} from "./connect-utils";

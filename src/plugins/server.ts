@@ -28,6 +28,7 @@ export interface Middleware {
     route: string
     handle: Function
 }
+
 export interface InitIncoming {
     middleware: Middleware[]
     options: Options
@@ -98,10 +99,16 @@ export enum ServerMessages {
 }
 
 export namespace ServerInit {
-    export interface Response  {
-        server: Server|null,
-        errors: Error[]
-    }
+    export type Response = [null|Error[], Server|null]
+}
+export namespace ServerListening {
+    export type Response = [null, boolean|null];
+}
+export namespace ServerStop {
+    export type Response = [null, string];
+}
+export namespace ServerAddress {
+    export type Response = [null, null|string];
 }
 
 export type ServerListeningResponse = [null, boolean];
@@ -114,13 +121,13 @@ export function BrowserSyncServer(address: string, context: IActorContext) {
         },
         initialState: {server: null, app: null},
         methods: {
-            [ServerMessages.Address]: function(stream: IMethodStream<void, any, ServerState>) {
-                return stream.map(({payload, respond, state}) => {
+            [ServerMessages.Address]: function(stream: IMethodStream<any, ServerAddress.Response, ServerState>) {
+                return stream.map(({respond, state}) => {
                     const {server} = state;
                     if (server && server.listening) {
-                        return respond(server.address(), state);
+                        return respond([null, server.address()], state);
                     }
-                    return respond(null, state);
+                    return respond([null, null], state);
                 });
             },
             [ServerMessages.Init]: function (stream: IMethodStream<InitIncoming, ServerInit.Response, ServerState>) {
@@ -138,7 +145,7 @@ export function BrowserSyncServer(address: string, context: IActorContext) {
                                     return replaceMiddleware(middleware, state.app)
                                         .do(x => console.log('replacing middleware'))
                                         .map((app) => {
-                                            return respond({server, errors: []}, {server, app, scheme});
+                                            return respond([null, server], {server, app, scheme});
                                         })
                                 }   
                             }
@@ -161,29 +168,29 @@ export function BrowserSyncServer(address: string, context: IActorContext) {
                                         .mapTo([server, app]);
                                 })
                                 .map(([server, app]) => {
-                                    return respond({server, errors: []}, {server, app, scheme});
+                                    return respond([null, server], {server, app, scheme});
                                 })
                         })
                         .catch(err => {
-                            return of(respond({server: null, errors: [err]}, state));
+                            return of(respond([[err], null], state));
                         });
                 });
             },
-            [ServerMessages.Stop]: function(stream: IMethodStream<InitIncoming, string, ServerState>) {
+            [ServerMessages.Stop]: function(stream: IMethodStream<InitIncoming, ServerStop.Response, ServerState>) {
                 return stream.flatMap(({payload, respond, state}) => {
                     const {server} = state;
                     if (server && server.listening) {
                         server.close();
                     }
-                    return Observable.of(respond('Done!', {server: null, app: null, scheme: null}));
+                    return Observable.of(respond([null, 'Done!'], {server: null, app: null, scheme: null}));
                 })
             },
-            [ServerMessages.Listening]: function(stream) {
+            [ServerMessages.Listening]: function(stream: IMethodStream<any, ServerListening.Response, ServerState> ) {
                 return stream.flatMap(({state, respond}) => {
                     if (state.server) {
-                        return Observable.of(respond(<ServerListeningResponse>[null, state.server.listening], state));
+                        return Observable.of(respond([null, state.server.listening], state));
                     }
-                    return Observable.of(respond(<ServerListeningResponse>[null, false], state));
+                    return Observable.of(respond([null, false], state));
                 });
             }
         },
