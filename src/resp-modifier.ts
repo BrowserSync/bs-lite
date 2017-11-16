@@ -37,8 +37,10 @@ export function respModifier(rules: RewriteRule[], options: Map<string, any>): M
         const toApply = rules
             .filter((rule) => {
 
-                if (rule.predicates.length) {
-                    return rule.predicates.every((x) => x.call(null, req, res, options));
+                const predicates = [].concat(rule.predicates).filter(Boolean);
+
+                if (predicates.length) {
+                    return predicates.every((x) => x.call(null, req, res, options));
                 }
 
                 if (!headerHasHtmlAccept(req)) {
