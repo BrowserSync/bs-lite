@@ -4,7 +4,6 @@ import httpProxy = require('http-proxy');
 import {ServerOptions} from 'http-proxy';
 import NodeURL  = require('url');
 import * as http from "http";
-import ErrorCallback = require("http-proxy");
 import {parse} from "url";
 import {checkCookies, proxyRewriteLinks} from "./proxy-utils";
 import {fromJS, List} from "immutable";
@@ -35,7 +34,7 @@ export interface ProxyItem {
     cookies?: CookieOptions
     proxyReq?: ProxyReqFn[]
     proxyRes?: ProxyResFn[]
-    proxyErr?: ErrorCallback[]
+    proxyErr?: ProxyErrFn[]
 }
 
 export type ProxyReqFn = (proxyReq: http.ClientRequest,
@@ -46,6 +45,8 @@ export type ProxyReqFn = (proxyReq: http.ClientRequest,
 export type ProxyResFn = (proxyRes: http.IncomingMessage,
                           req: http.IncomingMessage,
                           res: http.ServerResponse) => void;
+
+export type ProxyErrFn = (error: Error) => void;
 
 export function createItemFromString(input: string): ProxyItem {
     const url = parse(input);
@@ -69,7 +70,7 @@ export function createItem(incoming: ProxyItem): ProxyItem {
         ...incoming,
         proxyReq: [].concat(incoming.proxyReq).filter(Boolean),
         proxyRes: [].concat(incoming.proxyRes).filter(Boolean),
-        proxyErr: [].concat(incoming.proxyErr).filter(Boolean),
+        proxyErr: [(err) => {/* noop */}].concat(incoming.proxyErr).filter(Boolean),
         options: {
             ...defaultHttpProxyOptions,
             ...incoming.options,
@@ -84,6 +85,10 @@ export function createItem(incoming: ProxyItem): ProxyItem {
 export function createOneMiddleware(proxyItem: ProxyItem): Middleware {
 
     const proxy = httpProxy.createProxyServer(proxyItem.options);
+
+    proxy.on('error', function(err) {
+        proxyItem.proxyErr.forEach(fn => fn(err));
+    });
 
     if (proxyItem.cookies.stripDomain) {
         proxy.on('proxyRes', checkCookies);
