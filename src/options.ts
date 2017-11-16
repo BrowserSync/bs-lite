@@ -3,8 +3,8 @@ import {Middleware} from "./plugins/Server/server";
 import {Set, fromJS} from "immutable";
 import {RewriteRule} from "./rewrite-rules";
 import {clientScript, scriptTags} from "./connect-utils";
-import {ProxyOptionsInput} from "./plugins/proxy";
 import {doesNotContainDisableParam, headerHasHtmlAccept} from "./utils";
+import {ProxyOptionsInput} from "./plugins/Proxy/Options.message";
 
 const {of} = Observable;
 

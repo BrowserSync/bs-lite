@@ -1,5 +1,15 @@
 import {isAbsolute, join} from "path";
 import {readFileSync} from "fs";
+var proto = Object.prototype;
+var gpo = Object.getPrototypeOf;
+
+export function isPojo (obj) {
+    if (obj === null || typeof obj !== "object") {
+        return false;
+    }
+    return gpo(obj) === proto;
+}
+
 export function template(string, obj) {
     return string.replace(/\{\{(.+?)\}\}/g, function () {
         return obj[arguments[1]] || '';

@@ -52,7 +52,8 @@ export function initMessageHandler(context: IActorContext) {
                                 server: state.server,
                                 options: mergedOptions,
                             };
-                            return of(respond([[err], null], nextState));
+                            const flattened = [].concat(err);
+                            return of(respond([flattened, null], nextState));
                         })
                 })
         })

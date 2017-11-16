@@ -53,6 +53,6 @@
   },
   "include": ["src/*"],
   "exclude": [
-    "client/src/*.ts"
+    "client/src/**"
   ]
 }
