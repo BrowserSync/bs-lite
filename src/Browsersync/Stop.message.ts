@@ -1,5 +1,5 @@
 import {Observable} from 'rxjs';
-import {ServerListeningResponse, ServerMessages} from "../plugins/server";
+import {ServerMessages} from "../plugins/Server/server";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {BrowserSyncState} from "../Browsersync";
 

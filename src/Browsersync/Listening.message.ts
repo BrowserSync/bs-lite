@@ -1,6 +1,7 @@
 import {Observable} from 'rxjs';
-import {ServerListeningResponse, ServerMessages} from "../plugins/server";
+import {ServerMessages} from "../plugins/Server/server";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
+import {ServerListening} from "../plugins/Server/Listening.message";
 
 export namespace BrowsersyncListening {
     export type Response = [null, boolean];
@@ -9,6 +10,6 @@ export namespace BrowsersyncListening {
 export function listeningHandler(stream: IMethodStream<any, BrowsersyncListening.Response, any>) {
     return stream.flatMap(({respond, state}) => {
         return state.server.ask(ServerMessages.Listening)
-            .map((listening: ServerListeningResponse) => respond(listening, state));
+            .map((listening: ServerListening.Response) => respond(listening, state));
     });
 }

@@ -1,5 +1,5 @@
 import {Observable} from 'rxjs';
-import {Middleware} from "./plugins/server";
+import {Middleware} from "./plugins/Server/server";
 import {Set, fromJS} from "immutable";
 import {RewriteRule} from "./rewrite-rules";
 import {clientScript, scriptTags} from "./connect-utils";

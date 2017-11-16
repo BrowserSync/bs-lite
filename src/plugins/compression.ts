@@ -1,4 +1,4 @@
-import {Middleware} from "./server";
+import {Middleware} from "./Server/server";
 const debug = require('debug')('bs:compression');
 
 export default function Compression() {

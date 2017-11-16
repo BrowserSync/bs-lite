@@ -1,10 +1,10 @@
 import {Observable} from 'rxjs';
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {Options} from "../index";
-import {join, parse, ParsedPath} from "path";
-import {Middleware, MiddlewareResponse} from "./server";
-import {IMethodStream, IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
-import {normPath, Right} from "../utils";
+import {parse, ParsedPath} from "path";
+import {Middleware} from "./Server/server";
+import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
+import {normPath} from "../utils";
 const debug = require('debug')('bs:serveStatic');
 
 export type SSIncomingType = string|string[]|SSIncomingObject|SSIncomingObject[];

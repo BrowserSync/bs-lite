@@ -1,14 +1,13 @@
 import {Observable, BehaviorSubject} from 'rxjs';
 import serveStatic, {SSMiddlewarePayload} from './plugins/serveStatic';
-import {IServerOptions, Middleware, MiddlewareResponse, ServerInit, ServerMessages} from './plugins/server';
+import {Middleware} from './plugins/Server/server';
 import clientJS from './plugins/clientJS';
 import compression from './plugins/compression';
-import {fromJS, List, Map} from "immutable";
+import {fromJS} from "immutable";
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {Options} from "./index";
 import {RespModifier, RespModifierMiddlewareInput} from "./resp-modifier";
 import {addMissingOptions} from "./options";
-import {clientScript, scriptTags} from "./connect-utils";
 import {BrowsersyncProxy, askForProxyMiddleware, getProxyOption, askForProxyOptions} from "./plugins/proxy";
 import {RewriteRule} from "./rewrite-rules";
 import {ActorRef} from "aktor-js/dist/ActorRef";

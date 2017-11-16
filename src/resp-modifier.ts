@@ -5,7 +5,7 @@ import {MiddlewareFn, RewriteRule, TransformFn, createOne} from './rewrite-rules
 import debug = require('debug');
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {Options} from "./index";
-import {Middleware} from "./plugins/server";
+import {Middleware} from "./plugins/Server/server";
 import {headerHasHtmlAccept} from "./utils";
 const respModDebug = debug('bs:resp-mod');
 

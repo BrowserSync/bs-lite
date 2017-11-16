@@ -1,5 +1,5 @@
 import {Observable} from 'rxjs/Observable';
-import {Middleware, MiddlewareResponse} from "./server";
+import {Middleware, MiddlewareResponse} from "./Server/server";
 import httpProxy = require('http-proxy');
 import {ServerOptions} from 'http-proxy';
 import NodeURL  = require('url');
