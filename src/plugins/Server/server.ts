@@ -11,21 +11,30 @@ import {listeningHandler} from "./Listening.message";
 const debug = require('debug')('bs:server');
 
 export interface MiddlewareResponse {
-    mw?: Middleware[]
-    options?: Map<string, any>
+    mw?: Middleware[],
+    options?: Map<string, any>,
+}
+
+export enum MiddlewareTypes {
+    proxy = 'proxy',
+    serveStatic = 'serveStatic',
+    clientJs = 'clientJs',
+    rewriteRules = 'rewriteRules',
+    other = 'other',
 }
 
 export interface Middleware {
-    id?: string
-    via?: string
-    route: string
-    handle: Function
+    id?: string,
+    via?: string,
+    route: string,
+    handle: Function,
+    type: MiddlewareTypes,
 }
 
 export interface ServerState { 
-    server: any
-    app: any
-    scheme: Scheme
+    server: any,
+    app: any,
+    scheme: Scheme,
 }
 
 export enum ServerMessages {

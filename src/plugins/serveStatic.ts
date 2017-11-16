@@ -2,7 +2,7 @@ import {Observable} from 'rxjs';
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {Options} from "../index";
 import {parse, ParsedPath} from "path";
-import {Middleware} from "./Server/server";
+import {Middleware, MiddlewareTypes} from "./Server/server";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {normPath} from "../utils";
 const debug = require('debug')('bs:serveStatic');
@@ -122,6 +122,7 @@ function createMiddleware(options: SSIncomingType, cwd: string): Middleware[] {
                     return {
                         id: `Serve Static (${index}-${routeIndex}-${dirIndex})`,
                         route,
+                        type: MiddlewareTypes.serveStatic,
                         handle: require('serve-static')(dir.resolved)
                     }
                 }));

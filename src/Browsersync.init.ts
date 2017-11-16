@@ -14,35 +14,6 @@ import {ActorRef} from "aktor-js/dist/ActorRef";
 
 const debug = require('debug')('bs:system');
 
-const pluginWhitelist = {
-    'serveStatic': serveStatic,
-    'clientJS': clientJS,
-    'compression': compression,
-    'proxy': BrowsersyncProxy,
-    'rewriteRules': RespModifier,
-};
-
-const corePlugins = [
-    'compression',
-    'proxy',
-    'clientJS',
-    'rewriteRules',
-];
-
-const optionals = [
-    'serveStatic',
-];
-
-function getActors(order, options) {
-    return order.map(name => {
-        return {
-            name,
-            input: options[name],
-            factory: pluginWhitelist[name],
-        }
-    }).filter(Boolean);
-}
-
 export type GetActorFn = (name: string, factory: Function) => ActorRef;
 function _getActor(context): GetActorFn {
     return (name, factory) => {
@@ -70,12 +41,19 @@ export function getOptionsAndMiddleware(context: IActorContext, options: Options
         return Observable.zip(
             proxyActor,
             ((proxyResp) => {
-                return opts.updateIn(['rewriteRules'], prev => {
-                    if (proxyResp.rewriteRules.length) {
-                        return prev.concat(fromJS(proxyResp.rewriteRules));
-                    }
-                    return prev;
-                });
+                return opts
+                    .updateIn(['rewriteRules'], prev => {
+                        if (proxyResp.rewriteRules.length) {
+                            return prev.concat(fromJS(proxyResp.rewriteRules));
+                        }
+                        return prev;
+                    })
+                    .update('scheme', scheme => {
+                        if (proxyResp.scheme === 'https') {
+                            return proxyResp.scheme;
+                        }
+                        return scheme;
+                    });
             })
         )
     })
@@ -110,7 +88,12 @@ export function getOptionsAndMiddleware(context: IActorContext, options: Options
                 return mws.reduce((acc: Middleware[], item: Middleware[]) => acc.concat(item), [])
             }),
             Observable.of(opts),
-            (middleware, options) => ({middleware, options})
+            (middleware, options) => {
+                return {
+                    middleware,
+                    options
+                }
+            }
         )
     })
 }

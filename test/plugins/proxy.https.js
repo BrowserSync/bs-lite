@@ -23,6 +23,26 @@ it('can proxy https site', function (done) {
         .subscribe(() => done(), err => done(err));
 });
 
+it('can auto-proxy https site when no scheme given', function (done) {
+
+    const {app, server, url} = getHttpsApp();
+
+    app.use('/', function(req, res) {
+        res.end(`<h1><a href="${url}/about">About</a></h1>`);
+    });
+
+    const asserts = (resp, options) => {
+        const bsPort = options.getIn(['server', 'port']);
+        const expectedUrl = `//127.0.0.1:${bsPort}`;
+        const expected = `<h1><a href="${expectedUrl}/about">About</a></h1>`;
+        assert.equal(resp.text, expected);
+    };
+
+    serverAssert({proxy: [url]}, '/', asserts)
+        .do(() => server.close())
+        .subscribe(() => done(), err => done(err));
+});
+
 it('can proxy https site with multiple proxies', function (done) {
 
     const {app, server, url} = getHttpsApp();

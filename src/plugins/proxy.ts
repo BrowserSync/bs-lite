@@ -1,5 +1,5 @@
 import {Observable} from 'rxjs/Observable';
-import {Middleware, MiddlewareResponse} from "./Server/server";
+import {Middleware, MiddlewareResponse, MiddlewareTypes} from "./Server/server";
 import httpProxy = require('http-proxy');
 import {ServerOptions} from 'http-proxy';
 import NodeURL  = require('url');
@@ -97,6 +97,7 @@ export function createOneMiddleware(proxyItem: ProxyItem): Middleware {
         id: `Browsersync proxy for ${proxyItem.target}`,
         via: `Browsersync core`,
         route: '',
+        type: MiddlewareTypes.proxy,
         handle: (req, res) => {
             proxy.web(req, res, {target: proxyItem.target});
         }
@@ -118,21 +119,30 @@ export function BrowsersyncProxy(address, context) {
     return {
         receive(name, option, respond) {
             if (name === 'options') {
-                const items = option.map(option => {
+                const proxyItems = option.map(option => {
                     if (typeof option === 'string') {
-                        const item = createItemFromString(option);
-                        return proxyRewriteLinks(item.url);
+                        return createItemFromString(option);
                     } else {
                         if (!option.target || typeof option.target !== 'string') {
                             console.log('Incoming proxy option must contain at least a `target` property');
                             return null;
                         }
-                        const item = createItemFromObject(option);
-                        return proxyRewriteLinks(item.url);
+                        return createItemFromObject(option);
                     }
-                }).filter(Boolean);
+                });
+
+                const hasHttps = proxyItems
+                    .filter(Boolean)
+                    .some(x => x.url.protocol === 'https:');
+
+                const items = proxyItems
+                    .filter(Boolean)
+                    .map(item => proxyRewriteLinks(item.url));
+
+
                 respond({
-                    rewriteRules: items
+                    rewriteRules: items,
+                    scheme: hasHttps ? 'https' : 'http',
                 });
                 return;
             }

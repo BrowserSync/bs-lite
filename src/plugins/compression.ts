@@ -1,4 +1,4 @@
-import {Middleware} from "./Server/server";
+import {Middleware, MiddlewareTypes} from "./Server/server";
 const debug = require('debug')('bs:compression');
 
 export default function Compression() {
@@ -12,6 +12,7 @@ export default function Compression() {
                     const mw : Middleware = {
                         id: 'Compression',
                         route: '',
+                        type: MiddlewareTypes.other,
                         handle: require('compression')()
                     };
                     respond(mw);
