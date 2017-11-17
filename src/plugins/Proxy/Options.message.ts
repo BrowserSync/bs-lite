@@ -9,7 +9,7 @@ import {proxyRewriteLinks} from "../proxy-utils";
 import {isPojo} from "../../utils";
 import {RewriteRule} from "../../rewrite-rules";
 import {Scheme} from "../../options";
-import {BSError, BSErrorTypes} from "../../errors";
+import {BSError, BSErrorLevel, BSErrorTypes, ProxyInvalidInputError} from "../../errors";
 
 const {of} = Observable;
 
@@ -58,7 +58,6 @@ export type ProxyResFn = (proxyRes: http.IncomingMessage,
                           res: http.ServerResponse) => void;
 
 export type ProxyErrFn = (error: Error) => void;
-
 export type ProxyResult = {errors: BSError[], item?: ProxyItem };
 
 export function optionsHandler(stream$: IMethodStream<any, ProxyOptions.Response, any>) {
@@ -76,16 +75,19 @@ export function optionsHandler(stream$: IMethodStream<any, ProxyOptions.Response
                         item: createItemFromObject(option)
                     }
                 }
-                return {
+                const error: ProxyInvalidInputError = {
+                    type: BSErrorTypes.ProxyInvalidInput,
+                    level: BSErrorLevel.Fatal,
                     errors: [{
-                        type: BSErrorTypes.ProxyInvalidInput,
-                        errors: [{
-                            error: new Error('Incoming proxy option must contain at least a `target` property'),
-                            meta: {
-                                input: option
-                            }
-                        }]
-                    }],
+                        error: new Error('Incoming proxy option must contain at least a `target` property'),
+                        meta: {
+                            input: option,
+                            examples: ['http://example.com', 'https://example.com']
+                        }
+                    }]
+                };
+                return {
+                    errors: [error],
                     item: option,
                 }
             }
