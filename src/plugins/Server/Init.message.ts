@@ -7,7 +7,7 @@ import {Server as HttpsServer} from "https";
 import {Options} from "../../index";
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {Scheme} from "../../options";
-import {PortDetectPayload, PortDetectResponse, PortMessages, portsActorFactory} from "../../ports";
+import {PortDetect, PortDetectMessages, portsActorFactory} from "../../ports";
 
 import connect = require('connect');
 import http = require('http');
@@ -90,19 +90,20 @@ function getMaybePortActor(context, server, options) {
     }
 
     const portActor = context.actorOf(portsActorFactory);
-    const payload: PortDetectPayload = {
+    const payload: PortDetect.Input = {
         port: optionPort,
         strict: options.get('strict'),
         name: 'core'
     };
 
     return portActor
-        .ask(PortMessages.Detect, payload)
-        .flatMap((resp: PortDetectResponse) => {
-            if (resp.errors.length) {
-                return Observable.throw(resp.errors[0]);
+        .ask(PortDetectMessages.Detect, payload)
+        .flatMap((resp: PortDetect.Response) => {
+            const [errors, port] = resp;
+            if (errors && errors.length) {
+                return Observable.throw(errors[0]);
             }
-            return of(([resp.port, server]))
+            return of(([port, server]))
         });
 }
 
