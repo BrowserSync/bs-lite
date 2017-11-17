@@ -2,7 +2,7 @@ require('source-map-support').install();
 const assert = require('assert');
 const {BSErrorType, BSErrorLevel, printErrors} = require('../../');
 
-it.only('handles incorrect input type (setup error)', function (done) {
+it('handles incorrect input type (setup error)', function (done) {
     const browserSync = require('../../');
 
     const {bs, init, stop} = browserSync.create();

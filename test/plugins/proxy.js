@@ -1,14 +1,8 @@
 require('source-map-support').install();
-const {BrowsersyncProxy, createFromString, createItemFromString} = require('../../dist/plugins/proxy');
-const {DefaultOptions} = require('../../dist/options');
-const {createSystem, fromOptions} = require('../../dist');
-const {fromJS, Map} = require('immutable');
 const assert = require('assert');
 const http = require("http");
 const connect = require("connect");
 const serverAssert = require("../utils").serverAssert;
-const {init, Methods} = require('../../');
-const {createWithOptions} = require('../../dist/Browsersync.init');
 
 it('proxy', function (done) {
     const app = connect();
