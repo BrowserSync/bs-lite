@@ -5,7 +5,7 @@ import NodeURL  = require('url');
 import * as http from "http";
 import {parse} from "url";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
-import {proxyRewriteLinks} from "../proxy-utils";
+import {proxyRewriteLinks} from "./proxy-utils";
 import {isPojo} from "../../utils";
 import {RewriteRule} from "../../rewrite-rules";
 import {Scheme} from "../../options";

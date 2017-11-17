@@ -1,6 +1,6 @@
 import {Observable} from 'rxjs';
 import httpProxy = require('http-proxy');
-import {checkCookies} from "../proxy-utils";
+import {checkCookies} from "./proxy-utils";
 import {createItemFromObject, createItemFromString, ProxyItem, ProxyOptionsInput} from "./Options.message";
 import {Middleware, MiddlewareTypes} from "../Server/Server";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";

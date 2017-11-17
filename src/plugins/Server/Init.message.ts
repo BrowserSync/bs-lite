@@ -13,7 +13,7 @@ import connect = require('connect');
 import http = require('http');
 import https = require('https');
 import {Sockets, SocketsInitPayload, SocketsMessages} from "../../sockets";
-import {getHttpsOptions} from "../server-utils";
+import {getHttpsOptions} from "./server-utils";
 
 const { of } = Observable;
 

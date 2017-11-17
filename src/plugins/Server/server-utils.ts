@@ -3,7 +3,7 @@ import {readFileSync} from "fs";
 import {fromJS, List, Map} from 'immutable';
 
 function certPath(file) {
-    return join(__dirname, '..', '..', 'server', 'certs', file);
+    return join(__dirname, '..', '..', '..', 'server', 'certs', file);
 }
 
 export function getHttpsOptions(options): Map<string, any> {

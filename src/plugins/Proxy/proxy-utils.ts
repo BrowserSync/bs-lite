@@ -1,7 +1,7 @@
-import {createOne, RewriteRule} from "../rewrite-rules";
+import {createOne, RewriteRule} from "../../rewrite-rules";
 import NodeURL = require('url');
 import * as http from "http";
-import {doesNotContainDisableParam, headerHasHtmlAccept} from "../utils";
+import {doesNotContainDisableParam, headerHasHtmlAccept} from "../../utils";
 const url = require('url');
 
 export function proxyRewriteLinks(userServer: NodeURL.Url): RewriteRule {
