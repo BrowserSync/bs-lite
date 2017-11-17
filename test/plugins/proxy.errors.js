@@ -1,17 +1,8 @@
 require('source-map-support').install();
-const {BrowsersyncProxy, createFromString, createItemFromString} = require('../../dist/plugins/proxy');
-const {DefaultOptions} = require('../../dist/options');
-const {createSystem, fromOptions} = require('../../dist');
-const {fromJS, Map} = require('immutable');
 const assert = require('assert');
-const http = require("http");
-const connect = require("connect");
-const serverAssert = require("../utils").serverAssert;
-const {init, Methods} = require('../../');
-const {createWithOptions} = require('../../dist/Browsersync.init');
-const {BSErrorTypes} = require('../../dist/errors');
+const {BSErrorType, BSErrorLevel, printErrors} = require('../../');
 
-it('handles incorrect input type (setup error)', function (done) {
+it.only('handles incorrect input type (setup error)', function (done) {
     const browserSync = require('../../');
 
     const {bs, init, stop} = browserSync.create();
@@ -20,7 +11,17 @@ it('handles incorrect input type (setup error)', function (done) {
         .subscribe(([errors, output]) => {
             const first = errors[0];
             const type = first.type;
-            assert.equal(type, BSErrorTypes.ProxyInvalidInput);
+            const level = first.level;
+            assert.equal(type, BSErrorType.ProxyInvalidInput);
+            assert.equal(level, BSErrorLevel.Fatal);
+            assert.equal([
+            `   Error Type: ProxyInvalidInput`,
+            `  Error Level: Fatal`,
+            `Error Message: Incoming proxy option must contain at least a \`target\` property`,
+            `   Your Input: 1`,
+            `     Examples: 'http://example.com' or 'https://example.com'`,
+        ].join('\n'), printErrors(errors));
+            // console.log(printErrors(errors));
             // console.log('   Error Type:', first.type);
             // console.log('Error Message:', first.errors[0].error.message);
             // console.log('   Your Input:', first.errors[0].meta.input);

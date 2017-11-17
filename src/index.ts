@@ -7,6 +7,7 @@ import {updateOption, getOptionsJS} from "./Browsersync.patterns";
 import {SystemActor} from "aktor-js/dist/SystemActor";
 import {Observable} from "rxjs";
 import {BrowsersyncInit} from "./Browsersync/Init.message";
+import {BSErrorLevel, BSErrorType, printErrors} from './errors';
 
 const debug = require('debug')('bs:system');
 
@@ -45,4 +46,7 @@ export {
     getOptionsJS,
     createSystem,
     Methods,
+    BSErrorLevel,
+    BSErrorType,
+    printErrors,
 };

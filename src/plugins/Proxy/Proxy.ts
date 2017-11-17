@@ -3,7 +3,7 @@ import httpProxy = require('http-proxy');
 import {Middleware, MiddlewareTypes} from "../Server/server";
 import {RewriteRule} from "../../rewrite-rules";
 import {Scheme} from "../../options";
-import {BSError, BSErrorTypes} from "../../errors";
+import {BSError, BSErrorType} from "../../errors";
 import {List} from "immutable";
 import {GetActorFn} from "../../Browsersync.init";
 import {

@@ -9,7 +9,7 @@ import {proxyRewriteLinks} from "../proxy-utils";
 import {isPojo} from "../../utils";
 import {RewriteRule} from "../../rewrite-rules";
 import {Scheme} from "../../options";
-import {BSError, BSErrorLevel, BSErrorTypes, ProxyInvalidInputError} from "../../errors";
+import {BSError, BSErrorLevel, BSErrorType, ProxyInvalidInputError} from "../../errors";
 
 const {of} = Observable;
 
@@ -76,13 +76,15 @@ export function optionsHandler(stream$: IMethodStream<any, ProxyOptions.Response
                     }
                 }
                 const error: ProxyInvalidInputError = {
-                    type: BSErrorTypes.ProxyInvalidInput,
+                    type: BSErrorType.ProxyInvalidInput,
                     level: BSErrorLevel.Fatal,
                     errors: [{
                         error: new Error('Incoming proxy option must contain at least a `target` property'),
-                        meta: {
-                            input: option,
-                            examples: ['http://example.com', 'https://example.com']
+                        meta: () => {
+                            return [
+                                `   Your Input: ${option}`,
+                                `     Examples: 'http://example.com' or 'https://example.com'`
+                            ];
                         }
                     }]
                 };
