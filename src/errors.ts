@@ -4,6 +4,8 @@ export enum BSErrorLevel {
 }
 export enum BSErrorType {
     ProxyInvalidInput = 'ProxyInvalidInput',
+    PortNotAvailable = 'PortNotAvailable',
+    PortDetectError = 'PortDetectError',
 }
 
 export type BSError<T = any> = {
@@ -16,6 +18,8 @@ export type BSError<T = any> = {
 }
 
 export type ProxyInvalidInputError = BSError<() => string[]>
+export type PortNotAvailableError = BSError<() => string[]>
+export type PortDetectError = BSError;
 
 export function printErrors(errors: BSError[]): string {
     return errors.map((error: BSError) => {

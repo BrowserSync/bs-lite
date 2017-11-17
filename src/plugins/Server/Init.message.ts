@@ -103,7 +103,7 @@ function getMaybePortActor(context, server, options) {
             if (errors && errors.length) {
                 return Observable.throw(errors[0]);
             }
-            return of(([port, server]))
+            return of([port, server])
         });
 }
 

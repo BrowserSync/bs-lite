@@ -1,12 +1,13 @@
-const browserSync = require('../');
+const {create, printErrors} = require('../');
 // const {Methods} = require('../');
 
-const {bs, init, stop} = browserSync.create();
+const {bs, init, stop} = create();
 
-init({proxy: ['http://example.com']})
+init({proxy: ['http://example.com'], port: 3000})
     .subscribe(([errors, output]) => {
-        if (errors) {
-            return console.log('has errors', errors);
+        if (errors && errors.length) {
+            console.log(printErrors(errors));
+            return;
         }
         console.log(output.server.address());
     });

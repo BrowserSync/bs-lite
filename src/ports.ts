@@ -3,8 +3,10 @@
 import {Observable} from 'rxjs/Observable';
 import {Options} from "./index";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
-import {BSError} from "./errors";
-const {of, zip} = Observable;
+import {BSError, BSErrorLevel, BSErrorType, PortDetectError, PortNotAvailableError} from "./errors";
+import {ActorRef} from "aktor-js/dist/ActorRef";
+
+const {of} = Observable;
 const debug = require('debug')('bs:ports');
 const portscanner = require('portscanner').findAPortNotInUse;
 
@@ -26,37 +28,80 @@ export function portsActorFactory(address, context) {
         methods: {
             [PortDetectMessages.Detect]: function(stream: IMethodStream<PortDetect.Input, PortDetect.Response, any>) {
                 return stream.switchMap(({payload, respond}) => {
-                    return getPort(payload.port, payload.strict, payload.name)
-                        .map(port => respond([null, port]))
-                        .catch(err => {
-                            return Observable.of(respond([err, null]))
-                        });
+                    const findPortActor = portActor(context);
+                    const findPayload = {
+                        start: payload.port,
+                        end: undefined,
+                        opts: { host: 'localhost', timeout: 1000 }
+                    };
+                    return findPortActor.ask('findFreePort', findPayload)
+                        .flatMap(function([err, port]) {
+                            debug(`+ success ${port}`);
+                            // generic error where port could not be detected
+                            if (err) {
+                                const outgoingError: PortDetectError = {
+                                    type: BSErrorType.PortDetectError,
+                                    level: BSErrorLevel.Fatal,
+                                    errors: [{error: err}]
+                                };
+                                return of(respond([[outgoingError], null]));
+                            }
+                            // generic error where port could not be detected
+                            if (payload.strict && payload.port !== port) {
+                                const outgoingError: PortNotAvailableError = {
+                                    type: BSErrorType.PortNotAvailable,
+                                    level: BSErrorLevel.Fatal,
+                                    errors: [
+                                        {
+                                            error: new Error('Strict Mode: Port ' + payload.port + ' not available'),
+                                            meta: () => [
+                                                `Error Details: You wanted to use port '${payload.port}' - but it wasn't available.`,
+                                                `               This usually means some other service is already listening on that port.`
+                                            ]
+                                        }
+                                    ]
+                                };
+                                return of(respond([[outgoingError], null]));
+                            }
+
+                            // Yay! this is the success case
+                            return of(respond([null, port]));
+                        })
                 })
             }
         }
     }
 }
 
-function findPort(start, strict, opts) {
-    return Observable.create(obs => {
-        portscanner(start, strict, opts, function (err, port) {
-            if (err) {
-                return obs.error(err);
-            }
-            obs.next(port);
-            obs.complete();
-        });
-    });
+function portActor(context): ActorRef {
+    const match = context.actorSelection('/system/findPort');
+
+    if (match.length > 0) {
+        return match[0];
+    }
+
+    return context.actorOf(actorWrap(findPort));
 }
 
-export function getPort(start, strict, name) {
-    debug(`> trying  ${start} for ${name}`);
-    return findPort(start, undefined, {host: 'localhost', timeout: 1000})
-        .flatMap(function(port) {
-            debug(`+ success ${port} for ${name}`);
-            if (strict && start !== port) {
-                return Observable.throw('Strict Mode: Port ' + start + ' not available');
+export function actorWrap(fn) {
+    return function(address, context) {
+        return {
+            receive(name, payload, respond) {
+                fn(payload).take(1).subscribe((res) => {
+                    respond(res);
+                });
             }
-            return of(port);
+        }
+    }
+}
+
+function findPort({start, end, opts}) {
+    return Observable.create(obs => {
+        portscanner(start, undefined, opts, function (err, port) {
+            if (err) {
+                obs.next([err, null]);
+            }
+            obs.next([null, port]);
         });
+    }).take(1);
 }
