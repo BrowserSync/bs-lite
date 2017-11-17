@@ -1,6 +1,6 @@
 import {Observable} from 'rxjs/Observable';
 import httpProxy = require('http-proxy');
-import {Middleware, MiddlewareTypes} from "../Server/server";
+import {Middleware, MiddlewareTypes} from "../Server/Server";
 import {RewriteRule} from "../../rewrite-rules";
 import {Scheme} from "../../options";
 import {BSError, BSErrorType} from "../../errors";

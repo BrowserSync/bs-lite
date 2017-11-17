@@ -1,6 +1,6 @@
 import {Observable, BehaviorSubject} from 'rxjs';
 import serveStatic, {SSMiddlewarePayload} from './plugins/serveStatic';
-import {Middleware} from './plugins/Server/server';
+import {Middleware} from './plugins/Server/Server';
 import clientJS from './plugins/clientJS';
 import compression from './plugins/compression';
 import {fromJS} from "immutable";

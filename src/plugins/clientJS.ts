@@ -1,6 +1,6 @@
 import {Observable} from 'rxjs';
 import {IActorContext} from "aktor-js/dist/ActorContext";
-import {Middleware, MiddlewareTypes} from "./Server/server";
+import {Middleware, MiddlewareTypes} from "./Server/Server";
 import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
 import {clientScript, socketConnector} from "../connect-utils";
 import {Options} from "../index";

@@ -1,5 +1,5 @@
 import {Observable} from 'rxjs';
-import {Middleware, ServerState} from "./server";
+import {Middleware, ServerState} from "./Server";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 
 import {Server} from "http";

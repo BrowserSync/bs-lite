@@ -1,5 +1,5 @@
 import {Observable} from 'rxjs';
-import {ServerState} from "./server";
+import {ServerState} from "./Server";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 
 export namespace ServerStop {

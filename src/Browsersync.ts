@@ -3,7 +3,7 @@ import {IActorContext} from "aktor-js/dist/ActorContext";
 import {DefaultOptions, DefaultOptionsMethods} from "./options";
 import {Map} from "immutable";
 import {getOptionsAndMiddleware} from "./Browsersync.init";
-import {BrowserSyncServer, ServerMessages} from "./plugins/Server/server";
+import {BrowserSyncServer, ServerMessages} from "./plugins/Server/Server";
 import {Options} from "./index";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {ActorRef} from "aktor-js/dist/ActorRef";

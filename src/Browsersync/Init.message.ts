@@ -3,7 +3,7 @@ import {BrowserSyncState} from "../Browsersync";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {DefaultOptions, DefaultOptionsMethods} from "../options";
 import {getOptionsAndMiddleware} from "../Browsersync.init";
-import {ServerMessages} from "../plugins/Server/server";
+import {ServerMessages} from "../plugins/Server/Server";
 import * as http from "http";
 import {Options} from "../index";
 import {IActorContext} from "aktor-js/dist/ActorContext";

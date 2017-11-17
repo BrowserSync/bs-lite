@@ -1,5 +1,5 @@
 import {Observable} from 'rxjs';
-import {ServerMessages} from "../plugins/Server/server";
+import {ServerMessages} from "../plugins/Server/Server";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {ServerListening} from "../plugins/Server/Listening.message";
 
