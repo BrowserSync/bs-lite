@@ -3,7 +3,7 @@ import serveStatic, {SSMiddlewarePayload} from './plugins/serveStatic';
 import {Middleware} from './plugins/Server/Server';
 import clientJS from './plugins/clientJS';
 import compression from './plugins/compression';
-import {fromJS} from "immutable";
+import {fromJS, Map, List} from "immutable";
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {Options} from "./index";
 import {RespModifier, RespModifierMiddlewareInput} from "./resp-modifier";
@@ -75,7 +75,7 @@ export function getOptionsAndMiddleware(context: IActorContext, options: Options
 
         const ssInput: SSMiddlewarePayload = {
             cwd: opts.get('cwd'),
-            options: opts.get('serveStatic').toJS()
+            options: serialise(opts.get('serveStatic'))
         };
 
         const proxyOption = getProxyOption(opts.get('proxy'));
@@ -86,7 +86,7 @@ export function getOptionsAndMiddleware(context: IActorContext, options: Options
                 getActor('compression', compression).ask('middleware', opts.get('compression')),
                 getActor('clientJS', clientJS).ask('middleware', opts),
                 getActor('resp-mod', RespModifier).ask('middleware', respInput),
-                getActor('serveStatic', serveStatic).ask('middleware', ssInput),
+                getActor('serveStatic', serveStatic).ask('middleware', ssInput).flatMap(throwForErrors),
                 proxyMiddleware.map(([, mw]) => mw),
             ).map(mws => {
                 return mws.reduce((acc: Middleware[], item: Middleware[]) => acc.concat(item), [])
@@ -102,4 +102,17 @@ export function getOptionsAndMiddleware(context: IActorContext, options: Options
     })
 }
 
+function throwForErrors([errors, output]) {
+    if (errors && errors.length) {
+        return Observable.throw(errors);
+    }
+    return of(output);
+}
 
+
+function serialise(input) {
+    if (Map.isMap(input) || List.isList(input)) {
+        return input.toJS();
+    }
+    return input;
+}

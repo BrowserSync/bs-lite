@@ -1,13 +1,13 @@
-const browserSync = require('../');
+require('source-map-support').install();
+const {create, printErrors} = require('../');
 const {join} = require('path');
-// const {Methods} = require('../');
 
-const {bs, init, stop} = browserSync.create();
+const {bs, init, stop} = create();
 
 init({serveStatic: [join(__dirname, '..', 'fixtures')]})
     .subscribe(([errors, output]) => {
         if (errors) {
-            return console.log('has errors', errors);
+            return console.log(printErrors(errors))
         }
         console.log(output.server.address());
     });

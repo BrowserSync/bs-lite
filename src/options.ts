@@ -19,7 +19,7 @@ export enum Scheme {
 
 export const defaultOptions: BsOptions = {
     cwd: process.cwd(),
-    strict: true,
+    strict: false,
     serveStatic: [],
     clientJS: [],
     compression: true,

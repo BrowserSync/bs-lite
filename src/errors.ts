@@ -6,6 +6,8 @@ export enum BSErrorType {
     ProxyInvalidInput = 'ProxyInvalidInput',
     PortNotAvailable = 'PortNotAvailable',
     PortDetectError = 'PortDetectError',
+
+    ServeStaticInput = 'ServeStaticInput',
 }
 
 export type BSError<T = any> = {

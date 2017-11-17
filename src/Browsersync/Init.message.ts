@@ -41,7 +41,7 @@ export function initMessageHandler(context: IActorContext) {
                                         return Observable.throw(errors[0]);
                                     }
                                     const output: BrowsersyncInit.Output = {server, options};
-                                    return Observable.of(output);
+                                    return of(output);
                                 });
                         })
                         .map((output) => {
