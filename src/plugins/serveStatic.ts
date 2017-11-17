@@ -4,13 +4,15 @@ import {Options} from "../index";
 import {parse, ParsedPath} from "path";
 import {Middleware, MiddlewareTypes} from "./Server/Server";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
-import {normPath} from "../utils";
+import {isPojo, normPath} from "../utils";
+import {BSError, BSErrorType, BSErrorLevel} from "../errors";
 const debug = require('debug')('bs:serveStatic');
 
 export type SSIncomingType = string|string[]|SSIncomingObject|SSIncomingObject[];
 
 export enum SSMesagges {
-    Middleware = 'middleware'
+    Middleware = 'middleware',
+    Validate = 'validate'
 }
 
 export interface SSMiddlewarePayload {
@@ -36,6 +38,7 @@ export interface Processed {
     id: string,
     dirs: SSDir[]
     routes: string[]
+    errors: Error[]
 }
 
 /**
@@ -54,9 +57,19 @@ export function processIncoming(input: SSIncomingType, cwd: string): Processed[]
                     input,
                     dirs: [createDir(input, cwd)],
                     routes: [''],
+                    errors: [],
                 }
             }
-            return fromObject(input, id, cwd);
+            if (isPojo(input)) {
+                return fromObject(input, id, cwd);
+            }
+            return {
+                id,
+                input,
+                dirs: [],
+                routes: [],
+                errors: [new Error(`Unsuported Type '${typeof input}'`)]
+            }
         })
 }
 
@@ -90,30 +103,34 @@ function fromObject(incoming: SSIncomingObject, id: string, cwd): Processed {
         input: incoming,
         dirs,
         routes,
+        errors: [],
         id,
     }
 }
 
-function createMiddleware(options: SSIncomingType, cwd: string): Middleware[] {
+function createMiddleware(options: SSIncomingType, cwd: string): [BSError[], Middleware[]] {
 
     const processed = processIncoming(options, cwd);
 
-    const withErrors = processed.filter(x => x.dirs.some(dir => dir.errors.length > 0));
-    const withoutErrors = processed.filter(x => x.dirs.every(dir => dir.errors.length === 0));
+    const withErrors = processed.filter(x => x.errors.length || x.dirs.some(dir => dir.errors.length > 0));
+    const withoutErrors = processed.filter(x => x.errors.length === 0 && x.dirs.every(dir => dir.errors.length === 0));
 
     // todo propagate these errors to allow strict mode to fail
-    if (withErrors.length) {
-        console.log(`${withErrors.length} Error(s) from ServeStatic`);
-        withErrors.forEach(withError => {
-            withError.dirs.forEach(dir => {
-                if (dir.errors.length) {
-                    dir.errors.forEach(err => {
-                        console.log(err.message);
-                    });
-                }
-            });
-        });
-    }
+    const bsErrors = withErrors.reduce((acc, item) => {
+        const errors = item.errors.length
+            ? item.errors
+            : item.dirs.reduce((acc, x) => acc.concat(x.errors), []);
+
+        if (errors.length) {
+            const outgoingError: BSError = {
+                type: BSErrorType.ServeStaticInput,
+                level: BSErrorLevel.Warn,
+                errors: errors.map(e => ({error: e}))
+            };
+            return acc.concat(outgoingError);
+        }
+        return acc;
+    }, []);
 
     const mw = withoutErrors
         .reduce((acc, item: Processed, index): Middleware[] => {
@@ -129,7 +146,11 @@ function createMiddleware(options: SSIncomingType, cwd: string): Middleware[] {
             }, []));
         }, []);
 
-    return mw;
+    return [bsErrors, mw];
+}
+
+export namespace ServeStatic {
+    export type Response = [null|BSError[], null|Middleware[]];
 }
 
 export function ServeStatic (address: string, context: IActorContext) {
@@ -139,13 +160,16 @@ export function ServeStatic (address: string, context: IActorContext) {
             debug('-> postStart()');
         },
         methods: {
-            [SSMesagges.Middleware]: function (stream: IMethodStream<SSMiddlewarePayload, Middleware[], any>) {
+            [SSMesagges.Middleware]: function (stream: IMethodStream<SSMiddlewarePayload, ServeStatic.Response, any>) {
                 return stream.map(({payload, respond}) => {
                     const {cwd, options} = payload;
-                    const mw = createMiddleware(options, cwd);
-                    return respond(mw);
+                    const [errors, mw] = createMiddleware(options, cwd);
+                    if (errors.length) {
+                        return respond([errors, null]);
+                    }
+                    return respond([null, mw]);
                 });
-            }
+            },
         },
     }
 }
