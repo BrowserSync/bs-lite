@@ -13,6 +13,7 @@ import {stopHandler} from "./Browsersync/Stop.message";
 import {addressHandler} from "./Browsersync/Address.message";
 import {updateOptionHandler} from "./Browsersync/UpdateOption.message";
 import {getOptionHandler} from "./Browsersync/GetOption.message";
+import {ServedFilesFactory} from "./plugins/ServedFiles/ServedFiles";
 
 export enum Methods {
     Init = 'init',
@@ -32,7 +33,8 @@ export function Browsersync(address: string, context: IActorContext) {
     return {
         initialState: {
             options: Map({}),
-            server: context.actorOf(BrowserSyncServer, 'server')
+            server: context.actorOf(BrowserSyncServer, 'server'),
+            servedFiles: context.actorOf(ServedFilesFactory, 'servedFiles')
         },
         methods: {
             [Methods.Init]: initMessageHandler(context),

@@ -6,6 +6,8 @@ import {Middleware, MiddlewareTypes} from "./Server/Server";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {isPojo, normPath} from "../utils";
 import {BSError, BSErrorType, BSErrorLevel} from "../errors";
+import {ServedFilesFile, ServedFilesMessages} from "./ServedFiles/ServedFiles";
+
 const debug = require('debug')('bs:serveStatic');
 
 export type SSIncomingType = string|string[]|SSIncomingObject|SSIncomingObject[];
@@ -23,6 +25,7 @@ export namespace ServeStaticMiddleware {
 }
 
 export function ServeStatic (address: string, context: IActorContext) {
+    const served = context.actorSelection('/system/core/servedFiles')[0];
     return {
         postStart() {
             debug('-> postStart()');
@@ -31,7 +34,14 @@ export function ServeStatic (address: string, context: IActorContext) {
             [SSMesagges.Middleware]: function (stream: IMethodStream<ServeStaticMiddleware.Input, ServeStaticMiddleware.Response, any>) {
                 return stream.map(({payload, respond}) => {
                     const {cwd, options} = payload;
-                    const [errors, mw] = createMiddleware(options, cwd);
+                    const [errors, mw] = createMiddleware(options, cwd, {
+                        onFile: (path, stat) => {
+                            const payload: ServedFilesFile.Input = {
+                                cwd, path
+                            };
+                            served.tell(ServedFilesMessages.File, payload).subscribe();
+                        }
+                    });
                     if (errors.length) {
                         return respond([errors, null]);
                     }
@@ -147,11 +157,9 @@ function fromObject(incoming: SSIncomingObject, id: string, cwd, options: SSOpti
     }
 }
 
-function createMiddleware(options: SSIncomingType, cwd: string): [BSError[], Middleware[]] {
+function createMiddleware(options: SSIncomingType, cwd: string, ssOpts: SSOptions): [BSError[], Middleware[]] {
 
-    const processed = processIncoming(options, cwd, { onFile: (path, state) => {
-        /** console.log('served', path); **/
-    }});
+    const processed = processIncoming(options, cwd, ssOpts);
 
     const withErrors = processed.filter(x => x.errors.length || x.dirs.some(dir => dir.errors.length > 0));
     const withoutErrors = processed.filter(x => x.errors.length === 0 && x.dirs.every(dir => dir.errors.length === 0));
