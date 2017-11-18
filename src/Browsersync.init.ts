@@ -1,5 +1,5 @@
 import {Observable, BehaviorSubject} from 'rxjs';
-import serveStatic, {SSMiddlewarePayload} from './plugins/serveStatic';
+import serveStatic, {ServeStaticMiddleware} from './plugins/serveStatic';
 import {Middleware} from './plugins/Server/Server';
 import clientJS from './plugins/clientJS';
 import compression from './plugins/compression';
@@ -73,7 +73,7 @@ export function getOptionsAndMiddleware(context: IActorContext, options: Options
             options: opts,
         };
 
-        const ssInput: SSMiddlewarePayload = {
+        const ssInput: ServeStaticMiddleware.Input = {
             cwd: opts.get('cwd'),
             options: serialise(opts.get('serveStatic'))
         };

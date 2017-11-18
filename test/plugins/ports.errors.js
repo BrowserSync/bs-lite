@@ -15,7 +15,7 @@ it('Gives errors about strict mode when no matching port is found', function (do
         }
     }, 'findPort');
 
-    init({proxy: 'http://example.com', port: 3000})
+    init({proxy: 'http://example.com', port: 3000, strict: true})
         .subscribe(([errors, output]) => {
             const first = errors[0];
             const type = first.type;
