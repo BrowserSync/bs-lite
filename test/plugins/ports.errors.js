@@ -5,15 +5,15 @@ const {BSErrorType, BSErrorLevel, printErrors} = require('../../');
 it('Gives errors about strict mode when no matching port is found', function (done) {
     const browserSync = require('../../');
 
-    const {bs, init, stop} = browserSync.create('test');
-
-    const p = bs.system.actorOf(function(address, context) {
-        return {
-            receive(name, payload, respond) {
-                respond([null, 3001]);
+    const {bs, init, stop} = browserSync.create('test', {
+        'findPort': function Find() {
+            return {
+                receive(name, payload, respond) {
+                    respond([null, 3001]);
+                }
             }
         }
-    }, 'findPort');
+    });
 
     init({proxy: 'http://example.com', port: 3000, strict: true})
         .subscribe(([errors, output]) => {
@@ -32,15 +32,15 @@ it('Gives errors about strict mode when no matching port is found', function (do
 it('Gives generic errors when port cannot be detected', function (done) {
     const browserSync = require('../../');
 
-    const {bs, init, stop} = browserSync.create('test');
-
-    const p = bs.system.actorOf(function(address, context) {
-        return {
-            receive(name, payload, respond) {
-                respond([new Error('oops!')]);
+    const {bs, init, stop} = browserSync.create('test', {
+        findPort: function() {
+            return {
+                receive(name, payload, respond) {
+                    respond([new Error('oops!')]);
+                }
             }
         }
-    }, 'findPort');
+    });
 
     init({proxy: 'http://example.com'})
         .subscribe(([errors, output]) => {

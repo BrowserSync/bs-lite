@@ -14,6 +14,7 @@ import {addressHandler} from "./Browsersync/Address.message";
 import {updateOptionHandler} from "./Browsersync/UpdateOption.message";
 import {getOptionHandler} from "./Browsersync/GetOption.message";
 import {ServedFilesFactory} from "./plugins/ServedFiles/ServedFiles";
+import {FindPortFactory} from "./ports";
 
 export enum Methods {
     Init = 'init',
@@ -29,20 +30,31 @@ export interface BrowserSyncState {
     options: Options
 }
 
-export function Browsersync(address: string, context: IActorContext) {
-    return {
-        initialState: {
-            options: Map({}),
+export function getBrowsersyncFactory(deps = {}) {
+    return function Browsersync(address: string, context: IActorContext) {
+        const children = {
+            servedFiles: context.actorOf(ServedFilesFactory, 'servedFiles'),
+            findPort: context.actorOf(deps.findPort ? deps.findPort : FindPortFactory, 'findPort'),
             server: context.actorOf(BrowserSyncServer, 'server'),
-            servedFiles: context.actorOf(ServedFilesFactory, 'servedFiles')
-        },
-        methods: {
-            [Methods.Init]: initMessageHandler(context),
-            [Methods.GetOption]: getOptionHandler,
-            [Methods.UpdateOption]: updateOptionHandler,
-            [Methods.Address]: addressHandler,
-            [Methods.Stop]: stopHandler,
-            [Methods.Listening]: listeningHandler
+        }
+        return {
+            initialState: {
+                options: Map({}),
+                server: children.server,
+            },
+            methods: {
+                [Methods.Init]: initMessageHandler(context),
+                [Methods.GetOption]: getOptionHandler,
+                [Methods.UpdateOption]: updateOptionHandler,
+                [Methods.Address]: addressHandler,
+                [Methods.Stop]: stopHandler,
+                [Methods.Listening]: listeningHandler
+            },
+            postStop() {
+                context.stop(children.findPort);
+                context.stop(children.servedFiles);
+                context.stop(children.server);
+            }
         }
     }
 }

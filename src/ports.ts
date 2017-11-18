@@ -28,10 +28,9 @@ export function portsActorFactory(address, context) {
         methods: {
             [PortDetectMessages.Detect]: function(stream: IMethodStream<PortDetect.Input, PortDetect.Response, any>) {
                 return stream.switchMap(({payload, respond}) => {
-                    const findPortActor = portActor(context);
+                    const findPortActor = context.actorSelection('/system/core/findPort')[0];
                     const findPayload = {
                         start: payload.port,
-                        end: undefined,
                         opts: { host: 'localhost', timeout: 1000 }
                     };
                     return findPortActor.ask('findFreePort', findPayload)
@@ -73,35 +72,15 @@ export function portsActorFactory(address, context) {
     }
 }
 
-function portActor(context): ActorRef {
-    const match = context.actorSelection('/system/findPort');
-
-    if (match.length > 0) {
-        return match[0];
-    }
-
-    return context.actorOf(actorWrap(findPort));
-}
-
-export function actorWrap(fn) {
-    return function(address, context) {
-        return {
-            receive(name, payload, respond) {
-                fn(payload).take(1).subscribe((res) => {
-                    respond(res);
-                });
-            }
+export function FindPortFactory(address, context) {
+    return {
+        receive(name, payload, respond) {
+            portscanner(payload.start, undefined, payload.opts, function (err, port) {
+                if (err) {
+                    respond([err, null]);
+                }
+                respond([null, port]);
+            });
         }
     }
-}
-
-function findPort({start, end, opts}) {
-    return Observable.create(obs => {
-        portscanner(start, undefined, opts, function (err, port) {
-            if (err) {
-                obs.next([err, null]);
-            }
-            obs.next([null, port]);
-        });
-    }).take(1);
 }
