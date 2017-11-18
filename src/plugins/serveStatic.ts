@@ -42,10 +42,15 @@ export function ServeStatic (address: string, context: IActorContext) {
     }
 }
 
+export interface SSOptions {
+    onFile(path:string, stat: any): void
+}
+
 export interface SSIncomingObject {
     id?: string
     dir?: string|string[];
     route?: string|string[];
+    options?: SSOptions
 }
 
 export interface SSDir {
@@ -61,6 +66,7 @@ export interface Processed {
     dirs: SSDir[]
     routes: string[]
     errors: Error[]
+    options: SSOptions,
 }
 
 
@@ -70,7 +76,7 @@ export interface Processed {
  *  eg: serveStatic: ['src']
  *  eg: serveStatic: 'app'
  */
-export function processIncoming(input: SSIncomingType, cwd: string): Processed[] {
+export function processIncoming(input: SSIncomingType, cwd: string, options: SSOptions): Processed[] {
     return [].concat(input)
         .map((input, index) : Processed => {
             const id = `serve-static-${index}`;
@@ -81,17 +87,19 @@ export function processIncoming(input: SSIncomingType, cwd: string): Processed[]
                     dirs: [createDir(input, cwd)],
                     routes: [''],
                     errors: [],
+                    options,
                 }
             }
             if (isPojo(input)) {
-                return fromObject(input, id, cwd);
+                return fromObject(input, id, cwd, options);
             }
             return {
                 id,
                 input,
                 dirs: [],
                 routes: [],
-                errors: [new Error(`Unsuported Type '${typeof input}'`)]
+                errors: [new Error(`Unsupported Type '${typeof input}'`)],
+                options,
             }
         })
 }
@@ -115,12 +123,16 @@ function createDir(dir: string, cwd): SSDir {
         })
 }
 
-function fromObject(incoming: SSIncomingObject, id: string, cwd): Processed {
+function fromObject(incoming: SSIncomingObject, id: string, cwd, options: SSOptions): Processed {
     const dirs = [].concat(incoming.dir)
         .filter(Boolean)
         .map(d => createDir(d, cwd));
 
-    const routes = [].concat(incoming.route).filter(Boolean);
+    const routes = (() => {
+        const routes = [].concat(incoming.route).filter(Boolean);
+        if (routes.length) return routes;
+        return ['/']
+    })();
 
     return {
         input: incoming,
@@ -128,12 +140,18 @@ function fromObject(incoming: SSIncomingObject, id: string, cwd): Processed {
         routes,
         errors: [],
         id,
+        options: {
+            ...options,
+            ...incoming.options
+        },
     }
 }
 
 function createMiddleware(options: SSIncomingType, cwd: string): [BSError[], Middleware[]] {
 
-    const processed = processIncoming(options, cwd);
+    const processed = processIncoming(options, cwd, { onFile: (path, state) => {
+        /** console.log('served', path); **/
+    }});
 
     const withErrors = processed.filter(x => x.errors.length || x.dirs.some(dir => dir.errors.length > 0));
     const withoutErrors = processed.filter(x => x.errors.length === 0 && x.dirs.every(dir => dir.errors.length === 0));
@@ -162,7 +180,7 @@ function createMiddleware(options: SSIncomingType, cwd: string): [BSError[], Mid
                         id: `Serve Static (${index}-${routeIndex}-${dirIndex})`,
                         route,
                         type: MiddlewareTypes.serveStatic,
-                        handle: require('serve-static')(dir.resolved)
+                        handle: require('serve-static')(dir.resolved, item.options)
                     }
                 }));
             }, []));
