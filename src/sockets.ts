@@ -47,6 +47,10 @@ export function Sockets(address, context) {
                         clients
                     };
 
+                    clients.on("connection", function(socket) {
+                        socket.emit('connection', {greeting: 'Hi from Browsersync!'});
+                    });
+
                     return Observable.of(respond('all done!', nextState));
                 });
             }

@@ -4,4 +4,6 @@ const {socketConfig, socketUrl, browserSyncOptions} = window.___browserSync___;
 
 const io = socket(socketUrl, socketConfig);
 
-console.log('Here we are!');
+io.on('connection', function(data) {
+    console.log(data);
+});
