@@ -1,5 +1,5 @@
 import {Observable, BehaviorSubject} from 'rxjs';
-import serveStatic, {ServeStaticMiddleware} from './plugins/serveStatic';
+import serveStatic, {ServeStaticMiddleware} from './plugins/ServeStatic/serveStatic';
 import {Middleware} from './plugins/Server/Server';
 import clientJS from './plugins/clientJS';
 import compression from './plugins/compression';
