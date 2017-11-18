@@ -1,21 +1,11 @@
 import {Observable} from 'rxjs';
-import {IActorContext} from "aktor-js/dist/ActorContext";
-import {Middleware, MiddlewareTypes} from "./Server/Server";
-import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
-import {clientScript, socketConnector} from "../connect-utils";
-import {Options} from "../index";
-import {client} from "../config";
-import {readFileSafe} from "../utils";
+import {Middleware, MiddlewareTypes} from "../Server/Server";
+import {clientScript, socketConnector} from "../../connect-utils";
+import {Options} from "../../index";
+import {client} from "../../config";
+import {readFileSafe} from "../../utils";
+import {ClientJSIncomingType, Processed} from "./ClientJS";
 const debug = require('debug')('bs:clientJS');
-
-export type ClientJSIncomingType = string|string[]|Processed|Processed[];
-
-export interface Processed {
-    input?: ClientJSIncomingType;
-    content: (options: Options, item?: Processed, req?: any, res?: any) => string;
-    id: string
-    via: string
-}
 
 function createOne(ref: string, content: string, via: string): string  {
     return `/**
@@ -69,7 +59,7 @@ export function processIncomingOptions(input: ClientJSIncomingType, cwd: string)
         })
 }
 
-function createMiddleware(options: Options): Middleware {
+export function createMiddleware(options: Options): Middleware {
 
     const coreJS = [
         {
@@ -111,21 +101,3 @@ function createMiddleware(options: Options): Middleware {
         }
     }
 }
-
-export function ClientJS(address: string, context: IActorContext) {
-
-    return {
-        postStart() {
-            debug('-> postStart()');
-        },
-        methods: {
-            middleware: function (stream: IRespondableStream) {
-                return stream.flatMap(({payload, respond}) => {
-                    const mw = createMiddleware(payload);
-                    return Observable.of(respond(mw));
-                });
-            }
-        }
-    }
-}
-export default ClientJS;

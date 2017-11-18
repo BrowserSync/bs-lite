@@ -1,7 +1,7 @@
 import {Observable, BehaviorSubject} from 'rxjs';
 import serveStatic, {ServeStaticMiddleware} from './plugins/ServeStatic/serveStatic';
 import {Middleware} from './plugins/Server/Server';
-import clientJS from './plugins/clientJS';
+import clientJS from './plugins/ClientJS/clientJS';
 import compression from './plugins/compression';
 import {fromJS, Map, List} from "immutable";
 import {IActorContext} from "aktor-js/dist/ActorContext";
