@@ -1,8 +1,9 @@
 require('source-map-support').install();
 const {create, printErrors} = require('../');
+const {Observable} = require('rxjs');
 const {join} = require('path');
 
-const {bs, init, stop} = create();
+const {bs, init, stop, system} = create();
 
 const config = {
     serveStatic: [{
