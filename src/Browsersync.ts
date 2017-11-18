@@ -30,13 +30,17 @@ export interface BrowserSyncState {
     options: Options
 }
 
-export function getBrowsersyncFactory(deps = {}) {
+export interface Dependencies {
+    findPort?: Function
+}
+
+export function getBrowsersyncFactory(deps: Dependencies = {}) {
     return function Browsersync(address: string, context: IActorContext) {
         const children = {
             servedFiles: context.actorOf(ServedFilesFactory, 'servedFiles'),
             findPort: context.actorOf(deps.findPort ? deps.findPort : FindPortFactory, 'findPort'),
             server: context.actorOf(BrowserSyncServer, 'server'),
-        }
+        };
         return {
             initialState: {
                 options: Map({}),
@@ -48,12 +52,11 @@ export function getBrowsersyncFactory(deps = {}) {
                 [Methods.UpdateOption]: updateOptionHandler,
                 [Methods.Address]: addressHandler,
                 [Methods.Stop]: stopHandler,
-                [Methods.Listening]: listeningHandler
+                [Methods.Listening]: listeningHandler,
             },
             postStop() {
                 context.stop(children.findPort);
                 context.stop(children.servedFiles);
-                context.stop(children.server);
             }
         }
     }

@@ -2,7 +2,7 @@ import * as actorJS from 'aktor-js';
 import {Map} from "immutable";
 import {BsOptions, DefaultOptions, DefaultOptionsMethods} from "./options";
 import {ActorRef} from "aktor-js/dist/ActorRef";
-import {Browsersync, getBrowsersyncFactory, Methods} from "./Browsersync";
+import {getBrowsersyncFactory, Methods} from "./Browsersync";
 import {updateOption, getOptionsJS} from "./Browsersync.patterns";
 import {SystemActor} from "aktor-js/dist/SystemActor";
 import {Observable} from "rxjs";

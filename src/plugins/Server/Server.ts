@@ -40,7 +40,7 @@ export interface ServerState {
 export enum ServerMessages {
     Init = 'Detect',
     Listening = 'Listening',
-    Stop = 'Stop',
+    Stop = 'stop',
     Address = 'Address',
 }
 
