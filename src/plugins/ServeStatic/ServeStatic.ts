@@ -47,7 +47,7 @@ export function ServeStatic (address: string, context: IActorContext) {
                             const payload: ServedFilesFile.Input = {
                                 cwd, path
                             };
-                            served.tell(ServedFilesMessages.File, payload).subscribe();
+                            served.tell(ServedFilesMessages.AddFile, payload).subscribe();
                         }
                     });
                     if (errors.length) {

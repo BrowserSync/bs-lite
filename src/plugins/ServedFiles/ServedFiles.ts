@@ -3,7 +3,7 @@ import {Set} from 'immutable';
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 
 export enum ServedFilesMessages {
-    File = 'File',
+    AddFile = 'AddFile',
     GetFiles = 'GetFiles',
 }
 
@@ -20,7 +20,7 @@ export function ServedFilesFactory(address, context) {
     return {
         initialState: Set([]),
         methods: {
-            [ServedFilesMessages.File]: function(stream: IMethodStream<ServedFilesFile.Input, ServedFilesFile.Response, any>) {
+            [ServedFilesMessages.AddFile]: function(stream: IMethodStream<ServedFilesFile.Input, ServedFilesFile.Response, any>) {
                 return stream.map(({payload, respond, state}) => {
                     const nextState = state.add(payload.path);
                     return respond([null, true], nextState);

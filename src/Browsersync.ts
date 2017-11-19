@@ -46,13 +46,16 @@ export function getBrowsersyncFactory(deps: Dependencies = {}) {
                 options: Map({}),
                 server: children.server,
             },
+            postStart() {
+                // context.watch(children.servedFiles);
+            },
             methods: {
                 [Methods.Init]: initMessageHandler(context),
                 [Methods.GetOption]: getOptionHandler,
                 [Methods.UpdateOption]: updateOptionHandler,
                 [Methods.Address]: addressHandler,
                 [Methods.Stop]: stopHandler,
-                [Methods.Listening]: listeningHandler,
+                [Methods.Listening]: listeningHandler
             },
             postStop() {
                 context.stop(children.findPort);
