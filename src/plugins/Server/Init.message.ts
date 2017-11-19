@@ -12,8 +12,9 @@ import {PortDetect, PortDetectMessages, portsActorFactory} from "../../ports";
 import connect = require('connect');
 import http = require('http');
 import https = require('https');
-import {Sockets, SocketsInitPayload, SocketsMessages} from "../../sockets";
+import {Sockets, SocketsMessages} from "../Sockets/Sockets";
 import {getHttpsOptions} from "./server-utils";
+import {SocketsInit} from "../Sockets/Init.message";
 
 const { of } = Observable;
 
@@ -46,7 +47,9 @@ export function serverInitHandler(context: IActorContext) {
                                 })
                         }
                     }
-                    // at this point, the PORT has changed so we close the server
+                    // at this point, either:
+                    //      1) we don't have a server at all
+                    //      2) we have a server but the port has changed
                     return closeServer(server)
                     // Now we recreate a new server
                         .flatMap(() => getNewServer(middleware, port, options))
@@ -54,7 +57,7 @@ export function serverInitHandler(context: IActorContext) {
                         .flatMap(([server, app]) => {
 
                             // this is the payload for the Socket actors Init message
-                            const socketPayload: SocketsInitPayload = {
+                            const socketPayload: SocketsInit.Input = {
                                 server,
                                 options: options.get('socket').toJS()
                             };
