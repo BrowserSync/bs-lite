@@ -1,6 +1,8 @@
 import {Observable} from 'rxjs';
 import {Set} from 'immutable';
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
+import {WatcherMessages} from "../Watcher/Watcher";
+import {WatcherAddItems} from "../Watcher/AddItems.message";
 
 export enum ServedFilesMessages {
     AddFile = 'AddFile',
@@ -22,6 +24,13 @@ export function ServedFilesFactory(address, context) {
         methods: {
             [ServedFilesMessages.AddFile]: function(stream: IMethodStream<ServedFilesFile.Input, ServedFilesFile.Response, any>) {
                 return stream.map(({payload, respond, state}) => {
+                    const watchpayload: WatcherAddItems.Input = {
+                        ns: 'core',
+                        items: [payload.path]
+                    };
+                    context.actorSelection('/system/core/watcher')[0]
+                        .tell(WatcherMessages.AddItems, watchpayload)
+                        .subscribe();
                     const nextState = state.add(payload.path);
                     return respond([null, true], nextState);
                 })

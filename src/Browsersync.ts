@@ -15,6 +15,7 @@ import {updateOptionHandler} from "./Browsersync/UpdateOption.message";
 import {getOptionHandler} from "./Browsersync/GetOption.message";
 import {ServedFilesFactory} from "./plugins/ServedFiles/ServedFiles";
 import {FindPortFactory} from "./ports";
+import {WatcherFactory} from "./plugins/Watcher/Watcher";
 
 export enum Methods {
     Init = 'init',
@@ -40,6 +41,7 @@ export function getBrowsersyncFactory(deps: Dependencies = {}) {
             servedFiles: context.actorOf(ServedFilesFactory, 'servedFiles'),
             findPort: context.actorOf(deps.findPort ? deps.findPort : FindPortFactory, 'findPort'),
             server: context.actorOf(BrowserSyncServer, 'server'),
+            watcher: context.actorOf(WatcherFactory, 'watcher'),
         };
         return {
             initialState: {

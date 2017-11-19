@@ -8,8 +8,9 @@ import * as http from "http";
 import {Options} from "../index";
 import {IActorContext} from "aktor-js/dist/ActorContext";
 import {ServerInit} from "../plugins/Server/Init.message";
+import {WatcherMessages} from "../plugins/Watcher/Watcher";
 
-const {of} = Observable;
+const {of, merge} = Observable;
 
 export namespace BrowsersyncInit {
     export type Output = {
@@ -33,16 +34,22 @@ export function initMessageHandler(context: IActorContext) {
                     return getOptionsAndMiddleware(context, mergedOptions)
                         .flatMap(({middleware, options}) => {
                             const payload = {middleware, options};
-                            return state.server
-                                .ask(ServerMessages.Init, payload)
-                                .flatMap((resp: ServerInit.Response) => {
-                                    const [errors, server] = resp;
-                                    if (errors && errors.length) {
-                                        return Observable.throw(errors[0]);
-                                    }
-                                    const output: BrowsersyncInit.Output = {server, options};
-                                    return of(output);
-                                });
+                            const watcher = context.actorSelection('/system/core/watcher')[0];
+                            return merge(
+                                // start the server + sockets
+                                state.server
+                                    .ask(ServerMessages.Init, payload)
+                                    .flatMap((resp: ServerInit.Response) => {
+                                        const [errors, server] = resp;
+                                        if (errors && errors.length) {
+                                            return Observable.throw(errors[0]);
+                                        }
+                                        const output: BrowsersyncInit.Output = {server, options};
+                                        return of(output);
+                                    }),
+                                // start the watcher
+                                watcher.ask(WatcherMessages.Init).ignoreElements()
+                            );
                         })
                         .map((output) => {
                             return respond([null, output], nextState);
