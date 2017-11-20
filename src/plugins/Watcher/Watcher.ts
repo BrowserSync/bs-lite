@@ -7,6 +7,7 @@ import EventEmitter = NodeJS.EventEmitter;
 import {from} from "rxjs/observable/from";
 import {gracefullyStopChildren} from "../../utils";
 import {getStopHandler} from "./Stop.message";
+import {getFileEventHandler} from "./FileEvent.message";
 
 const { of } = Observable;
 
@@ -14,6 +15,7 @@ export enum WatcherMessages {
     Init = 'init',
     AddItems = 'AddItems',
     Stop = 'stop',
+    FileEvent = 'FileEvent',
 }
 
 export interface NamespacedWatcher {
@@ -34,6 +36,7 @@ export function WatcherFactory(address, context) {
             [WatcherMessages.Init]: initHandler,
             [WatcherMessages.AddItems]: getAddItemsHandler(context),
             [WatcherMessages.Stop]: getStopHandler(context),
+            [WatcherMessages.FileEvent]: getFileEventHandler(context),
         },
         postStop(){
             // console.log('watcher stopped');

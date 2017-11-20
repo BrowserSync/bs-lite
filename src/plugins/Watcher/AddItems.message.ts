@@ -27,6 +27,10 @@ export function getAddItemsHandler(context: IActorContext) {
                     .flatMap(() => {
                         return of(respond([null, 'yay!']))
                     })
+            } else {
+                match
+                    .tell('add', payload.items)
+                    .subscribe();
             }
             return of(respond([null, 'yay!'], state))
         });

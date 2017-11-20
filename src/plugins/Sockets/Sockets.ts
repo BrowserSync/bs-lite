@@ -3,6 +3,7 @@ import {BsSocketOptions} from "../../options";
 import {Server} from "http";
 import {initHandler} from "./Init.message";
 import {stateHandler} from "./State.message";
+import {ClientsFactory} from "./Clients/Clients";
 
 export interface SocketsState {
     io: any
@@ -20,9 +21,12 @@ export function Sockets(address, context) {
             io: null,
             clients: null,
         },
+        postStart() {
+            context.actorOf(ClientsFactory, 'clients')
+        },
         methods: {
             [SocketsMessages.State]: stateHandler,
-            [SocketsMessages.Init]: initHandler
+            [SocketsMessages.Init]: initHandler,
         }
     }
 }
