@@ -3,7 +3,6 @@ import {ServerMessages} from "../plugins/Server/Server";
 import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {BrowserSyncState} from "../Browsersync";
 import {IActorContext} from "aktor-js/dist/ActorContext";
-import {stopChildren} from "../utils";
 
 const {concat, from} = Observable;
 

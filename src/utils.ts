@@ -80,7 +80,7 @@ export function doesNotContainDisableParam(req) {
     return true;
 }
 
-export function stopChildren(context) {
+export function gracefullyStopChildren(context) {
     const children = context.actorSelection('*');
     return Observable.from(children)
         .flatMap(ref => context.gracefulStop(ref))
