@@ -127,7 +127,7 @@ function getNewServer(middleware: Middleware[], port: number, options: Options) 
         app.use(mw.route, mw.handle);
     });
 
-    const server = createNewServer(options, app);
+    const server = require('http-shutdown')(createNewServer(options, app));
 
     server.listen(port);
     return Observable.of([server, app]);

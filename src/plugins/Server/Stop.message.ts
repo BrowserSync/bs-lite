@@ -10,9 +10,12 @@ export function stopHandler(stream: IMethodStream<void, ServerStop.Response, Ser
     return stream.flatMap(({respond, state}) => {
         const {server} = state;
         if (server && server.listening) {
-            console.log('closing server');
-            server.close();
+            return Observable.create(obs => {
+                server.shutdown(function() {
+                    obs.next(true);
+                });
+            }).map(() => respond([null, 'Done!'], {server: null, app: null, scheme: null}))
         }
         return Observable.of(respond([null, 'Done!'], {server: null, app: null, scheme: null}));
-    })
+    });
 }
