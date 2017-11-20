@@ -20,7 +20,7 @@ export function WatcherChildFactory(address, context) {
                 case 'start': {
                     watcher = chokidar.watch(payload);
                     watcher.on('change', function() {
-                        console.log('change');
+                        // console.log('change');
                     });
                     break;
                 }
@@ -31,7 +31,7 @@ export function WatcherChildFactory(address, context) {
             }
         },
         postStop() {
-            console.log('child stopped');
+            // console.log('child stopped');
         }
     }
 }

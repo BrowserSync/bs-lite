@@ -27,7 +27,7 @@ export interface WatcherState {
 export function WatcherFactory(address, context) {
     return {
         postStart() {
-            console.log('post start');
+            // console.log('post start');
         },
         methods: {
             [WatcherMessages.Init]: initHandler,
@@ -40,7 +40,7 @@ export function WatcherFactory(address, context) {
             },
         },
         postStop(){
-            console.log('watcher stopped');
+            // console.log('watcher stopped');
         }
     }
 }

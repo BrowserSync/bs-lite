@@ -12,10 +12,18 @@ export namespace BrowsersyncStop {
 }
 
 export function getStopHandler(context: IActorContext) {
-    return function stopHandler(stream: IMethodStream<any, BrowsersyncStop.Response, BrowserSyncState>) {
-        return stream.switchMap(({payload, respond, state}) => {
-            return stopChildren(context)
-                .mapTo(respond([null, 'done!']));
+    return function stopHandler(stream: IMethodStream<void, BrowsersyncStop.Response, BrowserSyncState>) {
+        return stream.switchMap(({respond, state}) => {
+            const requiresShutdown = [
+                'server',
+                'watcher'
+            ].map(x => context.actorSelection(x))
+                .reduce((acc, item) => acc.concat(item), []);
+
+            return Observable.from(requiresShutdown)
+                .flatMap(ref => context.gracefulStop(ref))
+                .toArray()
+                .mapTo(respond([null, 'done!'], state));
         });
     }
 }

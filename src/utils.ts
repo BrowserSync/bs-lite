@@ -85,5 +85,4 @@ export function stopChildren(context) {
     return Observable.from(children)
         .flatMap(ref => context.gracefulStop(ref))
         .toArray()
-        .do(x => console.log('children stopped'))
 }
