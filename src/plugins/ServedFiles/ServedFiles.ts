@@ -5,8 +5,9 @@ import {WatcherMessages} from "../Watcher/Watcher";
 import {WatcherAddItems} from "../Watcher/AddItems.message";
 
 export enum ServedFilesMessages {
-    AddFile = 'AddFile',
+    AddFile  = 'AddFile',
     GetFiles = 'GetFiles',
+    Stop     = 'Stop',
 }
 
 export namespace ServedFilesFile {
@@ -16,6 +17,10 @@ export namespace ServedFilesFile {
 
 export namespace ServedFilesGetFiles {
     export type Response = [null, string[]];
+}
+
+export namespace ServedFilesStop {
+    export type Response = [null, string];
 }
 
 export function ServedFilesFactory(address, context) {
@@ -38,6 +43,11 @@ export function ServedFilesFactory(address, context) {
             [ServedFilesMessages.GetFiles]: function(stream: IMethodStream<void, ServedFilesFile.Response, any>) {
                 return stream.map(({respond, state}) => {
                     return respond([null, state.toArray()], state);
+                })
+            },
+            [ServedFilesMessages.Stop]: function(stream: IMethodStream<void, ServedFilesStop.Response, any>) {
+                return stream.map(({respond, state}) => {
+                    return respond([null, 'ok'], state);
                 })
             },
         }

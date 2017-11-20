@@ -2,12 +2,17 @@ import {Observable} from 'rxjs';
 import {WatcherObjectInput} from './Init.message';
 import {BSError} from "../../errors";
 import {initHandler, WatcherItem} from "./Init.message";
-import {addItemsHandler} from "./AddItems.message";
+import {getAddItemsHandler} from "./AddItems.message";
 import EventEmitter = NodeJS.EventEmitter;
+import {from} from "rxjs/observable/from";
+import {stopChildren} from "../../utils";
+
+const { of } = Observable;
 
 export enum WatcherMessages {
     Init = 'init',
     AddItems = 'AddItems',
+    Stop = 'stop',
 }
 
 export interface NamespacedWatcher {
@@ -21,20 +26,21 @@ export interface WatcherState {
 
 export function WatcherFactory(address, context) {
     return {
-        initialState: {
-            watchers: {
-                core: {
-                    watcher: null,
-                    items: []
-                }
-            },
-        },
         postStart() {
             console.log('post start');
         },
         methods: {
             [WatcherMessages.Init]: initHandler,
-            [WatcherMessages.AddItems]: addItemsHandler,
+            [WatcherMessages.AddItems]: getAddItemsHandler(context),
+            [WatcherMessages.Stop]: function(stream) {
+                return stream.flatMap(({respond}) => {
+                    return stopChildren(context)
+                        .mapTo(respond([null, 'done!']));
+                });
+            },
+        },
+        postStop(){
+            console.log('watcher stopped');
         }
     }
 }

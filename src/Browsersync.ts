@@ -9,7 +9,7 @@ import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {ActorRef} from "aktor-js/dist/ActorRef";
 import {BrowsersyncInit, initMessageHandler} from "./Browsersync/Init.message";
 import {listeningHandler} from "./Browsersync/Listening.message";
-import {stopHandler} from "./Browsersync/Stop.message";
+import {getStopHandler} from "./Browsersync/Stop.message";
 import {addressHandler} from "./Browsersync/Address.message";
 import {updateOptionHandler} from "./Browsersync/UpdateOption.message";
 import {getOptionHandler} from "./Browsersync/GetOption.message";
@@ -56,12 +56,12 @@ export function getBrowsersyncFactory(deps: Dependencies = {}) {
                 [Methods.GetOption]: getOptionHandler,
                 [Methods.UpdateOption]: updateOptionHandler,
                 [Methods.Address]: addressHandler,
-                [Methods.Stop]: stopHandler,
+                [Methods.Stop]: getStopHandler(context),
                 [Methods.Listening]: listeningHandler
             },
             postStop() {
-                context.stop(children.findPort);
-                context.stop(children.servedFiles);
+                // context.stop(children.findPort);
+                // context.stop(children.servedFiles);
             }
         }
     }

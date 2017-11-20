@@ -1,3 +1,4 @@
+import {Observable} from 'rxjs';
 import {isAbsolute, join} from "path";
 import {readFileSync} from "fs";
 var proto = Object.prototype;
@@ -77,4 +78,12 @@ export function doesNotContainDisableParam(req) {
         }
     }
     return true;
+}
+
+export function stopChildren(context) {
+    const children = context.actorSelection('*');
+    return Observable.from(children)
+        .flatMap(ref => context.gracefulStop(ref))
+        .toArray()
+        .do(x => console.log('children stopped'))
 }

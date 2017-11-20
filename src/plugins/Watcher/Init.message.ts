@@ -26,7 +26,6 @@ export namespace WatcherInit {
 
 export function initHandler(stream: IMethodStream<WatcherInit.Input, any, WatcherState>) {
     return stream.switchMap(({payload, respond, state}) => {
-        console.log('Watcher init');
         return of(respond([null, 'yay!'], state))
     });
 }

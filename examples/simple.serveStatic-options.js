@@ -20,4 +20,9 @@ init(config)
             return console.log(printErrors(errors))
         }
         console.log(output.server.address());
+        setTimeout(() => {
+            stop().subscribe(() => {
+                console.log('stopped');
+            });
+        }, 3000);
     });
