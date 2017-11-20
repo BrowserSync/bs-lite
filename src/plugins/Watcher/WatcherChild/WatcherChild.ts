@@ -1,8 +1,8 @@
 import {Observable} from 'rxjs';
-import {WatcherObjectInput} from './Init.message';
-import {BSError} from "../../errors";
-import {initHandler, WatcherItem} from "./Init.message";
-import {getAddItemsHandler} from "./AddItems.message";
+import {WatcherObjectInput} from '../Init.message';
+import {BSError} from "../../../errors";
+import {initHandler, WatcherItem} from "../Init.message";
+import {getAddItemsHandler} from "../AddItems.message";
 import EventEmitter = NodeJS.EventEmitter;
 import chokidar = require('chokidar');
 

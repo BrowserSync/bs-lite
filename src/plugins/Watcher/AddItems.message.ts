@@ -5,7 +5,7 @@ import {WatcherInput} from "./Init.message";
 import {WatcherState} from "./Watcher";
 import chokidar = require('chokidar');
 import {IActorContext} from "aktor-js/dist/ActorContext";
-import {WatcherChildFactory} from "./WatcherChild";
+import {WatcherChildFactory} from "./WatcherChild/WatcherChild";
 
 const {of} = Observable;
 
