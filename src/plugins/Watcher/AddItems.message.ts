@@ -22,12 +22,11 @@ export function getAddItemsHandler(context: IActorContext) {
         return stream.switchMap(({payload, respond, state}) => {
             const match = context.actorSelection(payload.ns)[0];
             if (!match) {
-                // const a = context.actorOf(WatcherChildFactory, payload.ns);
-                // return a.ask('start', payload.items)
-                //     .flatMap((resp) => {
-                //         console.log(resp);
-                //         return of(respond([null, 'yay!']))
-                //     })
+                const a = context.actorOf(WatcherChildFactory, payload.ns);
+                return a.ask('start', payload.items)
+                    .flatMap(() => {
+                        return of(respond([null, 'yay!']))
+                    })
             }
             return of(respond([null, 'yay!'], state))
         });

@@ -19,14 +19,15 @@ export function WatcherChildFactory(address, context) {
             switch (name) {
                 case 'start': {
                     watcher = chokidar.watch(payload);
-                    watcher.on('change', function() {
-                        // console.log('change');
+                    watcher.on('all', function(event, path) {
+                        console.log(event, path);
                     });
                     break;
                 }
                 case 'stop': {
                     watcher.close();
                     respond([null, 'done!']);
+                    break;
                 }
             }
         },

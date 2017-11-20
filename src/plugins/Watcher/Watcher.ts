@@ -6,6 +6,7 @@ import {getAddItemsHandler} from "./AddItems.message";
 import EventEmitter = NodeJS.EventEmitter;
 import {from} from "rxjs/observable/from";
 import {gracefullyStopChildren} from "../../utils";
+import {getStopHandler} from "./Stop.message";
 
 const { of } = Observable;
 
@@ -32,12 +33,7 @@ export function WatcherFactory(address, context) {
         methods: {
             [WatcherMessages.Init]: initHandler,
             [WatcherMessages.AddItems]: getAddItemsHandler(context),
-            [WatcherMessages.Stop]: function(stream) {
-                return stream.flatMap(({respond}) => {
-                    return gracefullyStopChildren(context)
-                        .mapTo(respond([null, 'done!']));
-                });
-            },
+            [WatcherMessages.Stop]: getStopHandler(context),
         },
         postStop(){
             // console.log('watcher stopped');
