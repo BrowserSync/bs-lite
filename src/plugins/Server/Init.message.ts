@@ -15,6 +15,7 @@ import https = require('https');
 import {Sockets, SocketsMessages} from "../Sockets/Sockets";
 import {getHttpsOptions} from "./server-utils";
 import {SocketsInit} from "../Sockets/Init.message";
+const debug = require('debug')('bs:server');
 
 const { of } = Observable;
 
@@ -124,6 +125,7 @@ function getNewServer(middleware: Middleware[], port: number, options: Options) 
 
     const app = connect();
     middleware.forEach(mw => {
+        debug(mw);
         app.use(mw.route, mw.handle);
     });
 
