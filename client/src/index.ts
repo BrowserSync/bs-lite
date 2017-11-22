@@ -8,8 +8,8 @@ io.on('connection', function(data) {
     console.log(data);
 });
 
-io.on('browser:reload', (event) => {
-    console.log('reloading');
-    window.location.reload(true);
+io.on('Browser:Reload', (event) => {
+    console.log('Browser:Reload', event);
+    // window.location.reload(true);
 });
 
