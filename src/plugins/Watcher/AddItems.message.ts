@@ -21,18 +21,18 @@ export function getAddItemsHandler(context: IActorContext) {
     return function addItemsHandler(stream: IMethodStream<WatcherAddItems.Input, WatcherAddItems.Response, WatcherState>) {
         return stream.switchMap(({payload, respond, state}) => {
             const match = context.actorSelection(payload.ns)[0];
+
             if (!match) {
                 const a = context.actorOf(WatcherChildFactory, payload.ns);
                 return a.ask('start', payload.items)
                     .flatMap(() => {
                         return of(respond([null, 'yay!']))
                     })
-            } else {
-                match
-                    .tell('add', payload.items)
-                    .subscribe();
             }
-            return of(respond([null, 'yay!'], state))
+
+            return match
+                .tell('add', payload.items)
+                .mapTo(respond([null, 'yay!'], state));
         });
     }
 }

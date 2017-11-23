@@ -12,6 +12,7 @@
     "@types/socket.io": "2",
     "mime-types": "^2.1.16",
     "mocha": "^3.4.2",
+    "nodemon": "^1.12.1",
     "source-map-support": "^0.4.15",
     "supertest": "^3.0.0",
     "supertest-as-promised": "^4.0.2",

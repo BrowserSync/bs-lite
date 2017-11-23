@@ -28,16 +28,17 @@ export function ServedFilesFactory(address, context) {
         initialState: Set([]),
         methods: {
             [ServedFilesMessages.AddFile]: function(stream: IMethodStream<ServedFilesFile.Input, ServedFilesFile.Response, any>) {
-                return stream.map(({payload, respond, state}) => {
+                return stream.flatMap(({payload, respond, state}) => {
                     const watchpayload: WatcherAddItems.Input = {
                         ns: 'core',
                         items: [payload.path]
                     };
-                    context.actorSelection('/system/core/watcher')[0]
+                    return context.actorSelection('/system/core/watcher')[0]
                         .tell(WatcherMessages.AddItems, watchpayload)
-                        .subscribe();
-                    const nextState = state.add(payload.path);
-                    return respond([null, true], nextState);
+                        .map(() => {
+                            const nextState = state.add(payload.path);
+                            return respond([null, true], nextState);
+                        });
                 })
             },
             [ServedFilesMessages.GetFiles]: function(stream: IMethodStream<void, ServedFilesFile.Response, any>) {
