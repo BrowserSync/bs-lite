@@ -1,0 +1,5 @@
+tasks:
+  start@p:
+    - '@sh cd client && ./node_modules/.bin/webpack --watch'
+    - '@npm tsc --watch'
+    - '@sh node examples/simple.js'
