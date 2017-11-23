@@ -69,7 +69,7 @@ export function createMiddleware(options: Options): Middleware {
         },
         {
             id: 'browser-sync-client',
-            content: (options, item) => readFileSafe(client.mainDist, options.get('cwd')),
+            content: (options, item) => readFileSafe(options.get('debug') ? client.main : client.mainDist, options.get('cwd')),
             via: 'Browsersync Core'
         },
     ];

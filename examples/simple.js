@@ -4,7 +4,10 @@ const {join} = require('path');
 
 const {bs, init, stop} = create();
 
-init({serveStatic: [join(__dirname, '..', 'fixtures')]})
+init({
+    serveStatic: [join(__dirname, '..', 'fixtures')],
+    debug: true
+})
     .subscribe(([errors, output]) => {
         if (errors) {
             return console.log(printErrors(errors))

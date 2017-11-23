@@ -18,6 +18,7 @@ export enum Scheme {
 }
 
 export const defaultOptions: BsOptions = {
+    debug: false,
     cwd: process.cwd(),
     strict: false,
     serveStatic: [],
@@ -65,6 +66,7 @@ export const defaultOptions: BsOptions = {
 };
 
 export interface BsOptions {
+    debug: boolean,
     strict: boolean
     cwd?: string,
     middleware?: Middleware[],
