@@ -2,6 +2,10 @@
 # yarn lockfile v1
 
 
+"@kwonoj/rxjs-testscheduler-compat@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@kwonoj/rxjs-testscheduler-compat/-/rxjs-testscheduler-compat-1.0.2.tgz#8f08e6e303b272f10b6657d86f2e0e964338bc21"
+
 "@types/http-proxy@^1.12.0":
   version "1.12.0"
   resolved "https://registry.yarnpkg.com/@types/http-proxy/-/http-proxy-1.12.0.tgz#4c635e37f2ccaa508e8e15b09e044a51bef3ee75"
@@ -40,9 +44,9 @@ ajv@^4.9.1:
     co "^4.6.0"
     json-stable-stringify "^1.0.1"
 
-aktor-js@1.2.5:
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/aktor-js/-/aktor-js-1.2.5.tgz#abde0428772934e81d32c01dcfede6b9b1d604b5"
+aktor-js@1.2.7:
+  version "1.2.7"
+  resolved "https://registry.yarnpkg.com/aktor-js/-/aktor-js-1.2.7.tgz#cdef323335325e500e276a873ef20c729e36455f"
   dependencies:
     anymatch "^1.3.0"
     debug "^2.6.3"

@@ -32,6 +32,7 @@ export interface BrowserSyncState {
 }
 
 export interface Dependencies {
+    scheduler?: any;
     findPort?: Function
 }
 

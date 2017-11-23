@@ -5,10 +5,10 @@ const {join} = require('path');
 const {bs, init, stop} = create();
 
 init({
-    serveStatic: [join(__dirname, '..', 'fixtures')],
+    serveStatic: ['/Users/shakyshane/Sites/jh/m2-perf-work/public'],
     debug: true
 })
-    .subscribe(([errors, output]) => {
+    .subscribe(([errors,  output]) => {
         if (errors) {
             return console.log(printErrors(errors))
         }
