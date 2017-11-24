@@ -20,7 +20,7 @@ export function ClientsFactory(address: string, context: IActorContext) {
                 .flatMap((obs) => {
                     return obs
                         // .pluck('message', 'action')
-                        .buffer(obs.debounceTime(500, context.scheduler))
+                        .buffer(obs.debounceTime(500))
                         .flatMap((mess) => {
 
                             const emitPayload: BrowserReload.Message = {
@@ -28,7 +28,7 @@ export function ClientsFactory(address: string, context: IActorContext) {
                                 payload: { force: true }
                             };
                             return context.parent.tell(SocketsMessages.Emit, emitPayload)
-                                .mapTo(patterns.createResponse(mess, 'ok!'));
+                                .mapTo(patterns.createResponse(mess[0], 'ok!'));
                         });
                 })
         }
