@@ -4,6 +4,8 @@ import {IMethodStream, MessageResponse} from "aktor-js";
 import {WatcherMessages} from "../Watcher/Watcher";
 import {WatcherAddItems} from "../Watcher/AddItems.message";
 
+const {of} = Observable;
+
 export enum ServedFilesMessages {
     AddFile  = 'AddFile',
     GetFiles = 'GetFiles',
@@ -30,6 +32,16 @@ export function ServedFilesFactory(address, context): any {
             [ServedFilesMessages.AddFile]: function(stream: IMethodStream<ServedFilesFile.Input, ServedFilesFile.Response, any>) {
                 return stream.flatMap(({payload, respond, state}) => {
 
+                    const watcher = context.actorSelection('/system/core/watcher')[0];
+
+                    if (!watcher) {
+                        return of(respond([null, false], state));
+                    }
+
+                    if (state.contains(payload.path)) {
+                        return of(respond([null, false], state));
+                    }
+
                     const watchpayload: WatcherAddItems.Input = {
                         ns: 'core',
                         items: [payload.path]
@@ -38,7 +50,7 @@ export function ServedFilesFactory(address, context): any {
                     const nextState = state.add(payload.path);
                     const response = respond([null, true], nextState);
 
-                    return context.actorSelection('/system/core/watcher')[0]
+                    return watcher
                         .tell(WatcherMessages.AddItems, watchpayload)
                         .mapTo(response);
                 })

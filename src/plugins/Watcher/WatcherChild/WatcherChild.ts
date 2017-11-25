@@ -1,41 +1,53 @@
 import {Observable} from 'rxjs';
-import {WatcherObjectInput} from '../Init.message';
-import {BSError} from "../../../errors";
-import {initHandler, WatcherItem} from "../Init.message";
-import {getAddItemsHandler} from "../AddItems.message";
-import EventEmitter = NodeJS.EventEmitter;
 import chokidar = require('chokidar');
-import {WatcherMessages} from "../Watcher";
-import {FileEvent} from "../FileEvent.message";
+import {createFileEvent} from "../FileEvent.message";
 import {parse} from "path";
+import {WatcherAddItems} from "../AddItems.message";
 
-export enum WatcherChild {
-    Init = 'init',
+const debug = require('debug')('bs:WatcherChild');
+
+export enum WatcherChildMessages {
+    Start = 'Start',
+    Add = 'Add',
+    Stop = 'stop',
 }
 
 export function WatcherChildFactory(address, context) {
     let watcher;
+    let ready = false;
     let parent = context.parent;
     return {
+        postStart() {
+            debug('postStart()')
+        },
         receive: function (name, payload, respond) {
             switch (name) {
-                case 'start': {
-                    watcher = chokidar.watch(payload);
+                case WatcherChildMessages.Start: {
+                    const incoming: WatcherAddItems.Input = payload;
+                    debug('chokidar.watch()', incoming);
+                    watcher = chokidar.watch(incoming);
+                    watcher.on('ready', () => ready = true);
                     watcher.on('change', function(path) {
-                        const payload: FileEvent.Input = {
+                        const payload = {
                             event: 'change',
                             path,
                             parsed: parse(path),
                         };
-                        parent.tell(WatcherMessages.FileEvent, payload).subscribe();
+                        debug('File Event', payload.event, payload.path);
+                        parent.tell(...createFileEvent(payload)).subscribe();
                     });
                     break;
                 }
-                case 'add': {
+
+                case WatcherChildMessages.Add: {
+                    debug('watcher.add()', payload);
                     watcher.add(payload);
                     break;
                 }
-                case 'stop': {
+
+                case WatcherChildMessages.Stop: {
+                    debug('watcher.close()');
+                    ready = false;
                     watcher.close();
                     respond([null, 'done!']);
                     break;
@@ -43,7 +55,7 @@ export function WatcherChildFactory(address, context) {
             }
         },
         postStop() {
-            // console.log('child stopped');
+            debug('postStop()');
         }
     }
 }

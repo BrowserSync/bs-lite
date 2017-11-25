@@ -2,7 +2,7 @@ import {Observable} from 'rxjs';
 import {BSError} from "../../errors";
 import {WatcherInput} from "./Init.message";
 import {WatcherState} from "./Watcher";
-import {WatcherChildFactory} from "./WatcherChild/WatcherChild";
+import {WatcherChildFactory, WatcherChildMessages} from "./WatcherChild/WatcherChild";
 import {IActorContext, MessageResponse, IMethodStream} from "aktor-js";
 
 const {of} = Observable;
@@ -22,14 +22,14 @@ export function getAddItemsHandler(context: IActorContext): any {
 
             if (!match) {
                 const a = context.actorOf(WatcherChildFactory, payload.ns);
-                return a.ask('start', payload.items)
+                return a.ask(WatcherChildMessages.Start, payload.items)
                     .flatMap(() => {
                         return of(respond([null, 'yay!']))
                     })
             }
 
             return match
-                .tell('add', payload.items)
+                .tell(WatcherChildMessages.Add, payload.items)
                 .mapTo(respond([null, 'yay!'], state));
         });
     }
