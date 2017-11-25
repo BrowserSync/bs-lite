@@ -1,6 +1,6 @@
 import {Observable} from 'rxjs';
 import {SocketsMessages} from "../Sockets";
-import {BrowserMessages, BrowserReload} from "./Messages";
+import {BrowserMessages, BrowserReload} from "./BrowserMessageTypes";
 import {patterns, IActorContext, IncomingMessage} from "aktor-js";
 import {FileEvent} from "../../Watcher/FileEvent.message";
 
