@@ -1,8 +1,9 @@
 import {Observable} from 'rxjs';
 import {FileEvent} from "../../Watcher/FileEvent.message";
 import {IActorContext, IncomingMessage, patterns} from "aktor-js";
-import {BrowserMessages, BrowserReload} from "./BrowserMessageTypes";
+import {AssetReload, BrowserMessages, BrowserReload} from "./BrowserMessageTypes";
 import {SocketsMessages} from "../Sockets";
+import {Set} from 'immutable';
 const debug = require('debug')('bs:Clients:Reload');
 
 export namespace ClientReloadMessage {
@@ -12,7 +13,7 @@ export namespace ClientReloadMessage {
 export function reloadHandler(stream: Observable<IncomingMessage>, context: IActorContext) {
     return stream
         /**
-         * Group incoming messages
+         * Group incoming messages into 500ms chunks
          */
         .buffer(stream.debounceTime(500, context.timeScheduler))
         /**
@@ -21,19 +22,43 @@ export function reloadHandler(stream: Observable<IncomingMessage>, context: IAct
          */
         .do(x => debug(`buffered ${x.length} items before sending to clients`))
         .flatMap((messages: IncomingMessage[]) => {
-            /**
-             * Construct the outgoing payload (to the browser)
-             */
-            const emitPayload: BrowserReload.Message = {
-                name: BrowserMessages.BrowserReload,
-                payload: {
-                    force: true,
-                    reason: BrowserReload.Reasons.FileChanged,
-                    items: messages.map(incoming => incoming.message.action.payload)
-                }
-            };
+            const injectTypes = Set(['.css']);
+            const items = messages.map(incoming => incoming.message.action.payload);
+            const injects = items.filter((item: FileEvent.Input) => injectTypes.contains(item.parsed.ext));
+            const reloads = items.filter((item: FileEvent.Input) => !injectTypes.contains(item.parsed.ext));
 
-            return context.parent.tell(SocketsMessages.Emit, emitPayload)
-                .mapTo(patterns.createResponse(messages[0], 'ok!'));
+            if (reloads.length) {
+                /**
+                 * Construct the outgoing payload (to the browser)
+                 */
+                const emitPayload: BrowserReload.Message = {
+                    name: BrowserMessages.BrowserReload,
+                    payload: {
+                        force: true,
+                        reason: BrowserReload.Reasons.FileChanged,
+                        items: [reloads[0]], // only send the first item
+                    }
+                };
+
+                return context.parent.tell(SocketsMessages.Emit, emitPayload)
+                    .mapTo(patterns.createResponse(messages[0], 'ok!'));
+            }
+
+            if (injects.length) {
+                /**
+                 * Construct the outgoing payload (to the browser)
+                 */
+                const emitPayload: AssetReload.Message = {
+                    name: BrowserMessages.AssetReload,
+                    payload: {
+                        force: true,
+                        reason: BrowserReload.Reasons.FileChanged,
+                        items: injects, // send all injectable items
+                    }
+                };
+
+                return context.parent.tell(SocketsMessages.Emit, emitPayload)
+                    .mapTo(patterns.createResponse(messages[0], 'ok!'));
+            }
         });
 }
