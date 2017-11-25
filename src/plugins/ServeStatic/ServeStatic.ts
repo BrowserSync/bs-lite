@@ -1,7 +1,6 @@
 import {Observable} from 'rxjs';
-import {IActorContext} from "aktor-js/dist/ActorContext";
 import {Middleware} from "../Server/Server";
-import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
+import {IMethodStream, IActorContext} from "aktor-js";
 import {BSError} from "../../errors";
 import {ServedFilesFile, ServedFilesMessages} from "../ServedFiles/ServedFiles";
 import {createMiddleware} from "./ServeStatic.utils";
@@ -32,7 +31,7 @@ export namespace ServeStaticMiddleware {
     export type Response = [null|BSError[], null|Middleware[]];
 }
 
-export function ServeStatic (address: string, context: IActorContext) {
+export function ServeStatic (address: string, context: IActorContext): any {
     const served = context.actorSelection('/system/core/servedFiles')[0];
     return {
         postStart() {

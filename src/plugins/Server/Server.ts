@@ -1,6 +1,6 @@
 import {Observable} from 'rxjs';
 import {Server} from "http";
-import {IActorContext} from "aktor-js/dist/ActorContext";
+import {IActorContext, MessageResponse} from "aktor-js";
 import {Map} from "immutable";
 import {Scheme} from "../../options";
 import {serverAddressHandler} from "./Address.message";
@@ -44,7 +44,7 @@ export enum ServerMessages {
     Address = 'Address',
 }
 
-export function BrowserSyncServer(address: string, context: IActorContext) {
+export function BrowserSyncServer(address: string, context: IActorContext): any {
     return {
         postStart() {
             debug('-> postStart()');

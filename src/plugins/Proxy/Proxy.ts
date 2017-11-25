@@ -1,9 +1,5 @@
-import {Observable} from 'rxjs/Observable';
-import httpProxy = require('http-proxy');
-import {Middleware, MiddlewareTypes} from "../Server/Server";
-import {RewriteRule} from "../../rewrite-rules";
-import {Scheme} from "../../options";
-import {BSError, BSErrorType} from "../../errors";
+import {Observable} from 'rxjs';
+import {MessageResponse} from "aktor-js";
 import {List} from "immutable";
 import {GetActorFn} from "../../Browsersync.init";
 import {
@@ -17,7 +13,7 @@ export enum ProxyMessages {
     Middleware = 'middleware'
 }
 
-export function BrowsersyncProxyFactory() {
+export function BrowsersyncProxyFactory(): any {
     return {
         methods: {
             [ProxyMessages.Options]: optionsHandler,
@@ -30,7 +26,7 @@ export function getProxyOption(input: any): ProxyOptionsInput[] {
     return List([]).concat(input).toJS().filter(Boolean);
 }
 
-export function askForProxyMiddleware (getActor: GetActorFn, proxyOption: ProxyOptionsInput[]) {
+export function askForProxyMiddleware (getActor: GetActorFn, proxyOption: ProxyOptionsInput[]): any {
     if (proxyOption.length) {
         return getActor('proxy', BrowsersyncProxyFactory)
             .ask(ProxyMessages.Middleware, proxyOption)
@@ -38,7 +34,7 @@ export function askForProxyMiddleware (getActor: GetActorFn, proxyOption: ProxyO
     return Observable.of([null, []]);
 }
 
-export function askForProxyOptions(getActor: GetActorFn, proxyOption: ProxyOptionsInput[]) {
+export function askForProxyOptions(getActor: GetActorFn, proxyOption: ProxyOptionsInput[]): any {
     if (proxyOption.length) {
         return getActor('proxy', BrowsersyncProxyFactory)
             .ask(ProxyMessages.Options, proxyOption)

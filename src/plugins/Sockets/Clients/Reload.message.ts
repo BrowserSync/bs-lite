@@ -1,5 +1,5 @@
 import {Observable} from 'rxjs';
-import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
+import {IMethodStream} from "aktor-js";
 import {SocketsState} from "../Sockets";
 
 const { empty } = Observable;

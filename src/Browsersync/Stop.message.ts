@@ -1,16 +1,12 @@
 import {Observable} from 'rxjs';
-import {ServerMessages} from "../plugins/Server/Server";
-import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
+import {IMethodStream, IActorContext} from "aktor-js";
 import {BrowserSyncState} from "../Browsersync";
-import {IActorContext} from "aktor-js/dist/ActorContext";
-
-const {concat, from} = Observable;
 
 export namespace BrowsersyncStop {
     export type Response = [null, string];
 }
 
-export function getStopHandler(context: IActorContext) {
+export function getStopHandler(context: IActorContext): any {
     return function stopHandler(stream: IMethodStream<void, BrowsersyncStop.Response, BrowserSyncState>) {
         return stream.switchMap(({respond, state}) => {
             const requiresShutdown = [

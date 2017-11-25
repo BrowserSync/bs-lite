@@ -1,11 +1,10 @@
 import {Observable} from 'rxjs';
 import {Middleware, ServerState} from "./Server";
-import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
+import {IMethodStream, IActorContext} from "aktor-js";
 
 import {Server} from "http";
 import {Server as HttpsServer} from "https";
 import {Options} from "../../index";
-import {IActorContext} from "aktor-js/dist/ActorContext";
 import {Scheme} from "../../options";
 import {PortDetect, PortDetectMessages, portsActorFactory} from "../../ports";
 
@@ -27,7 +26,7 @@ export namespace ServerInit {
     }
 }
 
-export function serverInitHandler(context: IActorContext) {
+export function serverInitHandler(context: IActorContext): any {
     return function(stream: IMethodStream<ServerInit.Input, ServerInit.Response, ServerState>) {
 
         return stream.flatMap(({payload, respond, state}) => {

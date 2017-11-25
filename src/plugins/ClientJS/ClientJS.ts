@@ -1,6 +1,5 @@
 import {Observable} from 'rxjs';
-import {IActorContext} from "aktor-js/dist/ActorContext";
-import {IRespondableStream} from "aktor-js/dist/patterns/mapped-methods";
+import {IRespondableStream, IActorContext} from "aktor-js";
 import {Options} from "../../index";
 import {createMiddleware} from "./ClientJS.utils";
 
@@ -21,7 +20,7 @@ export enum ClientJSMessages {
     Middleware = 'middleware',
 }
 
-export function ClientJS(address: string, context: IActorContext) {
+export function ClientJS(address: string, context: IActorContext): any {
     return {
         postStart() {
             debug('-> postStart()');

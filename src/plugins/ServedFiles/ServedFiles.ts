@@ -1,6 +1,6 @@
 import {Observable} from 'rxjs';
 import {Set} from 'immutable';
-import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
+import {IMethodStream, MessageResponse} from "aktor-js";
 import {WatcherMessages} from "../Watcher/Watcher";
 import {WatcherAddItems} from "../Watcher/AddItems.message";
 
@@ -23,7 +23,7 @@ export namespace ServedFilesStop {
     export type Response = [null, string];
 }
 
-export function ServedFilesFactory(address, context) {
+export function ServedFilesFactory(address, context): any {
     return {
         initialState: Set([]),
         methods: {

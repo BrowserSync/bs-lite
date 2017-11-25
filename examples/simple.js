@@ -5,7 +5,7 @@ const {join} = require('path');
 const {bs, init, stop} = create();
 
 init({
-    serveStatic: ['/Users/shakyshane/Sites/jh/m2-perf-work/public'],
+    serveStatic: [join(__dirname, '..', 'fixtures')],
     debug: true
 })
     .subscribe(([errors,  output]) => {

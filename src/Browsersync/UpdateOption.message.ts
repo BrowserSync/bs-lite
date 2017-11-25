@@ -1,5 +1,5 @@
 import {Observable} from 'rxjs';
-import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
+import {IMethodStream} from "aktor-js";
 import {BrowserSyncState} from "../Browsersync";
 
 const { of } = Observable;
@@ -12,7 +12,7 @@ export namespace BrowsersyncUpdateOption {
     export type Response = [null, string];
 }
 
-export function updateOptionHandler(stream: IMethodStream<BrowsersyncUpdateOption.Input, BrowsersyncUpdateOption.Response, BrowserSyncState>) {
+export function updateOptionHandler(stream: IMethodStream<BrowsersyncUpdateOption.Input, BrowsersyncUpdateOption.Response, BrowserSyncState>): any {
     return stream.switchMap(({payload, respond, state}) => {
         const {path, fn} = payload;
         const updated = state.options.updateIn([].concat(path), fn);

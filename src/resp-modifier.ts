@@ -3,10 +3,10 @@ import {Map} from 'immutable';
 import {MiddlewareFn, RewriteRule, TransformFn, createOne} from './rewrite-rules';
 
 import debug = require('debug');
-import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {Options} from "./index";
 import {Middleware, MiddlewareTypes} from "./plugins/Server/Server";
 import {headerHasHtmlAccept} from "./utils";
+import {IMethodStream, MessageResponse} from "aktor-js";
 const respModDebug = debug('bs:resp-mod');
 
 export function isHtml(str) {
@@ -188,7 +188,7 @@ export enum RespModifierMessages {
     middleware = 'middleware'
 }
 
-export function RespModifier(address, context) {
+export function RespModifier(address, context): any {
     return {
         methods: {
             [RespModifierMessages.middleware]: function(stream: IMethodStream<{rules: RewriteRule[], options: Options}, Middleware[], any>) {

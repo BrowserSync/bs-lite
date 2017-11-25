@@ -4,10 +4,9 @@ import {BSError} from "../../errors";
 import {initHandler, WatcherItem} from "./Init.message";
 import {getAddItemsHandler} from "./AddItems.message";
 import EventEmitter = NodeJS.EventEmitter;
-import {from} from "rxjs/observable/from";
-import {gracefullyStopChildren} from "../../utils";
 import {getStopHandler} from "./Stop.message";
 import {getFileEventHandler} from "./FileEvent.message";
+import {MessageResponse} from "aktor-js";
 
 const { of } = Observable;
 

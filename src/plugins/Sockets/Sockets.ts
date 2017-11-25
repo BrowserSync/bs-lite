@@ -1,10 +1,9 @@
 import {Observable} from 'rxjs';
-import {BsSocketOptions} from "../../options";
 import {Server} from "http";
 import {initHandler} from "./Init.message";
 import {stateHandler} from "./State.message";
 import {ClientsFactory} from "./Clients/Clients";
-import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
+import {MessageResponse, IMethodStream} from "aktor-js";
 
 const { of } = Observable;
 
@@ -19,7 +18,7 @@ export enum SocketsMessages {
     State = 'State',
 }
 
-export function Sockets(address, context) {
+export function Sockets(address, context): any {
     return {
         initialState: {
             io: null,
@@ -38,6 +37,7 @@ export function Sockets(address, context) {
                         clients.emit(payload.name, payload.payload);
                     }
                     return of(respond([null, 'sent!'], state));
+
                 })
             },
         }

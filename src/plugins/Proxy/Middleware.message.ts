@@ -3,13 +3,13 @@ import httpProxy = require('http-proxy');
 import {checkCookies} from "./proxy-utils";
 import {createItemFromObject, createItemFromString, ProxyItem, ProxyOptionsInput} from "./Options.message";
 import {Middleware, MiddlewareTypes} from "../Server/Server";
-import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
+import {IMethodStream, MessageResponse} from "aktor-js";
 
 export namespace ProxyMiddleware {
     export type Response = [null|Error[], null|Middleware[]]
 }
 
-export function middlewareHandler(stream: IMethodStream<any, ProxyMiddleware.Response, any>) {
+export function middlewareHandler(stream: IMethodStream<any, ProxyMiddleware.Response, any>): any {
     return stream.map(({payload, respond}) => {
         return respond([null, getMiddleware(payload)]);
     })

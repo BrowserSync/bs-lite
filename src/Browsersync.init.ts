@@ -1,16 +1,15 @@
-import {Observable, BehaviorSubject} from 'rxjs';
+import {Observable} from 'rxjs';
 import serveStatic, {ServeStaticMiddleware} from './plugins/ServeStatic/serveStatic';
 import {Middleware} from './plugins/Server/Server';
 import clientJS from './plugins/ClientJS/clientJS';
 import compression from './plugins/compression';
 import {fromJS, Map, List} from "immutable";
-import {IActorContext} from "aktor-js/dist/ActorContext";
 import {Options} from "./index";
 import {RespModifier, RespModifierMiddlewareInput} from "./resp-modifier";
-import {addMissingOptions} from "./options";
+import {addMissingOptions, BsOptions} from "./options";
 import {askForProxyMiddleware, getProxyOption, askForProxyOptions} from "./plugins/Proxy/proxy";
 import {RewriteRule} from "./rewrite-rules";
-import {ActorRef} from "aktor-js/dist/ActorRef";
+import {ActorRef, IActorContext} from "aktor-js";
 import {ProxyOptions} from "./plugins/Proxy/Options.message";
 
 const debug = require('debug')('bs:system');
@@ -61,7 +60,7 @@ export function getOptionsAndMiddleware(context: IActorContext, options: Options
             return of(updatedOptions);
         })
     })
-    .flatMap((opts): any => {
+    .flatMap((opts: Options): any => {
 
         const snippetRule: RewriteRule = opts.getIn(['snippetOptions', 'rewriteRule']).toJS();
         const optionRules = opts.get('rewriteRules').toJS().filter(Boolean);

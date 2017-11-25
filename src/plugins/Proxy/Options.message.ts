@@ -1,10 +1,9 @@
 import {Observable} from 'rxjs';
-import httpProxy = require('http-proxy');
 import {ServerOptions} from 'http-proxy';
 import NodeURL  = require('url');
 import * as http from "http";
 import {parse} from "url";
-import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
+import {IMethodStream, MessageResponse} from "aktor-js";
 import {proxyRewriteLinks} from "./proxy-utils";
 import {isPojo} from "../../utils";
 import {RewriteRule} from "../../rewrite-rules";
@@ -60,7 +59,7 @@ export type ProxyResFn = (proxyRes: http.IncomingMessage,
 export type ProxyErrFn = (error: Error) => void;
 export type ProxyResult = {errors: BSError[], item?: ProxyItem };
 
-export function optionsHandler(stream$: IMethodStream<any, ProxyOptions.Response, any>) {
+export function optionsHandler(stream$: IMethodStream<any, ProxyOptions.Response, any>): any {
     return stream$.flatMap(({payload, respond}) => {
         const proxyItems = payload.map((option): ProxyResult => {
             if (typeof option === 'string') {

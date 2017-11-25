@@ -2,9 +2,8 @@ import {Observable} from 'rxjs';
 import socket = require('socket.io');
 import {Server} from "http";
 import {SocketsState} from "./Sockets";
-import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
+import {IMethodStream, MessageResponse} from "aktor-js";
 import {BsSocketOptions} from "../../options";
-
 
 export namespace SocketsInit {
     export type Input = {
@@ -14,7 +13,7 @@ export namespace SocketsInit {
     export type Response = [null, string];
 }
 
-export function initHandler(stream: IMethodStream<SocketsInit.Input, SocketsInit.Response, SocketsState>) {
+export function initHandler(stream: IMethodStream<SocketsInit.Input, SocketsInit.Response, SocketsState>): any {
 
     return stream.switchMap(({payload, respond, state}) => {
 

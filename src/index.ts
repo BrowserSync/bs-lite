@@ -1,11 +1,10 @@
+import {Observable} from "rxjs";
 import * as actorJS from 'aktor-js';
 import {Map} from "immutable";
 import {BsOptions, DefaultOptions, DefaultOptionsMethods} from "./options";
-import {ActorRef} from "aktor-js/dist/ActorRef";
+import {ActorRef, SystemActor} from "aktor-js";
 import {Dependencies, getBrowsersyncFactory, Methods} from "./Browsersync";
 import {updateOption, getOptionsJS} from "./Browsersync.patterns";
-import {SystemActor} from "aktor-js/dist/SystemActor";
-import {Observable} from "rxjs";
 import {BrowsersyncInit} from "./Browsersync/Init.message";
 import {BSErrorLevel, BSErrorType, printErrors} from './errors';
 
@@ -23,9 +22,9 @@ export interface CreateReturn {
     stop(): Observable<string>
 }
 
-export function create(name = 'Browsersync', deps: Dependencies = {}): CreateReturn {
+export function create(name = 'Browsersync', deps: Dependencies = {}): any {
     const system = createSystem({
-        messageScheduler: deps.scheduler,
+        timeScheduler: deps.timeScheduler,
     });
     const bs = system.actorOf(getBrowsersyncFactory(deps), 'core');
     return {
@@ -37,7 +36,7 @@ export function create(name = 'Browsersync', deps: Dependencies = {}): CreateRet
     };
 }
 
-export function fromOptions(options: object) {
+export function fromOptions(options: object): any {
     const system = createSystem();
     return system.actorOf(DefaultOptions)
         .ask(DefaultOptionsMethods.Merge, options);

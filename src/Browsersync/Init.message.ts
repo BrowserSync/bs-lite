@@ -1,12 +1,11 @@
 import {Observable} from 'rxjs';
 import {BrowserSyncState} from "../Browsersync";
-import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {DefaultOptions, DefaultOptionsMethods} from "../options";
 import {getOptionsAndMiddleware} from "../Browsersync.init";
 import {ServerMessages} from "../plugins/Server/Server";
 import * as http from "http";
 import {Options} from "../index";
-import {IActorContext} from "aktor-js/dist/ActorContext";
+import {IMethodStream, IActorContext} from "aktor-js";
 import {ServerInit} from "../plugins/Server/Init.message";
 import {WatcherMessages} from "../plugins/Watcher/Watcher";
 
@@ -21,7 +20,7 @@ export namespace BrowsersyncInit {
     export type Input = object;
 }
 
-export function initMessageHandler(context: IActorContext) {
+export function initMessageHandler(context: IActorContext): any {
     return function (stream: IMethodStream<BrowsersyncInit.Input, BrowsersyncInit.Response, BrowserSyncState>) {
         return stream.switchMap(({payload, respond, state}) => {
             return context.actorOf(DefaultOptions)
@@ -51,7 +50,7 @@ export function initMessageHandler(context: IActorContext) {
                                 watcher.ask(WatcherMessages.Init).ignoreElements()
                             );
                         })
-                        .map((output) => {
+                        .map((output: BrowsersyncInit.Output) => {
                             return respond([null, output], nextState);
                         })
                         .catch(err => {

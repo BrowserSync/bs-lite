@@ -6,12 +6,12 @@ import {getAddItemsHandler} from "../AddItems.message";
 import EventEmitter = NodeJS.EventEmitter;
 import chokidar = require('chokidar');
 import {WatcherMessages} from "../Watcher";
+import {FileEvent} from "../FileEvent.message";
+import {parse} from "path";
 
 export enum WatcherChild {
     Init = 'init',
 }
-
-
 
 export function WatcherChildFactory(address, context) {
     let watcher;
@@ -22,7 +22,12 @@ export function WatcherChildFactory(address, context) {
                 case 'start': {
                     watcher = chokidar.watch(payload);
                     watcher.on('change', function(path) {
-                        parent.tell(WatcherMessages.FileEvent, {event: 'change', path}).subscribe();
+                        const payload: FileEvent.Input = {
+                            event: 'change',
+                            path,
+                            parsed: parse(path),
+                        };
+                        parent.tell(WatcherMessages.FileEvent, payload).subscribe();
                     });
                     break;
                 }

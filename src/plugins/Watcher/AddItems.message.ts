@@ -1,11 +1,9 @@
 import {Observable} from 'rxjs';
-import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {BSError} from "../../errors";
 import {WatcherInput} from "./Init.message";
 import {WatcherState} from "./Watcher";
-import chokidar = require('chokidar');
-import {IActorContext} from "aktor-js/dist/ActorContext";
 import {WatcherChildFactory} from "./WatcherChild/WatcherChild";
+import {IActorContext, MessageResponse, IMethodStream} from "aktor-js";
 
 const {of} = Observable;
 
@@ -17,7 +15,7 @@ export namespace WatcherAddItems {
     export type Response = [null|BSError[], null|string];
 }
 
-export function getAddItemsHandler(context: IActorContext) {
+export function getAddItemsHandler(context: IActorContext): any {
     return function addItemsHandler(stream: IMethodStream<WatcherAddItems.Input, WatcherAddItems.Response, WatcherState>) {
         return stream.switchMap(({payload, respond, state}) => {
             const match = context.actorSelection(payload.ns)[0];

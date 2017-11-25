@@ -1,10 +1,6 @@
-'use strict';
-
-import {Observable} from 'rxjs/Observable';
-import {Options} from "./index";
-import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
+import {Observable} from 'rxjs';
 import {BSError, BSErrorLevel, BSErrorType, PortDetectError, PortNotAvailableError} from "./errors";
-import {ActorRef} from "aktor-js/dist/ActorRef";
+import {IMethodStream, MessageResponse} from "aktor-js";
 
 const {of} = Observable;
 const debug = require('debug')('bs:ports');
@@ -23,7 +19,7 @@ export namespace PortDetect {
     export type Response = [null|BSError[], null|number]
 }
 
-export function portsActorFactory(address, context) {
+export function portsActorFactory(address, context): any {
     return {
         methods: {
             [PortDetectMessages.Detect]: function(stream: IMethodStream<PortDetect.Input, PortDetect.Response, any>) {

@@ -1,7 +1,7 @@
 import {Observable} from 'rxjs';
-import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
 import {BSError} from "../../errors";
 import {WatcherState} from "./Watcher";
+import {IMethodStream, MessageResponse} from "aktor-js";
 
 const {of} = Observable;
 
@@ -24,7 +24,7 @@ export namespace WatcherInit {
     export type Response = [null|BSError[], null|string];
 }
 
-export function initHandler(stream: IMethodStream<WatcherInit.Input, any, WatcherState>) {
+export function initHandler(stream: IMethodStream<WatcherInit.Input, any, WatcherState>): any {
     return stream.switchMap(({payload, respond, state}) => {
         return of(respond([null, 'yay!'], state))
     });

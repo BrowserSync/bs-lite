@@ -1,12 +1,12 @@
 import {Observable} from 'rxjs';
 import {ServerState} from "./Server";
-import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
+import {IMethodStream, MessageResponse} from "aktor-js";
 
 export namespace ServerStop {
     export type Response = [null, string];
 }
 
-export function stopHandler(stream: IMethodStream<void, ServerStop.Response, ServerState>) {
+export function stopHandler(stream: IMethodStream<void, ServerStop.Response, ServerState>): any {
     return stream.flatMap(({respond, state}) => {
         const {server} = state;
         if (server && server.listening) {

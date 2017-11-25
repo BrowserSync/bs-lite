@@ -1,13 +1,9 @@
 import {Observable} from 'rxjs';
-import {IActorContext} from "aktor-js/dist/ActorContext";
-import {DefaultOptions, DefaultOptionsMethods} from "./options";
 import {Map} from "immutable";
-import {getOptionsAndMiddleware} from "./Browsersync.init";
-import {BrowserSyncServer, ServerMessages} from "./plugins/Server/Server";
+import {BrowserSyncServer} from "./plugins/Server/Server";
 import {Options} from "./index";
-import {IMethodStream} from "aktor-js/dist/patterns/mapped-methods";
-import {ActorRef} from "aktor-js/dist/ActorRef";
-import {BrowsersyncInit, initMessageHandler} from "./Browsersync/Init.message";
+import {ActorRef, IActorContext} from "aktor-js";
+import {initMessageHandler} from "./Browsersync/Init.message";
 import {getListeningHandler} from "./Browsersync/Listening.message";
 import {getStopHandler} from "./Browsersync/Stop.message";
 import {addressHandler} from "./Browsersync/Address.message";
@@ -33,10 +29,11 @@ export interface BrowserSyncState {
 
 export interface Dependencies {
     scheduler?: any;
+    timeScheduler?: any;
     findPort?: Function
 }
 
-export function getBrowsersyncFactory(deps: Dependencies = {}) {
+export function getBrowsersyncFactory(deps: Dependencies = {}): any {
     return function Browsersync(address: string, context: IActorContext) {
         const children = {
             servedFiles: context.actorOf(ServedFilesFactory, 'servedFiles'),
