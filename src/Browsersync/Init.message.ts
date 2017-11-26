@@ -1,6 +1,6 @@
 import {Observable} from 'rxjs';
 import {BrowserSyncState} from "../Browsersync";
-import {DefaultOptions, DefaultOptionsMethods} from "../options";
+import {BsOptions, DefaultOptions, DefaultOptionsMethods} from "../options";
 import {getOptionsAndMiddleware} from "../Browsersync.init";
 import {ServerMessages} from "../plugins/Server/Server";
 import * as http from "http";
@@ -34,6 +34,7 @@ export function initMessageHandler(context: IActorContext): any {
                         .flatMap(({middleware, options}) => {
                             const payload = {middleware, options};
                             const watcher = context.actorSelection('/system/core/watcher')[0];
+                            const watcherPayload: BsOptions['watch'] = options.get('watch').toJS();
                             return merge(
                                 // start the server + sockets
                                 state.server
@@ -47,7 +48,7 @@ export function initMessageHandler(context: IActorContext): any {
                                         return of(output);
                                     }),
                                 // start the watcher
-                                watcher.ask(WatcherMessages.Init).ignoreElements()
+                                watcher.ask(WatcherMessages.Init, watcherPayload).ignoreElements()
                             );
                         })
                         .map((output: BrowsersyncInit.Output) => {

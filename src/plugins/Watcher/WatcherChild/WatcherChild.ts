@@ -3,6 +3,7 @@ import chokidar = require('chokidar');
 import {createFileEvent} from "../FileEvent.message";
 import {parse} from "path";
 import {WatcherAddItems} from "../AddItems.message";
+import {WatcherInput} from "../Init.message";
 
 const debug = require('debug')('bs:WatcherChild');
 
@@ -24,8 +25,13 @@ export function WatcherChildFactory(address, context) {
             switch (name) {
                 case WatcherChildMessages.Start: {
                     const incoming: WatcherAddItems.Input = payload;
-                    debug('chokidar.watch()', incoming);
-                    watcher = chokidar.watch(incoming);
+                    debug('chokidar.watch() ns:', incoming.ns);
+                    debug('chokidar.watch() items:', incoming.items);
+                    debug('chokidar.watch() options:', incoming.options);
+                    if (watcher) {
+                        watcher.close();
+                    }
+                    watcher = chokidar.watch(incoming.items, incoming.options);
                     watcher.on('ready', () => ready = true);
                     watcher.on('change', function(path) {
                         const payload = {
@@ -41,7 +47,7 @@ export function WatcherChildFactory(address, context) {
 
                 case WatcherChildMessages.Add: {
                     debug('watcher.add()', payload);
-                    watcher.add(payload);
+                    watcher.add(<WatcherInput>payload);
                     break;
                 }
 

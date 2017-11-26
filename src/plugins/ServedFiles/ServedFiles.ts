@@ -38,9 +38,10 @@ export function ServedFilesFactory(address, context): any {
                         return of(respond([null, false], state));
                     }
 
-                    if (state.contains(payload.path)) {
-                        return of(respond([null, false], state));
-                    }
+                    // TODO: skip duplicates somewhere
+                    // if (state.contains(payload.path)) {
+                    //     return of(respond([null, false], state));
+                    // }
 
                     const watchpayload: WatcherAddItems.Input = {
                         ns: 'core',

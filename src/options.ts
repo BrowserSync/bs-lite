@@ -5,6 +5,7 @@ import {RewriteRule} from "./rewrite-rules";
 import {clientScript, scriptTags} from "./connect-utils";
 import {doesNotContainDisableParam, headerHasHtmlAccept} from "./utils";
 import {ProxyOptionsInput} from "./plugins/Proxy/Options.message";
+import {WatchOptions} from "chokidar";
 
 const {of} = Observable;
 
@@ -27,6 +28,11 @@ export const defaultOptions: BsOptions = {
     middleware: [],
     rewriteRules: [],
     snippet: '',
+    watch: {
+        active: true,
+        options: {},
+        debounce: 500,
+    },
     server: {
         port: 9000,
     },
@@ -72,6 +78,11 @@ export interface BsOptions {
     middleware?: Middleware[],
     server: {
         port: number,
+    },
+    watch: {
+        active: boolean,
+        options: WatchOptions,
+        debounce: number,
     },
     serveStatic: string|string[];
     clientJS: string|string[];

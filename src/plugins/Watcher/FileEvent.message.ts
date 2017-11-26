@@ -2,10 +2,10 @@ import {Observable} from 'rxjs';
 import {ClientMessages} from "../Sockets/Clients/Clients";
 import {IMethodStream, IActorContext} from "aktor-js";
 import {ParsedPath} from "path";
-import {WatcherMessages} from "./Watcher";
+import {WatcherMessages, WatcherState} from "./Watcher";
 const debug = require('debug')('bs:Watcher:FileEvent');
 
-const { empty } = Observable;
+const { empty, of } = Observable;
 
 export namespace FileEvent {
     export type Input = {
@@ -13,6 +13,7 @@ export namespace FileEvent {
         path: string,
         parsed: ParsedPath
     }
+    export type Response = [null, string];
 }
 
 export function createFileEvent(payload: FileEvent.Input) {
@@ -20,16 +21,17 @@ export function createFileEvent(payload: FileEvent.Input) {
 }
 
 export function getFileEventHandler(context: IActorContext): any {
-    return function(stream: IMethodStream<any, FileEvent.Input, void>) {
-        return stream.flatMap(({payload}) => {
+    return function(stream: IMethodStream<any, FileEvent.Response, WatcherState>) {
+        return stream.flatMap(({payload, state, respond}) => {
             const sockets = context.actorSelection('/system/core/server/sockets/clients')[0];
 
-            if (sockets) {
+            if (sockets && state.active) {
                 debug('sockets available, sending', ClientMessages.Reload);
-                return sockets.tell(ClientMessages.Reload, payload);
+                return sockets.tell(ClientMessages.Reload, payload)
+                    .mapTo(respond([null, 'ok!'], state))
             }
 
-            return empty();
+            return of(true).mapTo(respond([null, 'skipped!'], state));
         });
     }
 }
