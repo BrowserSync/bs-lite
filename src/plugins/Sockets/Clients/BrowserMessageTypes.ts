@@ -6,16 +6,18 @@ export enum BrowserMessages {
 }
 
 export namespace BrowserReload {
-    export type Name = BrowserMessages.BrowserReload;
     export enum Reasons {
         FileChanged = 'FileChanged'
     }
     export type Payload = {
-        force: boolean,
         reason: Reasons,
         items: FileEvent.Input[]
     };
-    export type Message = { name: BrowserReload.Name, payload: BrowserReload.Payload };
+    export type Message = { name: BrowserMessages.BrowserReload, payload: Payload };
+
+    export function create(payload: Payload): [BrowserMessages.BrowserReload, Payload] {
+        return [BrowserMessages.BrowserReload, payload];
+    }
 }
 
 export namespace AssetReload {
@@ -24,7 +26,6 @@ export namespace AssetReload {
         FileChanged = 'FileChanged'
     }
     export type Payload = {
-        force: boolean,
         reason: Reasons,
         items: FileEvent.Input[]
     };

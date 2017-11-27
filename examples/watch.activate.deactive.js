@@ -1,5 +1,5 @@
 require('source-map-support').install();
-const {create, printErrors} = require('../');
+const {create, printErrors, WatcherMessages} = require('../');
 const {join} = require('path');
 
 const {bs, init, stop, system} = create();
@@ -12,12 +12,12 @@ ac({
 
 setTimeout(() => {
     const a = system.actorSelection('core/watcher')[0];
-    a.tell('Deactivate').subscribe();
+    a.tell(WatcherMessages.Deactivate).subscribe();
 }, 5000);
 
 setTimeout(() => {
     const a = system.actorSelection('core/watcher')[0];
-    a.tell('Activate').subscribe();
+    a.tell(WatcherMessages.Activate).subscribe();
 }, 10000);
 
 function ac (opts) {

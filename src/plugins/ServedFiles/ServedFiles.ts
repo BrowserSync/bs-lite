@@ -43,16 +43,16 @@ export function ServedFilesFactory(address, context): any {
                     //     return of(respond([null, false], state));
                     // }
 
-                    const watchpayload: WatcherAddItems.Input = {
+                    const watchpayload = WatcherAddItems.create({
                         ns: 'core',
                         items: [payload.path]
-                    };
+                    });
 
                     const nextState = state.add(payload.path);
                     const response = respond([null, true], nextState);
 
                     return watcher
-                        .tell(WatcherAddItems.Name, watchpayload)
+                        .tell(...watchpayload)
                         .mapTo(response);
                 })
             },

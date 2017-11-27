@@ -31,16 +31,12 @@ export function reloadHandler(stream: Observable<IncomingMessage>, context: IAct
                 /**
                  * Construct the outgoing payload (to the browser)
                  */
-                const emitPayload: BrowserReload.Message = {
-                    name: BrowserMessages.BrowserReload,
-                    payload: {
-                        force: true,
-                        reason: BrowserReload.Reasons.FileChanged,
-                        items: [reloads[0]], // only send the first item
-                    }
-                };
+                const emitPayload = BrowserReload.create({
+                    reason: BrowserReload.Reasons.FileChanged,
+                    items: [reloads[0]], // only send the first item
+                });
 
-                return context.parent.tell(SocketsMessages.Emit, emitPayload)
+                return context.parent.tell(emitPayload[0], emitPayload[1])
                     .mapTo(patterns.createResponse(messages[0], 'ok!'));
             }
 
@@ -51,7 +47,6 @@ export function reloadHandler(stream: Observable<IncomingMessage>, context: IAct
                 const emitPayload: AssetReload.Message = {
                     name: BrowserMessages.AssetReload,
                     payload: {
-                        force: true,
                         reason: BrowserReload.Reasons.FileChanged,
                         items: injects, // send all injectable items
                     }

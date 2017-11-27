@@ -7,6 +7,7 @@ import {Dependencies, getBrowsersyncFactory, Methods} from "./Browsersync";
 import {updateOption, getOptionsJS} from "./Browsersync.patterns";
 import {BrowsersyncInit} from "./Browsersync/Init.message";
 import {BSErrorLevel, BSErrorType, printErrors} from './errors';
+import {WatcherMessages} from './plugins/Watcher/Watcher';
 
 const debug = require('debug')('bs:system');
 
@@ -50,4 +51,5 @@ export {
     BSErrorLevel,
     BSErrorType,
     printErrors,
+    WatcherMessages,
 };

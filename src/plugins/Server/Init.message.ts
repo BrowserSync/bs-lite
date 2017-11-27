@@ -41,7 +41,7 @@ export function serverInitHandler(context: IActorContext): any {
                         if (server.address().port === port && state.scheme === scheme) {
                             // if so, just re-apply the middleware to avoid rebinding a port
                             return replaceMiddleware(middleware, state.app)
-                                .do(x => console.log('replacing middleware'))
+                                .do(x => debug('replacing middleware'))
                                 .map((app) => {
                                     return respond([null, server], {server, app, scheme});
                                 })

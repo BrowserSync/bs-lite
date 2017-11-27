@@ -16,6 +16,9 @@ export namespace WatcherAddItems {
         options?: WatchOptions,
     };
     export type Response = [null|BSError[], null|string];
+    export function create(payload: Input) {
+        return [Name, payload];
+    }
 }
 
 export function getAddItemsHandler(context: IActorContext): any {
