@@ -123,6 +123,12 @@ function createNewServer(options: Options, app): Server|HttpsServer {
 function getNewServer(middleware: Middleware[], port: number, options: Options) {
 
     const app = connect();
+    app.use(function(req, res, next) {
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
+        next();
+    });
     middleware.forEach(mw => {
         debug(mw);
         app.use(mw.route, mw.handle);
