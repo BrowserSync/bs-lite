@@ -52,7 +52,7 @@ export function ServedFilesFactory(address, context): any {
                     const response = respond([null, true], nextState);
 
                     return watcher
-                        .tell(WatcherMessages.AddItems, watchpayload)
+                        .tell(WatcherAddItems.Name, watchpayload)
                         .mapTo(response);
                 })
             },

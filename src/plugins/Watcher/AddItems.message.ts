@@ -1,7 +1,7 @@
 import {Observable} from 'rxjs';
 import {BSError} from "../../errors";
 import {WatcherInput} from "./Init.message";
-import {WatcherState} from "./Watcher";
+import {WatcherMessages, WatcherState} from "./Watcher";
 import {WatcherChildFactory, WatcherChildMessages} from "./WatcherChild/WatcherChild";
 import {IActorContext, MessageResponse, IMethodStream} from "aktor-js";
 import {WatchOptions} from "chokidar";
@@ -9,6 +9,7 @@ import {WatchOptions} from "chokidar";
 const {of} = Observable;
 
 export namespace WatcherAddItems {
+    export const Name = WatcherMessages.AddItems;
     export type Input = {
         ns: string,
         items: WatcherInput,
