@@ -2,7 +2,7 @@ import {Observable} from 'rxjs';
 import {Middleware} from "../Server/Server";
 import {IMethodStream, IActorContext} from "aktor-js";
 import {BSError} from "../../errors";
-import {ServedFilesFile, ServedFilesMessages} from "../ServedFiles/ServedFiles";
+import {ServedFilesAdd, ServedFilesMessages} from "../ServedFiles/ServedFiles";
 import {createMiddleware} from "./ServeStatic.utils";
 
 const debug = require('debug')('bs:serveStatic');
@@ -43,7 +43,7 @@ export function ServeStatic (address: string, context: IActorContext): any {
                     const {cwd, options} = payload;
                     const [errors, mw] = createMiddleware(options, cwd, {
                         onFile: (path, stat) => {
-                            const payload: ServedFilesFile.Input = {
+                            const payload: ServedFilesAdd.Input = {
                                 cwd, path
                             };
                             served.tell(ServedFilesMessages.AddFile, payload).subscribe();

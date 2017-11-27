@@ -32,12 +32,9 @@ export function Sockets(address, context): any {
             [SocketsMessages.Init]: initHandler,
             [SocketsMessages.Emit]: function(stream: IMethodStream<{name: string, payload: any}, [null, string], SocketsState>) {
                 return stream.switchMap(({state, payload, respond}) => {
-                    if (state.clients) {
-                        const clients = state.io.of('/browser-sync');
-                        clients.emit(payload.name, payload.payload);
-                    }
+                    const clients = state.io.of('/browser-sync');
+                    clients.emit(payload.name, payload.payload);
                     return of(respond([null, 'sent!'], state));
-
                 })
             },
         }

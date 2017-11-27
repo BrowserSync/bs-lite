@@ -1,5 +1,5 @@
 import {Observable} from 'rxjs';
-import {BrowserSyncState} from "../Browsersync";
+import {BrowserSyncState, CoreChildren} from "../Browsersync";
 import {BsOptions, DefaultOptions, DefaultOptionsMethods} from "../options";
 import {getOptionsAndMiddleware} from "../Browsersync.init";
 import {ServerMessages} from "../plugins/Server/Server";
@@ -8,6 +8,7 @@ import {Options} from "../index";
 import {IMethodStream, IActorContext} from "aktor-js";
 import {ServerInit} from "../plugins/Server/Init.message";
 import {WatcherMessages} from "../plugins/Watcher/Watcher";
+import {ServedFilesMessages} from "../plugins/ServedFiles/ServedFiles";
 
 const {of, merge} = Observable;
 
@@ -32,8 +33,9 @@ export function initMessageHandler(context: IActorContext): any {
                     };
                     return getOptionsAndMiddleware(context, mergedOptions)
                         .flatMap(({middleware, options}) => {
-                            const payload = {middleware, options};
-                            const watcher = context.actorSelection('/system/core/watcher')[0];
+                            const payload     = {middleware, options};
+                            const watcher     = context.actorSelection('/system/core/watcher')[0];
+                            const servedFiles = context.actorSelection(`/system/core/${CoreChildren.ServedFiles}`)[0];
                             const watcherPayload: BsOptions['watch'] = options.get('watch').toJS();
                             return merge(
                                 // start the server + sockets
@@ -48,7 +50,8 @@ export function initMessageHandler(context: IActorContext): any {
                                         return of(output);
                                     }),
                                 // start the watcher
-                                watcher.ask(WatcherMessages.Init, watcherPayload).ignoreElements()
+                                watcher.ask(WatcherMessages.Init, watcherPayload).ignoreElements(),
+                                servedFiles.ask(ServedFilesMessages.Init).ignoreElements(),
                             );
                         })
                         .map((output: BrowsersyncInit.Output) => {

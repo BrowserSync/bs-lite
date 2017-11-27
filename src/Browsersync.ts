@@ -33,10 +33,14 @@ export interface Dependencies {
     findPort?: Function
 }
 
+export enum CoreChildren {
+    ServedFiles = 'servedFiles',
+}
+
 export function getBrowsersyncFactory(deps: Dependencies = {}): any {
     return function Browsersync(address: string, context: IActorContext) {
         const children = {
-            servedFiles: context.actorOf(ServedFilesFactory, 'servedFiles'),
+            servedFiles: context.actorOf(ServedFilesFactory, CoreChildren.ServedFiles),
             findPort: context.actorOf(deps.findPort ? deps.findPort : FindPortFactory, 'findPort'),
             server: context.actorOf(BrowserSyncServer, 'server'),
             watcher: context.actorOf(WatcherFactory, 'watcher'),

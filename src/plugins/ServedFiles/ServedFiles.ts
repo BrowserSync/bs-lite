@@ -3,16 +3,19 @@ import {Set} from 'immutable';
 import {IMethodStream, MessageResponse} from "aktor-js";
 import {WatcherMessages} from "../Watcher/Watcher";
 import {WatcherAddItems} from "../Watcher/AddItems.message";
+import {next} from "@kwonoj/rxjs-testscheduler-compat";
+const debug = require('debug')('bs:ServedFiles');
 
 const {of} = Observable;
 
 export enum ServedFilesMessages {
+    Init     = 'Init',
     AddFile  = 'AddFile',
     GetFiles = 'GetFiles',
     Stop     = 'Stop',
 }
 
-export namespace ServedFilesFile {
+export namespace ServedFilesAdd {
     export type Input = {cwd: string, path: string};
     export type Response = [null, boolean];
 }
@@ -25,11 +28,17 @@ export namespace ServedFilesStop {
     export type Response = [null, string];
 }
 
+export namespace ServedFilesInit {
+    export type Response = [null, string];
+}
+
+type ServedFilesState = Set<string>;
+
 export function ServedFilesFactory(address, context): any {
     return {
         initialState: Set([]),
         methods: {
-            [ServedFilesMessages.AddFile]: function(stream: IMethodStream<ServedFilesFile.Input, ServedFilesFile.Response, any>) {
+            [ServedFilesMessages.AddFile]: function(stream: IMethodStream<ServedFilesAdd.Input, ServedFilesAdd.Response, ServedFilesState>) {
                 return stream.flatMap(({payload, respond, state}) => {
 
                     const watcher = context.actorSelection('/system/core/watcher')[0];
@@ -39,9 +48,9 @@ export function ServedFilesFactory(address, context): any {
                     }
 
                     // TODO: skip duplicates somewhere
-                    // if (state.contains(payload.path)) {
-                    //     return of(respond([null, false], state));
-                    // }
+                    if (state.contains(payload.path)) {
+                        return of(respond([null, false], state));
+                    }
 
                     const watchpayload = WatcherAddItems.create({
                         ns: 'core',
@@ -56,16 +65,23 @@ export function ServedFilesFactory(address, context): any {
                         .mapTo(response);
                 })
             },
-            [ServedFilesMessages.GetFiles]: function(stream: IMethodStream<void, ServedFilesFile.Response, any>) {
+            [ServedFilesMessages.GetFiles]: function(stream: IMethodStream<void, ServedFilesGetFiles.Response, ServedFilesState>) {
                 return stream.map(({respond, state}) => {
                     return respond([null, state.toArray()], state);
                 })
             },
-            [ServedFilesMessages.Stop]: function(stream: IMethodStream<void, ServedFilesStop.Response, any>) {
+            [ServedFilesMessages.Stop]: function(stream: IMethodStream<void, ServedFilesStop.Response, ServedFilesState>) {
                 return stream.map(({respond, state}) => {
                     return respond([null, 'ok'], state);
                 })
             },
+            [ServedFilesMessages.Init]: function(stream: IMethodStream<void, ServedFilesInit.Response, ServedFilesState>) {
+                return stream.map(({respond, state}) => {
+                    debug(`init, clearing ${state.size} items`);
+                    const nextState = Set([]);
+                    return respond([null, 'ok'], nextState);
+                })
+            }
         }
     }
 }

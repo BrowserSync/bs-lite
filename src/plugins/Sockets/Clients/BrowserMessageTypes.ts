@@ -15,8 +15,11 @@ export namespace BrowserReload {
     };
     export type Message = { name: BrowserMessages.BrowserReload, payload: Payload };
 
-    export function create(payload: Payload): [BrowserMessages.BrowserReload, Payload] {
-        return [BrowserMessages.BrowserReload, payload];
+    export function create(payload: Payload): Message {
+        return {
+            name: BrowserMessages.BrowserReload,
+            payload,
+        };
     }
 }
 
@@ -30,4 +33,10 @@ export namespace AssetReload {
         items: FileEvent.Input[]
     };
     export type Message = { name: AssetReload.Name, payload: AssetReload.Payload };
+    export function create(payload: Payload): Message {
+        return {
+            name: BrowserMessages.AssetReload,
+            payload,
+        };
+    }
 }
