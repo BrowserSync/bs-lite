@@ -33,7 +33,7 @@ export function replace(payload: AssetReload.Payload, log) {
 }
 
 function maybeSwap(changedNames: string[], style: CSSStyleSheet) {
-    Array.from(style.rules).forEach((rule, i) => {
+    [].slice.call(style.cssRules||[]).forEach((rule, i) => {
         if (rule instanceof CSSImportRule) {
             const a: any = document.createElement('A');
             a.href = rule.href;
@@ -48,7 +48,6 @@ function maybeSwap(changedNames: string[], style: CSSStyleSheet) {
                 style.deleteRule(i);
                 style.insertRule(`@import url("${nextUrl}")`);
             } else {
-                console.log(rule);
                 if (rule.styleSheet) {
                     maybeSwap(changedNames, rule.styleSheet);
                 }
