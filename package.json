@@ -41,6 +41,7 @@
     "http-shutdown": "^1.2.0",
     "immutable": "^3.8.1",
     "portscanner": "^2.1.1",
+    "rxjs": "^5.5.2",
     "serve-static": "browsersync/serve-static",
     "socket.io": "^2.0.3"
   }

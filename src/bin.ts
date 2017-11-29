@@ -12,14 +12,16 @@ start(inputs);
 function start(input, flags) {
     init({
         serveStatic: [].concat(input).filter(Boolean),
-        scheme: 'https',
-        debug: true
+        debug: true,
+        server: {
+            port: 8888,
+        },
     })
         .subscribe(([errors,  output]) => {
             if (errors) {
                 return console.log(printErrors(errors))
             }
-            console.log(output.server.address());
+            console.log(`http://localhost:${output.server.address().port}`);
         });
 }
 
