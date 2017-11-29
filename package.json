@@ -2,6 +2,7 @@
   "name": "bs-lite",
   "version": "0.0.9",
   "main": "dist/index",
+  "bin": "dist/bin",
   "typings": "dist/*.d.ts",
   "scripts": {
     "test": "tsc && mocha test/**"
