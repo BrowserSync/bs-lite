@@ -87,7 +87,7 @@ export function getOptionsAndMiddleware(context: IActorContext, options: Options
                 getActor('resp-mod', RespModifier).ask('middleware', respInput),
                 getActor('serveStatic', serveStatic).ask('middleware', ssInput).flatMap(throwForErrors),
                 proxyMiddleware.map(([, mw]) => mw),
-            ).map(mws => {
+            ).map((mws: any[]) => {
                 return mws.reduce((acc: Middleware[], item: Middleware[]) => acc.concat(item), [])
             }),
             Observable.of(opts),

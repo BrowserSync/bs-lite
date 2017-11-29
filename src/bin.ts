@@ -9,7 +9,7 @@ const inputs = process.argv.slice(2);
 
 start(inputs);
 
-function start(input, flags) {
+function start(input) {
     init({
         serveStatic: [].concat(input).filter(Boolean),
         debug: true,

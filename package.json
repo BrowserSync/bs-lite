@@ -8,6 +8,7 @@
   "typings": "dist/*.d.ts",
   "license": "MIT",
   "scripts": {
+    "prepublish": "npm test",
     "test": "tsc && mocha test/**"
   },
   "devDependencies": {

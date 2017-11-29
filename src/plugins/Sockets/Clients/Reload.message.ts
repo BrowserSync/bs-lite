@@ -10,7 +10,7 @@ export namespace ClientReloadMessage {
     export type Payload = FileEvent.Input
 }
 
-export function reloadHandler(stream: Observable<IncomingMessage>, context: IActorContext) {
+export function reloadHandler(stream: Observable<IncomingMessage>, context: any) {
     return stream
         /**
          * Group incoming messages into 500ms chunks
