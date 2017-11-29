@@ -38,6 +38,7 @@ export function WatcherChildFactory(address, context) {
                             event: 'change',
                             path,
                             parsed: parse(path),
+                            ns: incoming.ns,
                         };
                         debug('File Event', payload.event, payload.path);
                         parent.tell(...createFileEvent(payload)).subscribe();

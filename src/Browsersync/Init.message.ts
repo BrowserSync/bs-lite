@@ -9,6 +9,8 @@ import {IMethodStream, IActorContext} from "aktor-js";
 import {ServerInit} from "../plugins/Server/Init.message";
 import {WatcherMessages} from "../plugins/Watcher/Watcher";
 import {ServedFilesMessages} from "../plugins/ServedFiles/ServedFiles";
+import {WatcherInit} from "../plugins/Watcher/Init.message";
+import {WatcherAddItems, WatcherNamespace} from "../plugins/Watcher/AddItems.message";
 
 const {of, merge} = Observable;
 
@@ -36,7 +38,22 @@ export function initMessageHandler(context: IActorContext): any {
                             const payload     = {middleware, options};
                             const watcher     = context.actorSelection('/system/core/watcher')[0];
                             const servedFiles = context.actorSelection(`/system/core/${CoreChildren.ServedFiles}`)[0];
-                            const watcherPayload: BsOptions['watch'] = options.get('watch').toJS();
+
+                            const watcherPayload: WatcherInit.Input = options.get('watch').toJS();
+
+                            const filesOption = [].concat(options.get('files').toJS()).filter(Boolean);
+                            const afterInit = (() => {
+                                if (filesOption.length) {
+                                    const addPayload = WatcherAddItems.create({
+                                        ns: WatcherNamespace.FilesOption,
+                                        items: filesOption
+                                    });
+                                    return watcher.tell(addPayload[0], addPayload[1]);
+                                }
+                                return Observable.empty();
+                            })();
+
+
                             return merge(
                                 // start the server + sockets
                                 state.server
@@ -51,6 +68,7 @@ export function initMessageHandler(context: IActorContext): any {
                                     }),
                                 // start the watcher
                                 watcher.ask(WatcherMessages.Init, watcherPayload).ignoreElements(),
+                                afterInit.ignoreElements(),
                                 servedFiles.ask(ServedFilesMessages.Init).ignoreElements(),
                             );
                         })

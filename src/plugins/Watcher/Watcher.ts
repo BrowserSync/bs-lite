@@ -6,7 +6,7 @@ import EventEmitter = NodeJS.EventEmitter;
 import {getStopHandler} from "./Stop.message";
 import {getFileEventHandler} from "./FileEvent.message";
 import {MessageResponse} from "aktor-js";
-import {BsOptions} from "../../options";
+import {BsOptions, FilesOption} from "../../options";
 const debug = require('debug')('bs:Watcher');
 
 const { of } = Observable;

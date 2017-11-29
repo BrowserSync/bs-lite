@@ -7,6 +7,10 @@ const {bs, init, stop} = create();
 init({
     serveStatic: [join(__dirname, '..', 'fixtures')],
     scheme: 'https',
+    watch: {
+        active: true,
+    },
+    files: [__dirname],
     // serveStatic: ['/Users/shakyshane/sites/jh/m2-perf/public'],
     debug: true
 })

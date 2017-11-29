@@ -6,6 +6,7 @@ import {clientScript, scriptTags} from "./connect-utils";
 import {doesNotContainDisableParam, headerHasHtmlAccept} from "./utils";
 import {ProxyOptionsInput} from "./plugins/Proxy/Options.message";
 import {WatchOptions} from "chokidar";
+import {WatcherAddItems} from "./plugins/Watcher/AddItems.message";
 
 const {of} = Observable;
 
@@ -36,6 +37,7 @@ export const defaultOptions: BsOptions = {
     server: {
         port: 9000,
     },
+    files: [],
     scheme: Scheme.http,
     socket: {
         enabled: true,
@@ -84,6 +86,7 @@ export interface BsOptions {
         options: WatchOptions,
         debounce: number,
     },
+    files: FilesOption,
     serveStatic: string|string[];
     clientJS: string|string[];
     socket: BsSocketOptions;
@@ -111,6 +114,13 @@ export interface BsSocketOptions {
     clientPath: string;
     namespace: string;
 }
+
+export type FilesOption
+    = string
+    | string[]
+    | WatcherAddItems.Input
+    | WatcherAddItems.Input[]
+    | Array<(string | WatcherAddItems.Input)>
 
 export function DefaultOptions(address, context) {
     return {

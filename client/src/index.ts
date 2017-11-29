@@ -1,12 +1,12 @@
 import socket = require('socket.io-client');
 import {AssetReload, BrowserMessages, BrowserReload} from "../../src/plugins/Sockets/Clients/BrowserMessageTypes";
 import Reasons = AssetReload.Reasons;
-import {Reloader} from './vendor/ReReloader';
+import {Reloader} from './vendor/Reloader';
 import {Timer} from "./vendor/Timer";
 const nanlogger = require('nanologger');
 const log = nanlogger('Browsersync', {colors: {magenta: '#0F2634'}});
 
-const reloader = new Reloader(window, window.console, Timer);
+const reloader = new Reloader(window, log, Timer);
 
 const {socketConfig, socketUrl, browserSyncOptions} = window.___browserSync___;
 

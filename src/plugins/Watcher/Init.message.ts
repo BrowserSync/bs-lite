@@ -1,9 +1,10 @@
 import {Observable} from 'rxjs';
 import {BSError} from "../../errors";
-import {WatcherState} from "./Watcher";
+import {WatcherMessages, WatcherState} from "./Watcher";
 import {IActorContext, IMethodStream, MessageResponse} from "aktor-js";
-import {BsOptions} from "../../options";
+import {BsOptions, FilesOption} from "../../options";
 import {gracefullyStopChildren} from "../../utils";
+import {WatcherAddItems} from "./AddItems.message";
 
 const {of} = Observable;
 

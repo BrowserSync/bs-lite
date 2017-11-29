@@ -2,7 +2,7 @@ import {Observable} from 'rxjs';
 import {Set} from 'immutable';
 import {IMethodStream, MessageResponse} from "aktor-js";
 import {WatcherMessages} from "../Watcher/Watcher";
-import {WatcherAddItems} from "../Watcher/AddItems.message";
+import {WatcherAddItems, WatcherNamespace} from "../Watcher/AddItems.message";
 import {next} from "@kwonoj/rxjs-testscheduler-compat";
 const debug = require('debug')('bs:ServedFiles');
 
@@ -53,7 +53,7 @@ export function ServedFilesFactory(address, context): any {
                     }
 
                     const watchpayload = WatcherAddItems.create({
-                        ns: 'core',
+                        ns: WatcherNamespace.WatchOption,
                         items: [payload.path]
                     });
 
