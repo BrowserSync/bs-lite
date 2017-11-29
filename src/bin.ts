@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-require('source-map-support').install();
+// require('source-map-support').install();
 const {create, printErrors} = require('../');
 const {join, isAbsolute} = require('path');
 
