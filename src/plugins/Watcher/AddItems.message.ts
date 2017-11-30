@@ -31,7 +31,7 @@ export function getAddItemsHandler(context: IActorContext): any {
     return function addItemsHandler(stream: IMethodStream<WatcherAddItems.Input, WatcherAddItems.Response, WatcherState>) {
         return stream
             // .do(({payload}) => console.log(payload))
-            .switchMap(({payload, respond, state}) => {
+            .flatMap(({payload, respond, state}) => {
 
                 if (payload.ns === WatcherNamespace.WatchOption && !state.active) {
                     debug('Not adding files, auto-watcher is not active');

@@ -43,12 +43,14 @@ export function WatcherChildFactory(address, context) {
                         debug('File Event', payload.event, payload.path);
                         parent.tell(...createFileEvent(payload)).subscribe();
                     });
+                    respond([null, 'done!']);
                     break;
                 }
 
                 case WatcherChildMessages.Add: {
                     debug('watcher.add()', payload);
                     watcher.add(<WatcherInput>payload);
+                    respond([null, 'done!']);
                     break;
                 }
 
