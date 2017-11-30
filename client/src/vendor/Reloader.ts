@@ -186,20 +186,20 @@ export class Reloader {
             });
         }
 
-        this.logger.trace(`LiveReload found ${links.length} LINKed stylesheets, ${imported.length} @imported stylesheets`);
+        this.logger.trace(`found ${links.length} LINKed stylesheets, ${imported.length} @imported stylesheets`);
         const match = pickBestMatch(path, links.concat(imported), l => pathFromUrl(this.linkHref(l)));
 
 
         if (match) {
             if (match.object && match.object.rule) {
-                this.logger.trace(`LiveReload is reloading imported stylesheet: ${match.object.href}`);
+                this.logger.trace(`reloading imported stylesheet: ${match.object.href}`);
                 this.reattachImportedRule(match.object);
             } else {
-                this.logger.trace(`LiveReload is reloading stylesheet: ${this.linkHref(match.object)}`);
+                this.logger.trace(`reloading stylesheet: ${this.linkHref(match.object)}`);
                 this.reattachStylesheetLink(match.object);
             }
         } else {
-            this.logger.trace(`LiveReload will reload all stylesheets because path '${path}' did not match any specific one`);
+            this.logger.trace(`reloading all stylesheets because path '${path}' did not match any specific one`);
             links.forEach(link => this.reattachStylesheetLink(link));
         }
         return true;
@@ -245,7 +245,7 @@ export class Reloader {
         // http://www.zachleat.com/web/load-css-dynamically/
         // http://pieisgood.org/test/script-link-events/
         clone.onload = () => {
-            this.logger.trace("LiveReload: the new stylesheet has finished loading");
+            this.logger.trace("the new stylesheet has finished loading");
             this.knownToSupportCssOnLoad = true;
             return executeCallback();
         };
@@ -255,7 +255,7 @@ export class Reloader {
             let poll;
             (poll = () => {
                 if (clone.sheet) {
-                    this.logger.trace("LiveReload is polling until the new CSS finishes loading...");
+                    this.logger.trace("polling until the new CSS finishes loading...");
                     return executeCallback();
                 } else {
                     return this.Timer.start(50, poll);
@@ -379,7 +379,7 @@ export class Reloader {
             if (url.indexOf(this.options.serverURL) < 0) {
                 const originalUrl = url;
                 url = this.options.serverURL + this.options.overrideURL + "?url=" + encodeURIComponent(url);
-                this.logger.trace(`LiveReload is overriding source URL ${originalUrl} with ${url}`);
+                this.logger.trace(`overriding source URL ${originalUrl} with ${url}`);
             }
         }
 
