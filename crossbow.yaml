@@ -2,3 +2,10 @@ tasks:
   start@p:
     - '@sh cd client && ./node_modules/.bin/webpack --watch'
     - '@sh node examples/simple.js'
+
+  build:
+    - '@npm tsc'
+    - adaptor: npm
+      command: |
+        cd client
+        ./node_modules/.bin/webpack --config webpack.config.prod.js
