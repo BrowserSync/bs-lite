@@ -6,18 +6,18 @@ import {
     optionsHandler,
     ProxyOptionsInput
 } from "./Options.message";
-import {middlewareHandler, ProxyMiddleware} from "./Middleware.message";
+import {getMiddlewareHandler, ProxyMiddleware} from "./Middleware.message";
 
 export enum ProxyMessages {
     Options = 'options',
     Middleware = 'middleware'
 }
 
-export function BrowsersyncProxyFactory(): any {
+export function BrowsersyncProxyFactory(address, context): any {
     return {
         methods: {
             [ProxyMessages.Options]: optionsHandler,
-            [ProxyMessages.Middleware]: middlewareHandler,
+            [ProxyMessages.Middleware]: getMiddlewareHandler(context),
         }
     }
 }

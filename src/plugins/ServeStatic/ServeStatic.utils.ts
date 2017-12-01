@@ -141,3 +141,20 @@ export function createMiddleware(options: SSIncomingType, cwd: string, ssOpts: S
 
     return [bsErrors, mw];
 }
+
+export function alreadyCovered(existingItems, incoming) {
+    const incomingRoute = incoming.route.split('/').filter(Boolean);
+    const incomingDir = incoming.dir.split('/').filter(Boolean);
+
+    return existingItems.some(item => {
+        const rs = item.route.split('/').filter(Boolean);
+        const ds = item.dir.split('/').filter(Boolean);
+        const matchRoute = rs.every((r, index) => {
+            return r === incomingRoute[index];
+        });
+        const matchDir = matchRoute && ds.every((d, index) => {
+            return d === incomingDir[index];
+        });
+        return matchRoute && matchDir;
+    });
+}

@@ -38,6 +38,7 @@
     "compression": "^1.7.0",
     "connect": "^3.6.2",
     "debug": "^2.6.8",
+    "get-dirs": "^2.2.0",
     "http-proxy": "^1.16.2",
     "http-shutdown": "^1.2.0",
     "immutable": "^3.8.1",
