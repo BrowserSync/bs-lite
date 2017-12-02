@@ -3,3 +3,4 @@ node_modules
 /dist
 /client/dist
 example.js
+.DS_Store
