@@ -11,7 +11,8 @@ export function getStopHandler(context: IActorContext): any {
         return stream.switchMap(({respond, state}) => {
             const requiresShutdown = [
                 'server',
-                'watcher'
+                'watcher',
+                'proxy'
             ].map(x => context.actorSelection(x))
                 .reduce((acc, item) => acc.concat(item), []);
 

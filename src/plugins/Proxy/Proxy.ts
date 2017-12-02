@@ -1,5 +1,5 @@
 import {Observable} from 'rxjs';
-import {MessageResponse} from "aktor-js";
+import {IActorContext, MessageResponse} from "aktor-js";
 import {List} from "immutable";
 import {GetActorFn} from "../../Browsersync.init";
 import {
@@ -7,17 +7,25 @@ import {
     ProxyOptionsInput
 } from "./Options.message";
 import {getMiddlewareHandler, ProxyMiddleware} from "./Middleware.message";
+import {gracefullyStopChildren} from "../../utils";
 
 export enum ProxyMessages {
     Options = 'options',
-    Middleware = 'middleware'
+    Middleware = 'middleware',
+    Stop = 'stop',
 }
 
-export function BrowsersyncProxyFactory(address, context): any {
+export function BrowsersyncProxyFactory(address, context: IActorContext): any {
     return {
         methods: {
             [ProxyMessages.Options]: optionsHandler,
             [ProxyMessages.Middleware]: getMiddlewareHandler(context),
+            [ProxyMessages.Stop]: function(stream) {
+                return stream.flatMap(({respond}) => {
+                    return gracefullyStopChildren(context)
+                        .mapTo(respond([null, 'ok!']))
+                })
+            },
         }
     }
 }

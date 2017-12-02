@@ -4,10 +4,10 @@ const browserSync = require('../');
 const {bs, init, stop} = browserSync.create();
 
 const config = {
-    proxy: "http://ee.demo.wearejh.com/",
+    proxy: "http://ce.demo.wearejh.com/",
     rewriteRules: [
         (req, res, data, opts) => {
-            return data.replace(`"domain": ".ee.demo.wearejh.com",`, '');
+            return data.replace(`"domain": ".ce.demo.wearejh.com",`, '');
         }
     ],
 };

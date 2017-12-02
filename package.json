@@ -14,7 +14,7 @@
   "devDependencies": {
     "@kwonoj/rxjs-testscheduler-compat": "^1.0.2",
     "@types/chokidar": "^1.7.3",
-    "@types/http-proxy": "^1.12.0",
+    "@types/http-proxy": "1.16",
     "@types/node": "^8.0.13",
     "@types/socket.io": "1.4.31",
     "mime-types": "^2.1.16",

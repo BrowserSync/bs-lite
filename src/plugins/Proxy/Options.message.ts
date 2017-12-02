@@ -1,5 +1,5 @@
 import {Observable} from 'rxjs';
-import {ServerOptions} from 'http-proxy';
+import * as HttpProxy from 'http-proxy';
 import NodeURL  = require('url');
 import * as http from "http";
 import {parse} from "url";
@@ -19,29 +19,30 @@ export namespace ProxyOptions {
     }]
 }
 
-const defaultHttpProxyOptions: ServerOptions = {
+/**
+ * Add missing option from @types
+ */
+declare module 'http-proxy' {
+    interface ServerOptions {
+        cookieDomainRewrite?: boolean | string;
+    }
+}
+
+const defaultHttpProxyOptions: HttpProxy.ServerOptions = {
     changeOrigin: true,
     autoRewrite: true,
     secure: false,
     ws: true,
+    cookieDomainRewrite: '',
 };
 
 export type ProxyOptionsInput = (string|ProxyItem)|Array<string|ProxyItem>;
 
-export interface CookieOptions {
-    stripDomain: boolean;
-}
-
-const defaultCookieOptions: CookieOptions = {
-    stripDomain: true
-};
-
 export interface ProxyItem {
-    options?: ServerOptions;
+    options?: HttpProxy.ServerOptions;
     route?: string;
     target?: string;
     url?: NodeURL.Url;
-    cookies?: CookieOptions
     proxyReq?: ProxyReqFn[]
     proxyRes?: ProxyResFn[]
     proxyErr?: ProxyErrFn[]
@@ -50,7 +51,7 @@ export interface ProxyItem {
 export type ProxyReqFn = (proxyReq: http.ClientRequest,
                           req: http.IncomingMessage,
                           res: http.ServerResponse,
-                          options: ServerOptions) => void;
+                          options: HttpProxy.ServerOptions) => void;
 
 export type ProxyResFn = (proxyRes: http.IncomingMessage,
                           req: http.IncomingMessage,
@@ -144,9 +145,5 @@ export function createItem(incoming: ProxyItem): ProxyItem {
             ...defaultHttpProxyOptions,
             ...incoming.options,
         },
-        cookies: {
-            ...defaultCookieOptions,
-            ...incoming.cookies
-        }
     }
 }
