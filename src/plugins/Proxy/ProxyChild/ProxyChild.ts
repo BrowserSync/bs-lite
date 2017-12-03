@@ -60,7 +60,7 @@ export function ProxyChild(address, context): any {
 
                     respond([null, {
                         id: `Browsersync proxy for ${proxyItem.target}`,
-                        via: `Browsersync core`,
+                        via: `ProxyChild`,
                         route: '',
                         type: MiddlewareTypes.proxy,
                         handle: (req, res) => {

@@ -85,6 +85,7 @@ export function createMiddleware(options: Options): Middleware {
 
     return {
         id: 'Browsersync ClientJS',
+        via: 'Browsersync ClientJS',
         route: clientScript(options),
         type: MiddlewareTypes.clientJs,
         handle: (req, res) => {

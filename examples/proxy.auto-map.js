@@ -5,7 +5,8 @@ const {bs, init, stop} = create();
 
 init({
     proxy: ['https://wearejh.com'],
-    strict: true
+    strict: true,
+    serveStatic: ['.'],
 })
     .subscribe(([errors, output]) => {
         if (errors) {

@@ -4,6 +4,7 @@ import {IActorContext, IMethodStream, MessageResponse} from "aktor-js";
 import {WatcherMessages} from "../Watcher/Watcher";
 import {WatcherAddItems, WatcherNamespace} from "../Watcher/AddItems.message";
 import {next} from "@kwonoj/rxjs-testscheduler-compat";
+import {Methods} from "../../Browsersync";
 const debug = require('debug')('bs:ProxiedFiles');
 
 const {of} = Observable;
@@ -35,7 +36,6 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
         methods: {
             [ProxiedFilesMessages.AddFile]: function(stream: IMethodStream<ProxiedFilesAdd.Input, ProxiedFilesAdd.Response, ProxiedFilesState>) {
                 return stream
-                    // .do(({payload}) => debug(payload))
                     .flatMap(({payload, state, respond}) => {
                         if (state.contains(payload.path)) {
                             return of(respond([null, false], state));

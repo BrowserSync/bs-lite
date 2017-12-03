@@ -11,6 +11,7 @@ export default function Compression() {
                 try {
                     const mw : Middleware = {
                         id: 'Compression',
+                        via: 'Compression',
                         route: '',
                         type: MiddlewareTypes.other,
                         handle: require('compression')()

@@ -16,7 +16,10 @@ export function updateOptionHandler(stream: IMethodStream<BrowsersyncUpdateOptio
     return stream.switchMap(({payload, respond, state}) => {
         const {path, fn} = payload;
         const updated = state.options.updateIn([].concat(path), fn);
-        state.options = updated;
-        return of(respond(state.options.getIn([].concat(path)), state));
+        const nextState = {
+            ...state,
+            options: updated
+        };
+        return of(respond(state.options.getIn([].concat(path)), nextState));
     })
 }
