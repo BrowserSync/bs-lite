@@ -46,15 +46,17 @@ export function ProxyChild(address, context): any {
                         proxyItem.proxyRes.forEach(resFn => _proxy.on('proxyRes', resFn));
                     }
 
+                    const mimeWhitelist = [
+                        'text/css',
+                        'application/javascript; charset=utf-8',
+                    ];
+
                     _proxy.on('proxyRes', (proxyRes, req, res) => {
-                        debugRes(req.url);
-                        if (req.url.indexOf('css') > -1) {
-                            if (res.statusCode === 200 && proxyRes['headers']['content-type'] === 'text/css') {
-                                const proxiedFilesPayload: ProxiedFilesAdd.Input = {
-                                    path: req.url
-                                };
-                                proxiedFiles.tell(ProxiedFilesMessages.AddFile, proxiedFilesPayload).subscribe();
-                            }
+                        if (res.statusCode === 200 && mimeWhitelist.indexOf(proxyRes['headers']['content-type']) > -1) {
+                            const proxiedFilesPayload: ProxiedFilesAdd.Input = {
+                                path: req.url
+                            };
+                            proxiedFiles.tell(ProxiedFilesMessages.AddFile, proxiedFilesPayload).subscribe();
                         }
                     });
 

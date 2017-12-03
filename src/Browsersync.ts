@@ -13,6 +13,7 @@ import {ServedFilesFactory} from "./plugins/ServedFiles/ServedFiles";
 import {FindPortFactory} from "./ports";
 import {WatcherFactory} from "./plugins/Watcher/Watcher";
 import {ProxiedFilesFactory} from "./plugins/ProxiedFiles/ProxiedFiles";
+import {DirsFactory} from "./plugins/dirs";
 
 export enum Methods {
     Init = 'init',
@@ -37,11 +38,13 @@ export interface Dependencies {
 export enum CoreChildren {
     ServedFiles = 'servedFiles',
     ProxiedFiles = 'proxiedFiles',
+    Dirs = 'dirs',
 }
 
 export function getBrowsersyncFactory(deps: Dependencies = {}): any {
     return function Browsersync(address: string, context: IActorContext) {
         const children = {
+            dirs: context.actorOf(DirsFactory, CoreChildren.Dirs),
             servedFiles: context.actorOf(ServedFilesFactory, CoreChildren.ServedFiles),
             proxiedFiles: context.actorOf(ProxiedFilesFactory, CoreChildren.ProxiedFiles),
             findPort: context.actorOf(deps.findPort ? deps.findPort : FindPortFactory, 'findPort'),
