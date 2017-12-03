@@ -1,12 +1,13 @@
 import {Observable} from 'rxjs';
 import {Server} from "http";
-import {IActorContext, MessageResponse} from "aktor-js";
+import {IActorContext, IMethodStream, MessageResponse} from "aktor-js";
 import {Map} from "immutable";
 import {Scheme} from "../../options";
 import {serverAddressHandler} from "./Address.message";
 import {serverInitHandler} from "./Init.message";
 import {stopHandler} from "./Stop.message";
 import {listeningHandler} from "./Listening.message";
+import {addMiddlewareHandler} from "./AddMiddleware.message";
 
 const debug = require('debug')('bs:server');
 
@@ -40,6 +41,7 @@ export interface ServerState {
 export enum ServerMessages {
     Init = 'Detect',
     Listening = 'Listening',
+    AddMiddleware = 'AddMiddleware',
     Stop = 'stop',
     Address = 'Address',
 }
@@ -53,6 +55,7 @@ export function BrowserSyncServer(address: string, context: IActorContext): any 
         methods: {
             [ServerMessages.Address]: serverAddressHandler,
             [ServerMessages.Init]: serverInitHandler(context),
+            [ServerMessages.AddMiddleware]: addMiddlewareHandler,
             [ServerMessages.Stop]: stopHandler,
             [ServerMessages.Listening]: listeningHandler,
         },

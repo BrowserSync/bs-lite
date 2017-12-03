@@ -5,6 +5,9 @@ import {WatcherMessages} from "../Watcher/Watcher";
 import {WatcherAddItems, WatcherNamespace} from "../Watcher/AddItems.message";
 import {next} from "@kwonoj/rxjs-testscheduler-compat";
 import {Methods} from "../../Browsersync";
+import {join, parse} from "path";
+import {getDirs$} from "../../utils";
+import {existsSync} from "fs";
 const debug = require('debug')('bs:ProxiedFiles');
 
 const {of} = Observable;
@@ -40,9 +43,23 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                         if (state.contains(payload.path)) {
                             return of(respond([null, false], state));
                         }
+                        const paths = Observable.from(payload.path).map(x => parse(x));
+                        const cwd$ = Observable.of(process.cwd());
+                        const dir$ = getDirs$(process.cwd(), process.cwd());
+                        dir$.withLatestFrom(paths, cwd$,
+                            (dir, path, cwd) => {
+                                return {
+                                    dir, path, cwd, joined: join(dir, path.dir, path.base), dirname: join(dir, path.dir),
+                                }
+                            })
+                            .filter(({dir, path, joined}) => existsSync(joined));
                         const nextState = state.add(payload.path);
                         return of(respond([null, true], nextState));
-                    });
+                    })
+                    .catch(er => {
+                        console.log(er);
+                        return Observable.empty();
+                    })
             },
             [ProxiedFilesMessages.Init]: function(stream: IMethodStream<void, ProxiedFilesInit.Response, ProxiedFilesState>) {
                 return stream.map(({respond, state}) => {

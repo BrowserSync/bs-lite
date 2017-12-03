@@ -1,6 +1,7 @@
 import {Observable} from 'rxjs';
-import {isAbsolute, join} from "path";
+import {isAbsolute, join, relative} from "path";
 import {readFileSync} from "fs";
+const getDirs = require('get-dirs');
 var proto = Object.prototype;
 var gpo = Object.getPrototypeOf;
 
@@ -85,4 +86,24 @@ export function gracefullyStopChildren(context) {
     return Observable.from(children)
         .flatMap(ref => context.gracefulStop(ref))
         .toArray()
+}
+
+export function getDirs$(dir: string, cwd: string) {
+    return dirs(dir).map(x => isAbsolute(x) ? relative(cwd, x) : x)
+}
+const matchDotFolders = /^\.\w+|\/\./; // RegExp to exclude any root or nested .dotFolders/
+const exclusions = ['node_modules', matchDotFolders]; // exclusions are optional
+function dirs(dir) {
+    return Observable.create(obs => {
+        getDirs(dir, exclusions, readableStream => {
+            readableStream
+                .on('data', dir => {
+                    obs.next(dir);
+                })
+                .on('end', () => {
+                    obs.complete();
+                })
+                .on('error', (err) => obs.error(err));
+        })
+    })
 }
