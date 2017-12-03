@@ -1,6 +1,6 @@
 import {Observable} from 'rxjs';
 import {Set} from 'immutable';
-import {IMethodStream, MessageResponse} from "aktor-js";
+import {IActorContext, IMethodStream, MessageResponse} from "aktor-js";
 import {WatcherMessages} from "../Watcher/Watcher";
 import {WatcherAddItems, WatcherNamespace} from "../Watcher/AddItems.message";
 import {next} from "@kwonoj/rxjs-testscheduler-compat";
@@ -11,7 +11,6 @@ const {of} = Observable;
 export enum ServedFilesMessages {
     Init     = 'Init',
     AddFile  = 'AddFile',
-    GetFiles = 'GetFiles',
     Stop     = 'Stop',
 }
 
@@ -20,9 +19,6 @@ export namespace ServedFilesAdd {
     export type Response = [null, boolean];
 }
 
-export namespace ServedFilesGetFiles {
-    export type Response = [null, string[]];
-}
 
 export namespace ServedFilesStop {
     export type Response = [null, string];
@@ -63,11 +59,6 @@ export function ServedFilesFactory(address, context): any {
                     return watcher
                         .tell(...watchpayload)
                         .mapTo(response);
-                })
-            },
-            [ServedFilesMessages.GetFiles]: function(stream: IMethodStream<void, ServedFilesGetFiles.Response, ServedFilesState>) {
-                return stream.map(({respond, state}) => {
-                    return respond([null, state.toArray()], state);
                 })
             },
             [ServedFilesMessages.Stop]: function(stream: IMethodStream<void, ServedFilesStop.Response, ServedFilesState>) {

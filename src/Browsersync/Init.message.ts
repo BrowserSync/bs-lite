@@ -11,6 +11,7 @@ import {WatcherMessages} from "../plugins/Watcher/Watcher";
 import {ServedFilesMessages} from "../plugins/ServedFiles/ServedFiles";
 import {WatcherInit} from "../plugins/Watcher/Init.message";
 import {WatcherAddItems, WatcherNamespace} from "../plugins/Watcher/AddItems.message";
+import {ProxiedFilesMessages} from "../plugins/ProxiedFiles/ProxiedFiles";
 
 const {of, merge} = Observable;
 
@@ -38,6 +39,7 @@ export function initMessageHandler(context: IActorContext): any {
                             const payload     = {middleware, options};
                             const watcher     = context.actorSelection('/system/core/watcher')[0];
                             const servedFiles = context.actorSelection(`/system/core/${CoreChildren.ServedFiles}`)[0];
+                            const proxiedFiles = context.actorSelection(`/system/core/${CoreChildren.ProxiedFiles}`)[0];
 
                             const watcherPayload: WatcherInit.Input = options.get('watch').toJS();
 
@@ -70,6 +72,7 @@ export function initMessageHandler(context: IActorContext): any {
                                 watcher.ask(WatcherMessages.Init, watcherPayload).ignoreElements(),
                                 afterInit.ignoreElements(),
                                 servedFiles.ask(ServedFilesMessages.Init).ignoreElements(),
+                                proxiedFiles.ask(ProxiedFilesMessages.Init).ignoreElements(),
                             );
                         })
                         .map((output: BrowsersyncInit.Output) => {

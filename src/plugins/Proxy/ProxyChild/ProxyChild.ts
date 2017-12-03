@@ -3,6 +3,8 @@ import httpProxy = require('http-proxy');
 import {MiddlewareTypes} from "../../Server/Server";
 import {checkCookies} from "../proxy-utils";
 import {ProxyItem} from "../Options.message";
+import {ProxiedFilesAdd, ProxiedFilesMessages} from "../../ProxiedFiles/ProxiedFiles";
+import {CoreChildren} from "../../../Browsersync";
 
 const debug = require('debug')('bs:ProxyChild');
 const debugRes = require('debug')('bs:ProxyChild:res');
@@ -12,11 +14,13 @@ export enum ProxyChildMessages {
     Stop = 'stop',
 }
 
-export function ProxyChild(address, context) {
+export function ProxyChild(address, context): any {
     let proxy;
+    let parent;
     return {
         postStart() {
-            debug('postStart()')
+            debug('postStart()');
+            parent = context.parent;
         },
         receive(name, payload, respond) {
             switch(name) {
@@ -27,15 +31,16 @@ export function ProxyChild(address, context) {
                 }
                 case ProxyChildMessages.Start: {
                     if (proxy) proxy.close();
+                    const proxiedFiles = context.actorSelection(`/system/core/${CoreChildren.ProxiedFiles}`)[0];
 
                     const proxyItem: ProxyItem = payload;
                     debug(`target: ${proxyItem.target}`);
                     debug(proxyItem.options);
                     const _proxy = httpProxy.createProxyServer(proxyItem.options);
 
-                    _proxy.on('error', function(err) {
-                        proxyItem.proxyErr.forEach(fn => fn(err));
-                    });
+                    if (proxyItem.proxyErr.length) {
+                        proxyItem.proxyErr.forEach(resFn => _proxy.on('error', resFn));
+                    }
 
                     if (proxyItem.proxyRes.length) {
                         proxyItem.proxyRes.forEach(resFn => _proxy.on('proxyRes', resFn));
@@ -45,8 +50,10 @@ export function ProxyChild(address, context) {
                         debugRes(req.url);
                         if (req.url.indexOf('css') > -1) {
                             if (res.statusCode === 200 && proxyRes['headers']['content-type'] === 'text/css') {
-                                // console.log(req.url);
-                                // todo - move all proxies to be individual child actors
+                                const proxiedFilesPayload: ProxiedFilesAdd.Input = {
+                                    path: req.url
+                                };
+                                proxiedFiles.tell(ProxiedFilesMessages.AddFile, proxiedFilesPayload).subscribe();
                             }
                         }
                     });
