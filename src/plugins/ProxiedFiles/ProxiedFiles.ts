@@ -58,9 +58,6 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                             cwd: process.cwd(),
                         };
 
-                        // debug(`DirsGet.Input...`);
-                        // debug(dirsPayload);
-
                         return dirs.ask(DirsMesages.Get, dirsPayload).map(([, dirs]) => dirs)
                             .do(xs => debug(`${xs.length} dirs returned`))
                             .flatMap((xs: string[]) => {

@@ -33,6 +33,7 @@ export interface Dependencies {
     scheduler?: any;
     timeScheduler?: any;
     findPort?: Function
+    dirs?: Function
 }
 
 export enum CoreChildren {
@@ -44,9 +45,9 @@ export enum CoreChildren {
 export function getBrowsersyncFactory(deps: Dependencies = {}): any {
     return function Browsersync(address: string, context: IActorContext) {
         const children = {
-            dirs: context.actorOf(DirsFactory, CoreChildren.Dirs),
             servedFiles: context.actorOf(ServedFilesFactory, CoreChildren.ServedFiles),
             proxiedFiles: context.actorOf(ProxiedFilesFactory, CoreChildren.ProxiedFiles),
+            dirs: context.actorOf(deps.dirs ? deps.dirs : DirsFactory, CoreChildren.Dirs),
             findPort: context.actorOf(deps.findPort ? deps.findPort : FindPortFactory, 'findPort'),
             server: context.actorOf(BrowserSyncServer, 'server'),
             watcher: context.actorOf(WatcherFactory, 'watcher'),
