@@ -76,10 +76,10 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                     .filter(({dir, path, joined}) => existsSync(joined))
                             })
                             .do(x => {
-                                debug('+++MATCH+++ serve Static option...');
+                                debug('+++MATCH+++ possible Serve Static option...');
                                 debug({
-                                    route: x.path.dir,
-                                    dir: x.dirname
+                                    route: x.path.dir, // eg: /some/web-path
+                                    dir: x.dirname // eg: src/local/sources
                                 });
                             })
                             .toArray()

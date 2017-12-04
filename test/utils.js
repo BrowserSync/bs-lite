@@ -5,8 +5,8 @@ const request = require('supertest-as-promised');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 
-module.exports.serverAssert = function serverAssert(options, path, assertions) {
-    const {bs, server} = require('../dist').create();
+module.exports.serverAssert = function serverAssert(options, path, assertions, createOptions) {
+    const {bs, server} = require('../').create(createOptions);
     // console.log(options);
     return bs.ask(Methods.Init, options)
         .flatMap(([errors, output]) => {

@@ -5,6 +5,8 @@ import {checkCookies} from "../proxy-utils";
 import {ProxyItem} from "../Options.message";
 import {ProxiedFilesAdd, ProxiedFilesMessages} from "../../ProxiedFiles/ProxiedFiles";
 import {CoreChildren} from "../../../Browsersync";
+import mime = require('mime-types');
+import {IActorContext} from "aktor-js";
 
 const debug = require('debug')('bs:ProxyChild');
 const debugRes = require('debug')('bs:ProxyChild:res');
@@ -14,7 +16,7 @@ export enum ProxyChildMessages {
     Stop = 'stop',
 }
 
-export function ProxyChild(address, context): any {
+export function ProxyChild(address, context: IActorContext): any {
     let proxy;
     let parent;
     return {
@@ -46,17 +48,21 @@ export function ProxyChild(address, context): any {
                         proxyItem.proxyRes.forEach(resFn => _proxy.on('proxyRes', resFn));
                     }
 
-                    const mimeWhitelist = [
-                        'text/css',
-                        'application/javascript; charset=utf-8',
-                    ];
+                    const mimeWhitelist = new Set([
+                        'css',
+                    ]);
 
                     _proxy.on('proxyRes', (proxyRes, req, res) => {
-                        if (res.statusCode === 200 && mimeWhitelist.indexOf(proxyRes['headers']['content-type']) > -1) {
-                            const proxiedFilesPayload: ProxiedFilesAdd.Input = {
-                                path: req.url
-                            };
-                            proxiedFiles.tell(ProxiedFilesMessages.AddFile, proxiedFilesPayload).subscribe();
+                        if (res.statusCode === 200) {
+                            const ext = mime.extension(proxyRes['headers']['content-type']);
+                            if (mimeWhitelist.has(ext)) {
+                                const proxiedFilesPayload: ProxiedFilesAdd.Input = {
+                                    path: req.url
+                                };
+                                proxiedFiles
+                                    .tell(ProxiedFilesMessages.AddFile, proxiedFilesPayload)
+                                    .subscribe();
+                            }
                         }
                     });
 
