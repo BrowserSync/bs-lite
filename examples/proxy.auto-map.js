@@ -1,12 +1,12 @@
+require('source-map-support').install();
 const {create, printErrors} = require('../');
 // const {Methods} = require('../');
 
 const {bs, init, stop} = create();
 
 init({
-    proxy: ['https://wearejh.com'],
+    proxy: ['http://ce.demo.wearejh.com/'],
     strict: true,
-    serveStatic: ['.'],
 })
     .subscribe(([errors, output]) => {
         if (errors) {

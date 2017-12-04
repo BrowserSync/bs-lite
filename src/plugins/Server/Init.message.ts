@@ -131,9 +131,12 @@ function getNewServer(middleware: Middleware[], port: number, options: Options) 
         next();
     });
 
-    middleware.forEach(mw => {
+    middleware.forEach((mw: Middleware) => {
         debug(mw);
         app.use(mw.route, mw.handle);
+        app.stack[app.stack.length - 1].id = mw.id;
+        app.stack[app.stack.length - 1].type = mw.type;
+        app.stack[app.stack.length - 1].via = mw.via;
     });
 
     const server = require('http-shutdown')(createNewServer(options, app));
@@ -147,6 +150,9 @@ function replaceMiddleware(middleware, app) {
         app.stack = [];
         middleware.forEach(mw => {
             app.use(mw.route, mw.handle);
+            app.stack[app.stack.length - 1].id = mw.id;
+            app.stack[app.stack.length - 1].type = mw.type;
+            app.stack[app.stack.length - 1].via = mw.via;
         });
         obs.next(app);
         obs.complete();

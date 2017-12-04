@@ -1,4 +1,7 @@
 [
+  "fixtures",
+  "fixtures/wearejh.com",
+  "fixtures/wearejh.com/content",
   "fixtures/wearejh.com/content/themes",
   "fixtures/wearejh.com/content/themes/wearejh",
   "fixtures/wearejh.com/content/themes/wearejh/assets",

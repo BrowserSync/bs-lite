@@ -25,10 +25,13 @@ export enum SSMesagges {
 
 export namespace ServeStaticMiddleware {
     export type Input = {
-        cwd: string
         options: SSIncomingType
+        cwd: string
     };
     export type Response = [null|BSError[], null|Middleware[]];
+    export function create(cwd: string, options: SSIncomingType): [SSMesagges.Middleware, Input] {
+        return [SSMesagges.Middleware, {options, cwd}];
+    }
 }
 
 export function ServeStatic (address: string, context: IActorContext): any {

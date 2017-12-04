@@ -9,6 +9,8 @@ import {join, parse} from "path";
 import {getDirs$} from "../../utils";
 import {existsSync} from "fs";
 import {DirsGet, DirsMesages} from "../dirs";
+import {ServeStaticMiddleware, SSMesagges} from "../ServeStatic/ServeStatic";
+import {ServerAddMiddleware} from "../Server/AddMiddleware.message";
 
 const debug = require('debug')('bs:ProxiedFiles');
 
@@ -52,6 +54,8 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                         const paths$ = Observable.of(payload.path).map(x => parse(x));
                         const cwd$ = Observable.of(process.cwd());
                         const dirs = context.actorSelection(`/system/core/${CoreChildren.Dirs}`)[0];
+                        const ss = context.actorSelection(`/system/core/serveStatic`)[0];
+                        const server = context.actorSelection(`/system/core/server`)[0];
 
                         const dirsPayload: DirsGet.Input = {
                             target: process.cwd(),
@@ -75,9 +79,20 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                             .do(x => {
                                 debug('+++MATCH+++ possible Serve Static option...');
                                 debug({
-                                    route: x.path.dir, // eg: /some/web-path
-                                    dir: x.dirname // eg: src/local/sources
+                                    route: x.path.dir,
+                                    dir: x.dirname
                                 });
+                            })
+                            .flatMap(item => {
+                                const ssInput = ServeStaticMiddleware.create(item.cwd, {
+                                    route: item.path.dir, // eg: /some/web-path
+                                    dir: item.dirname // eg: src/local/sources
+                                });
+                                return ss.ask(ssInput[0], ssInput[1]);
+                            })
+                            .flatMap(([errs, middleware]) => {
+                                const mwPayload = ServerAddMiddleware.create(middleware);
+                                return server.ask(mwPayload[0], mwPayload[1]);
                             })
                             .toArray()
                             .mapTo(respond([null, true], nextState))

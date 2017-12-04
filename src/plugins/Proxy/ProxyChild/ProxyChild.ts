@@ -7,6 +7,7 @@ import {ProxiedFilesAdd, ProxiedFilesMessages} from "../../ProxiedFiles/ProxiedF
 import {CoreChildren} from "../../../Browsersync";
 import mime = require('mime-types');
 import {IActorContext} from "aktor-js";
+import * as url from 'url';
 
 const debug = require('debug')('bs:ProxyChild');
 const debugRes = require('debug')('bs:ProxyChild:res');
@@ -33,11 +34,13 @@ export function ProxyChild(address, context: IActorContext): any {
                 }
                 case ProxyChildMessages.Start: {
                     if (proxy) proxy.close();
-                    const proxiedFiles = context.actorSelection(`/system/core/${CoreChildren.ProxiedFiles}`)[0];
 
+                    const proxiedFiles = context.actorSelection(`/system/core/${CoreChildren.ProxiedFiles}`)[0];
                     const proxyItem: ProxyItem = payload;
+
                     debug(`target: ${proxyItem.target}`);
                     debug(proxyItem.options);
+
                     const _proxy = httpProxy.createProxyServer(proxyItem.options);
 
                     if (proxyItem.proxyErr.length) {
@@ -56,8 +59,9 @@ export function ProxyChild(address, context: IActorContext): any {
                         if (res.statusCode === 200) {
                             const ext = mime.extension(proxyRes['headers']['content-type']);
                             if (mimeWhitelist.has(ext)) {
+                                const parsed = url.parse(req.url);
                                 const proxiedFilesPayload: ProxiedFilesAdd.Input = {
-                                    path: req.url
+                                    path: parsed.pathname
                                 };
                                 proxiedFiles
                                     .tell(ProxiedFilesMessages.AddFile, proxiedFilesPayload)

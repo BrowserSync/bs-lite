@@ -1,5 +1,5 @@
 import {Observable} from 'rxjs';
-import {Middleware, ServerMessages, ServerState} from "./Server";
+import {Middleware, MiddlewareTypes, ServerMessages, ServerState} from "./Server";
 import {IActorContext, IMethodStream, MessageResponse} from "aktor-js";
 const debug = require('debug')('bs:Server:AddMiddleware');
 
@@ -17,6 +17,10 @@ export function addMiddlewareHandler(stream: IMethodStream<ServerAddMiddleware.I
     return stream
         .do(({payload}) => debug(payload))
         .map(({respond, payload, state}) => {
+            const firstProxy = state.app.stack.findIndex(x => x.type === MiddlewareTypes.proxy) || state.app.length;
+            const nextStack = state.app.stack.slice();
+            nextStack.splice(firstProxy, 0, ...payload.middleware);
+            state.app.stack = nextStack;
             return respond([null, true], state);
         });
 }
