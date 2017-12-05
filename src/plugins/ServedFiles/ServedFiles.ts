@@ -45,6 +45,7 @@ export function ServedFilesFactory(address, context): any {
 
                     // TODO: skip duplicates somewhere
                     if (state.contains(payload.path)) {
+                        debug('skipping', payload.path, 'as it already exists');
                         return of(respond([null, false], state));
                     }
 

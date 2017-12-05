@@ -12,6 +12,9 @@ export enum DirsMesages {
 export namespace DirsGet {
     export type Input = { target: string, cwd: string, }
     export type Response = [Error|null, string[]];
+    export function create(target: string, cwd: string): [DirsMesages.Get, Input] {
+        return [DirsMesages.Get, {target, cwd}];
+    }
 }
 
 type DirsState = Set<string>;

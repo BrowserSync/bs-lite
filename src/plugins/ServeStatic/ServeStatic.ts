@@ -35,7 +35,6 @@ export namespace ServeStaticMiddleware {
 }
 
 export function ServeStatic (address: string, context: IActorContext): any {
-    const served = context.actorSelection('/system/core/servedFiles')[0];
     return {
         postStart() {
             debug('-> postStart()');
@@ -49,6 +48,7 @@ export function ServeStatic (address: string, context: IActorContext): any {
                             const payload: ServedFilesAdd.Input = {
                                 cwd, path
                             };
+                            const served = context.actorSelection('/system/core/servedFiles')[0];
                             served.tell(ServedFilesMessages.AddFile, payload).subscribe();
                         }
                     });

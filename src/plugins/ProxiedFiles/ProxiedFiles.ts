@@ -5,7 +5,7 @@ import {WatcherMessages} from "../Watcher/Watcher";
 import {WatcherAddItems, WatcherNamespace} from "../Watcher/AddItems.message";
 import {next} from "@kwonoj/rxjs-testscheduler-compat";
 import {CoreChildren, Methods} from "../../Browsersync";
-import {join, parse} from "path";
+import {join, parse, ParsedPath} from "path";
 import {getDirs$} from "../../utils";
 import {existsSync} from "fs";
 import {DirsGet, DirsMesages} from "../dirs";
@@ -14,7 +14,7 @@ import {ServerAddMiddleware} from "../Server/AddMiddleware.message";
 
 const debug = require('debug')('bs:ProxiedFiles');
 
-const {of} = Observable;
+const {of, empty} = Observable;
 
 export enum ProxiedFilesMessages {
     Init = 'Init',
@@ -43,38 +43,46 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
         methods: {
             [ProxiedFilesMessages.AddFile]: function (stream: IMethodStream<ProxiedFilesAdd.Input, ProxiedFilesAdd.Response, ProxiedFilesState>) {
                 return stream
-                    .flatMap(({payload, state, respond}) => {
-                        if (state.contains(payload.path)) {
-                            debug('skipping', payload.path, '(already processed)');
-                            return of(respond([null, false], state));
-                        }
+                    .buffer(stream.debounceTime(500, context.timeScheduler))
+                    .do(xs => debug('buffered', xs.length, ProxiedFilesMessages.AddFile, 'messages'))
+                    .flatMap((items) => {
+                        const last = items[items.length-1];
+                        const {respond, state} = last;
 
-                        debug(`adding ${payload.path} to proxied files`);
-                        const nextState = state.add(payload.path);
-                        const paths$ = Observable.of(payload.path).map(x => parse(x));
+
+                        const dirsPayload = DirsGet.create(join(process.cwd(), 'localhost'), process.cwd());
                         const cwd$ = Observable.of(process.cwd());
                         const dirs = context.actorSelection(`/system/core/${CoreChildren.Dirs}`)[0];
                         const ss = context.actorSelection(`/system/core/serveStatic`)[0];
                         const server = context.actorSelection(`/system/core/server`)[0];
 
-                        const dirsPayload: DirsGet.Input = {
-                            target: process.cwd(),
-                            cwd: process.cwd(),
-                        };
-
-                        return dirs.ask(DirsMesages.Get, dirsPayload).map(([, dirs]) => dirs)
-                            .do(xs => debug(`${xs.length} dirs returned`))
-                            .flatMap((xs: string[]) => {
-                                return Observable.from(xs)
-                                    .withLatestFrom(paths$, cwd$)
-                                    .map(([dir, path, cwd]) => {
-                                        return {
-                                            dir, path, cwd,
-                                            dirname: join(dir, path.dir),
-                                            joined: join(dir, path.dir, path.base),
-                                        }
+                        return dirs.ask(dirsPayload[0], dirsPayload[1]).map(([, dirs]) => dirs)
+                            .withLatestFrom(cwd$)
+                            .flatMap(([dirs, cwd]) => {
+                                return Observable.from(items)
+                                    .distinct(({payload}) => payload.path)
+                                    .pluck('payload')
+                                    .map(x => parse(x.path))
+                                    .flatMap((path) => {
+                                        return Observable.from(['localhost', ...dirs])
+                                            .map(dir => {
+                                                return {
+                                                    dir, path, cwd,
+                                                    dirname: join(dir, path.dir),
+                                                    joined: join(dir, path.dir, path.base),
+                                                }
+                                            })
+                                            .filter(x => {
+                                                const exists = existsSync(x.joined);
+                                                debug(`existsSync [${exists}]`, x.joined);
+                                                return exists;
+                                            })
+                                            .take(1)
                                     })
-                                    .filter(({dir, path, joined}) => existsSync(joined))
+                            })
+                            .distinctUntilChanged((a, b) => {
+                                return a.path.dir === b.path.dir
+                                    && a.dirname === b.dirname;
                             })
                             .do(x => {
                                 debug('+++MATCH+++ possible Serve Static option...');
@@ -88,17 +96,32 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                     route: item.path.dir, // eg: /some/web-path
                                     dir: item.dirname // eg: src/local/sources
                                 });
-                                return ss.ask(ssInput[0], ssInput[1]);
+                                return ss.ask(ssInput[0], ssInput[1])
+                                    .flatMap((resp: ServeStaticMiddleware.Response) => {
+                                        const [errors, mws] = resp;
+                                        if (errors && errors.length) {
+                                            return empty();
+                                        }
+                                        return of([item, mws]);
+                                    })
                             })
-                            .flatMap(([errs, middleware]) => {
-                                const mwPayload = ServerAddMiddleware.create(middleware);
-                                return server.ask(mwPayload[0], mwPayload[1]);
+                            // .toArray()
+                            .flatMap(([item, mws]) => {
+                                const mwPayload = ServerAddMiddleware.create(mws);
+                                return server.ask(mwPayload[0], mwPayload[1])
+                                    .mapTo([item, mws])
                             })
-                            .toArray()
-                            .mapTo(respond([null, true], nextState))
+                            .reduce((acc: Set<string>, [item, mws]) => {
+                                return acc.add(item.joined);
+                            }, state)
+                            .map(newState => {
+                                debug('next state...');
+                                debug('->', newState);
+                                return respond([null, true], newState)
+                            })
                             .catch(err => {
                                 debug('err in processing dirs', err);
-                                return of(respond([null, false], nextState));
+                                return of(respond([null, false], state));
                             })
                     })
             },
