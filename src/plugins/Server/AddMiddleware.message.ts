@@ -16,6 +16,7 @@ export namespace ServerAddMiddleware {
 export function addMiddlewareHandler(stream: IMethodStream<ServerAddMiddleware.Input, ServerAddMiddleware.Response, ServerState>): any {
     return stream
         .do(({payload}) => debug(payload))
+        .filter(({state}) => state.app && state.app.stack && state.app.stack.length)
         .map(({respond, payload, state}) => {
             const firstProxy = state.app.stack.findIndex(x => x.type === MiddlewareTypes.proxy) || state.app.length;
             const nextStack = state.app.stack.slice();

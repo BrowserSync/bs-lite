@@ -45,7 +45,7 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                 return stream
                     .buffer(stream.debounceTime(500, context.timeScheduler))
                     .do(xs => debug('buffered', xs.length, ProxiedFilesMessages.AddFile, 'messages'))
-                    .flatMap((items) => {
+                    .concatMap((items) => {
                         const last = items[items.length-1];
                         const {respond, state} = last;
 
@@ -65,8 +65,8 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                 return Observable.from(items)
                                     .distinct(({payload}) => payload.path)
                                     .pluck('payload')
-                                    .map((x: ProxiedFilesAdd.Input) => [x.path, parse(x.path)])
-                                    .flatMap(([input, path]) => {
+                                    .map((x: ProxiedFilesAdd.Input) => ({input: x.path, path: parse(x.path)}))
+                                    .flatMap(({input, path}) => {
                                         return Observable.from(<Array<string>>[cwd, ...dirs])
                                             .flatMap(dir => {
                                                 if (matchFile) {
@@ -94,7 +94,9 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                             })
                                             .filter(x => {
                                                 const exists = existsSync(x.joined);
-                                                debug(`existsSync [${exists}]`, x.joined);
+                                                if (exists) {
+                                                    debug(`existsSync [${exists}]`, x.joined);
+                                                }
                                                 return exists;
                                             })
                                             .take(1)
