@@ -60,7 +60,7 @@ it.only('can track proxied files in sub-directories', function (done) {
 
             stop().subscribe(() => {
                 const msg = messages[0].message.action.payload;
-                console.log(msg);
+                // console.log(msg);
                 // assert.equal(msg.options.route, '/content/themes/wearejh/assets/dist');
                 // assert.equal(msg.options.dir, expected);
                 done();

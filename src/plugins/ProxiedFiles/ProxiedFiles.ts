@@ -65,26 +65,29 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                 return Observable.from(items)
                                     .distinct(({payload}) => payload.path)
                                     .pluck('payload')
-                                    .map((x: ProxiedFilesAdd.Input) => parse(x.path))
-                                    .flatMap((path) => {
+                                    .map((x: ProxiedFilesAdd.Input) => [x.path, parse(x.path)])
+                                    .flatMap(([input, path]) => {
                                         return Observable.from(<Array<string>>[cwd, ...dirs])
                                             .flatMap(dir => {
                                                 if (matchFile) {
                                                     return of({
-                                                        dir, path, cwd,
+                                                        dir, path, cwd, input,
                                                         dirname: join(dir, path.dir),
                                                         joined: join(dir, path.dir, path.base),
+                                                        target: join(dir, path.dir, path.base),
                                                     }, {
-                                                        dir, path, cwd,
+                                                        dir, path, cwd, input,
                                                         dirname: join(dir),
                                                         joined: join(dir, path.base),
-                                                    })
+                                                        target: join(dir, path.base),
+                                                    });
                                                 }
                                                 return of({
-                                                    dir, path, cwd,
+                                                    dir, path, cwd, input,
                                                     dirname: join(dir, path.dir),
                                                     joined: join(dir, path.dir, path.base),
-                                                })
+                                                    target: join(dir, path.dir),
+                                                });
                                             })
                                             .filter(x => {
                                                 const exists = existsSync(x.joined);
@@ -94,21 +97,30 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                             .take(1)
                                     })
                             })
+                            .filter(x => {
+                                const exists = state.has(`${x.input}:${x.target}`);
+                                if (exists) {
+                                    debug('--- skipping', `${x.input}:${x.target}`);
+                                    return false;
+                                }
+                                return true;
+                            })
+                            // .do(x => console.log(`${x.input}:${x.target}`))
                             .distinctUntilChanged((a, b) => {
                                 return a.path.dir === b.path.dir
-                                    && a.dirname === b.dirname;
+                                    && a.target === b.target;
                             })
                             .do(x => {
                                 debug('+++MATCH+++ possible Serve Static option...');
                                 debug({
                                     route: x.path.dir,
-                                    dir: x.dirname
+                                    dir: x.target
                                 });
                             })
                             .flatMap(item => {
                                 const ssInput = ServeStaticMiddleware.create(item.cwd, {
                                     route: item.path.dir, // eg: /some/web-path
-                                    dir: item.dirname // eg: src/local/sources
+                                    dir: item.target // eg: src/local/sources
                                 });
                                 return ssActor.ask(ssInput[0], ssInput[1])
                                     .flatMap((resp: ServeStaticMiddleware.Response) => {
@@ -126,7 +138,7 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                     .mapTo([item, mws])
                             })
                             .reduce((acc: Set<string>, [item, mws]) => {
-                                return acc.add(item.joined);
+                                return acc.add(`${item.input}:${item.target}`);
                             }, state)
                             .map(newState => {
                                 debug('next state...');
