@@ -60,12 +60,12 @@ export function ProxyChild(address, context: IActorContext): any {
                         if (res.statusCode === 200) {
                             const ext = mime.extension(proxyRes['headers']['content-type']);
                             if (mimeWhitelist.has(ext)) {
+
                                 const parsed = url.parse(req.url);
-                                const proxiedFilesPayload: ProxiedFilesAdd.Input = {
-                                    path: parsed.pathname
-                                };
+                                const proxiedFilesPayload = ProxiedFilesAdd.create(parsed.pathname, proxyItem.proxiedFileOptions);
+
                                 proxiedFiles
-                                    .tell(ProxiedFilesMessages.AddFile, proxiedFilesPayload)
+                                    .tell(proxiedFilesPayload[0], proxiedFilesPayload[1])
                                     .subscribe();
                             }
                         }

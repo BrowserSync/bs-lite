@@ -5,7 +5,13 @@ const {create, printErrors} = require('../');
 const {bs, init, stop} = create();
 
 init({
-    proxy: ['http://ce.demo.wearejh.com'],
+    proxy: [{
+        target: 'https://www.neomorganics.com',
+        // proxiedFileOptions: {
+            // matchFile: true,
+            // baseDirectory: 'fixtures'
+        // }
+    }],
     strict: true,
     server: {port: 9001}
 })

@@ -9,6 +9,8 @@ import {isPojo} from "../../utils";
 import {RewriteRule} from "../../rewrite-rules";
 import {Scheme} from "../../options";
 import {BSError, BSErrorLevel, BSErrorType, ProxyInvalidInputError} from "../../errors";
+import {ProxiedFilesAdd} from "../ProxiedFiles/ProxiedFiles";
+import ProxiedFilesAddOptions = ProxiedFilesAdd.ProxiedFilesAddOptions;
 
 const {of} = Observable;
 
@@ -46,6 +48,7 @@ export interface ProxyItem {
     proxyReq?: ProxyReqFn[]
     proxyRes?: ProxyResFn[]
     proxyErr?: ProxyErrFn[]
+    proxiedFileOptions?: ProxiedFilesAddOptions
 }
 
 export type ProxyReqFn = (proxyReq: http.ClientRequest,
@@ -145,5 +148,9 @@ export function createItem(incoming: ProxyItem): ProxyItem {
             ...defaultHttpProxyOptions,
             ...incoming.options,
         },
+        proxiedFileOptions: {
+            matchFile: false,
+            ...incoming.proxiedFileOptions
+        }
     }
 }

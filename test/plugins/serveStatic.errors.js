@@ -15,6 +15,8 @@ it('serveStatic', function (done) {
     init({serveStatic: () => {}})
         .subscribe(([errors]) => {
             assert.equal(errors[0].type, BSErrorType.ServeStaticInput);
-            done();
+            stop().subscribe(() => {
+                done();
+            })
         })
 });

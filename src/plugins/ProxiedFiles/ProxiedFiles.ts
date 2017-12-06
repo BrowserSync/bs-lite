@@ -5,7 +5,7 @@ import {WatcherMessages} from "../Watcher/Watcher";
 import {WatcherAddItems, WatcherNamespace} from "../Watcher/AddItems.message";
 import {next} from "@kwonoj/rxjs-testscheduler-compat";
 import {CoreChildren, Methods} from "../../Browsersync";
-import {join, parse, ParsedPath} from "path";
+import {isAbsolute, join, parse, ParsedPath} from "path";
 import {getDirs$} from "../../utils";
 import {existsSync} from "fs";
 import {DirsGet, DirsMesages} from "../dirs";
@@ -23,8 +23,20 @@ export enum ProxiedFilesMessages {
 }
 
 export namespace ProxiedFilesAdd {
-    export type Input = { path: string };
+    export interface ProxiedFilesAddOptions {
+        matchFile: boolean,
+        baseDirectory: string | string[],
+    }
+    export type Input = { path: string, options: ProxiedFilesAddOptions };
     export type Response = [null, boolean];
+    export function create(path: string, options?: ProxiedFilesAddOptions): [ProxiedFilesMessages.AddFile, Input] {
+        const mergedOptions: ProxiedFilesAddOptions = {
+            matchFile: false,
+            baseDirectory: [],
+            ...options
+        };
+        return [ProxiedFilesMessages.AddFile, {path, options: mergedOptions}]
+    }
 }
 
 export namespace ProxiedFilesStop {
@@ -43,21 +55,23 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
         methods: {
             [ProxiedFilesMessages.AddFile]: function (stream: IMethodStream<ProxiedFilesAdd.Input, ProxiedFilesAdd.Response, ProxiedFilesState>) {
                 return stream
-                    .buffer(stream.debounceTime(500, context.timeScheduler))
+                    .buffer(stream.debounceTime(1000, context.timeScheduler))
                     .do(xs => debug('buffered', xs.length, ProxiedFilesMessages.AddFile, 'messages'))
                     .concatMap((items) => {
                         const last = items[items.length-1];
                         const {respond, state} = last;
+                        const options: ProxiedFilesAdd.ProxiedFilesAddOptions = last.payload.options;
 
                         // todo - pass CWD through options
-                        const dirsPayload = DirsGet.create(join(process.cwd()), process.cwd());
+                        const baseDir = [].concat(options.baseDirectory)
+                            .map(x => isAbsolute(x) ? x : join(process.cwd(), x))
+                            .filter(Boolean)[0];
+
+                        const dirsPayload = DirsGet.create(baseDir || process.cwd(), process.cwd());
                         const cwd$ = Observable.of(process.cwd());
                         const dirsActor = context.actorSelection(`/system/core/${CoreChildren.Dirs}`)[0];
                         const ssActor = context.actorSelection(`/system/core/serveStatic`)[0];
                         const serverActor = context.actorSelection(`/system/core/server`)[0];
-
-                        // todo - allow the user to disable/enable this.
-                        const matchFile = true;
 
                         return dirsActor.ask(dirsPayload[0], dirsPayload[1]).map(([, dirs]) => dirs)
                             .withLatestFrom(cwd$)
@@ -65,31 +79,34 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                 return Observable.from(items)
                                     .distinct(({payload}) => payload.path)
                                     .pluck('payload')
-                                    .map((x: ProxiedFilesAdd.Input) => ({input: x.path, path: parse(x.path)}))
-                                    .flatMap(({input, path}) => {
-                                        return Observable.from(<Array<string>>[cwd, ...dirs])
+                                    .map((x: ProxiedFilesAdd.Input) => ({item: x, parsedPath: parse(x.path)}))
+                                    .flatMap(({item, parsedPath}) => {
+                                        const input = item.path;
+                                        const options: ProxiedFilesAdd.ProxiedFilesAddOptions = item.options;
+                                        const dirsToCheck = baseDir ? [baseDir, ...dirs] : [cwd, ...dirs];
+                                        return Observable.from(<Array<string>>dirsToCheck)
                                             .flatMap(dir => {
-                                                if (matchFile) {
+                                                if (options.matchFile) {
                                                     return of({ // full path to file
-                                                        dir, path, cwd, input,
-                                                        dirname: join(dir, path.dir),
-                                                        joined: join(dir, path.dir, path.base),
-                                                        target: join(dir, path.dir, path.base),
+                                                        dir, parsedPath, cwd, input,
+                                                        dirname: join(dir, parsedPath.dir),
+                                                        joined: join(dir, parsedPath.dir, parsedPath.base),
+                                                        target: join(dir, parsedPath.dir, parsedPath.base),
                                                         route: input,
                                                     }, {
-                                                        dir, path, cwd, input,
+                                                        dir, parsedPath, cwd, input,
                                                         dirname: join(dir),
-                                                        joined: join(dir, path.base),
-                                                        target: join(dir, path.base),
+                                                        joined: join(dir, parsedPath.base),
+                                                        target: join(dir, parsedPath.base),
                                                         route: input,
                                                     });
                                                 }
                                                 return of({
-                                                    dir, path, cwd, input,
-                                                    dirname: join(dir, path.dir),
-                                                    joined: join(dir, path.dir, path.base),
-                                                    target: join(dir, path.dir),
-                                                    route: path.dir
+                                                    dir, parsedPath, cwd, input,
+                                                    dirname: join(dir, parsedPath.dir),
+                                                    joined: join(dir, parsedPath.dir, parsedPath.base),
+                                                    target: join(dir, parsedPath.dir),
+                                                    route: parsedPath.dir
                                                 });
                                             })
                                             .filter(x => {
