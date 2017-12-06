@@ -56,6 +56,9 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                         const ssActor = context.actorSelection(`/system/core/serveStatic`)[0];
                         const serverActor = context.actorSelection(`/system/core/server`)[0];
 
+                        // todo - allow the user to disable/enable this.
+                        const matchFile = true;
+
                         return dirsActor.ask(dirsPayload[0], dirsPayload[1]).map(([, dirs]) => dirs)
                             .withLatestFrom(cwd$)
                             .flatMap(([dirs, cwd]) => {
@@ -65,12 +68,23 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                     .map((x: ProxiedFilesAdd.Input) => parse(x.path))
                                     .flatMap((path) => {
                                         return Observable.from(<Array<string>>[cwd, ...dirs])
-                                            .map(dir => {
-                                                return {
+                                            .flatMap(dir => {
+                                                if (matchFile) {
+                                                    return of({
+                                                        dir, path, cwd,
+                                                        dirname: join(dir, path.dir),
+                                                        joined: join(dir, path.dir, path.base),
+                                                    }, {
+                                                        dir, path, cwd,
+                                                        dirname: join(dir),
+                                                        joined: join(dir, path.base),
+                                                    })
+                                                }
+                                                return of({
                                                     dir, path, cwd,
                                                     dirname: join(dir, path.dir),
                                                     joined: join(dir, path.dir, path.base),
-                                                }
+                                                })
                                             })
                                             .filter(x => {
                                                 const exists = existsSync(x.joined);
