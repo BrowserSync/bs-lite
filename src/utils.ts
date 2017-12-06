@@ -89,7 +89,7 @@ export function gracefullyStopChildren(context) {
 }
 
 export function getDirs$(dir: string, cwd: string) {
-    return dirs(dir).map(x => isAbsolute(x) ? relative(cwd, x) : x)
+    return dirs(dir).map(x => !isAbsolute(x) ? join(cwd, x) : x)
 }
 const matchDotFolders = /^\.\w+|\/\./; // RegExp to exclude any root or nested .dotFolders/
 const exclusions = ['node_modules', matchDotFolders]; // exclusions are optional

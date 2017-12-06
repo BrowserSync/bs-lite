@@ -53,6 +53,7 @@ export function ProxyChild(address, context: IActorContext): any {
 
                     const mimeWhitelist = new Set([
                         'css',
+                        'js',
                     ]);
 
                     _proxy.on('proxyRes', (proxyRes, req, res) => {

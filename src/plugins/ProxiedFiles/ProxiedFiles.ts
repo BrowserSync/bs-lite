@@ -49,14 +49,14 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                         const last = items[items.length-1];
                         const {respond, state} = last;
 
-
+                        // todo - pass CWD through options
                         const dirsPayload = DirsGet.create(join(process.cwd()), process.cwd());
                         const cwd$ = Observable.of(process.cwd());
-                        const dirs = context.actorSelection(`/system/core/${CoreChildren.Dirs}`)[0];
-                        const ss = context.actorSelection(`/system/core/serveStatic`)[0];
-                        const server = context.actorSelection(`/system/core/server`)[0];
+                        const dirsActor = context.actorSelection(`/system/core/${CoreChildren.Dirs}`)[0];
+                        const ssActor = context.actorSelection(`/system/core/serveStatic`)[0];
+                        const serverActor = context.actorSelection(`/system/core/server`)[0];
 
-                        return dirs.ask(dirsPayload[0], dirsPayload[1]).map(([, dirs]) => dirs)
+                        return dirsActor.ask(dirsPayload[0], dirsPayload[1]).map(([, dirs]) => dirs)
                             .withLatestFrom(cwd$)
                             .flatMap(([dirs, cwd]) => {
                                 return Observable.from(items)
@@ -64,7 +64,7 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                     .pluck('payload')
                                     .map((x: ProxiedFilesAdd.Input) => parse(x.path))
                                     .flatMap((path) => {
-                                        return Observable.from(<Array<string>>dirs)
+                                        return Observable.from(<Array<string>>[cwd, ...dirs])
                                             .map(dir => {
                                                 return {
                                                     dir, path, cwd,
@@ -96,7 +96,7 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                     route: item.path.dir, // eg: /some/web-path
                                     dir: item.dirname // eg: src/local/sources
                                 });
-                                return ss.ask(ssInput[0], ssInput[1])
+                                return ssActor.ask(ssInput[0], ssInput[1])
                                     .flatMap((resp: ServeStaticMiddleware.Response) => {
                                         const [errors, mws] = resp;
                                         if (errors && errors.length) {
@@ -108,7 +108,7 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                             // .toArray()
                             .flatMap(([item, mws]) => {
                                 const mwPayload = ServerAddMiddleware.create(mws);
-                                return server.ask(mwPayload[0], mwPayload[1])
+                                return serverActor.ask(mwPayload[0], mwPayload[1])
                                     .mapTo([item, mws])
                             })
                             .reduce((acc: Set<string>, [item, mws]) => {
