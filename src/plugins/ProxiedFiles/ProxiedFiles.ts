@@ -50,7 +50,7 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                         const {respond, state} = last;
 
 
-                        const dirsPayload = DirsGet.create(join(process.cwd(), 'localhost'), process.cwd());
+                        const dirsPayload = DirsGet.create(join(process.cwd()), process.cwd());
                         const cwd$ = Observable.of(process.cwd());
                         const dirs = context.actorSelection(`/system/core/${CoreChildren.Dirs}`)[0];
                         const ss = context.actorSelection(`/system/core/serveStatic`)[0];
@@ -62,9 +62,9 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                 return Observable.from(items)
                                     .distinct(({payload}) => payload.path)
                                     .pluck('payload')
-                                    .map(x => parse(x.path))
+                                    .map((x: ProxiedFilesAdd.Input) => parse(x.path))
                                     .flatMap((path) => {
-                                        return Observable.from(['localhost', ...dirs])
+                                        return Observable.from(<Array<string>>dirs)
                                             .map(dir => {
                                                 return {
                                                     dir, path, cwd,

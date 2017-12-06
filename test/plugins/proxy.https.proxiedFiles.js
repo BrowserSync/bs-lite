@@ -12,7 +12,7 @@ const inputcss = `fixtures/wearejh.com${inputPath}`;
 const inputcss2 = `fixtures/wearejh.com${inputPath2}`;
 const request = require('supertest-as-promised');
 
-it('can track proxied files', function (done) {
+it.only('can track proxied lyfiles', function (done) {
 
     const {create} = require('../../');
     const {app, server, url} = getHttpsApp();
