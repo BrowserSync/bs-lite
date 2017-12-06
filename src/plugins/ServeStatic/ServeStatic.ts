@@ -41,22 +41,25 @@ export function ServeStatic (address: string, context: IActorContext): any {
         },
         methods: {
             [SSMesagges.Middleware]: function (stream: IMethodStream<ServeStaticMiddleware.Input, ServeStaticMiddleware.Response, any>) {
-                return stream.map(({payload, respond}) => {
-                    const {cwd, options} = payload;
-                    const [errors, mw] = createMiddleware(options, cwd, {
-                        onFile: (path, stat) => {
-                            const payload: ServedFilesAdd.Input = {
-                                cwd, path
-                            };
-                            const served = context.actorSelection('/system/core/servedFiles')[0];
-                            served.tell(ServedFilesMessages.AddFile, payload).subscribe();
+                return stream
+                    .do(x => debug(x.payload))
+                    .map(({payload, respond}) => {
+                        const {cwd, options} = payload;
+                        const [errors, mw] = createMiddleware(options, cwd, {
+                            onFile: (path, stat) => {
+                                const payload: ServedFilesAdd.Input = {
+                                    cwd, path
+                                };
+                                debug(path);
+                                const served = context.actorSelection('/system/core/servedFiles')[0];
+                                served.tell(ServedFilesMessages.AddFile, payload).subscribe();
+                            }
+                        });
+                        if (errors.length) {
+                            return respond([errors, null]);
                         }
+                        return respond([null, mw]);
                     });
-                    if (errors.length) {
-                        return respond([errors, null]);
-                    }
-                    return respond([null, mw]);
-                });
             },
         },
     }

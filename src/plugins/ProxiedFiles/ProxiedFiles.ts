@@ -70,16 +70,18 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                         return Observable.from(<Array<string>>[cwd, ...dirs])
                                             .flatMap(dir => {
                                                 if (matchFile) {
-                                                    return of({
+                                                    return of({ // full path to file
                                                         dir, path, cwd, input,
                                                         dirname: join(dir, path.dir),
                                                         joined: join(dir, path.dir, path.base),
                                                         target: join(dir, path.dir, path.base),
+                                                        route: input,
                                                     }, {
                                                         dir, path, cwd, input,
                                                         dirname: join(dir),
                                                         joined: join(dir, path.base),
                                                         target: join(dir, path.base),
+                                                        route: input,
                                                     });
                                                 }
                                                 return of({
@@ -87,6 +89,7 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                                     dirname: join(dir, path.dir),
                                                     joined: join(dir, path.dir, path.base),
                                                     target: join(dir, path.dir),
+                                                    route: path.dir
                                                 });
                                             })
                                             .filter(x => {
@@ -107,19 +110,19 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                             })
                             // .do(x => console.log(`${x.input}:${x.target}`))
                             .distinctUntilChanged((a, b) => {
-                                return a.path.dir === b.path.dir
+                                return a.route === b.route
                                     && a.target === b.target;
                             })
                             .do(x => {
                                 debug('+++MATCH+++ possible Serve Static option...');
                                 debug({
-                                    route: x.path.dir,
+                                    route: x.route,
                                     dir: x.target
                                 });
                             })
                             .flatMap(item => {
                                 const ssInput = ServeStaticMiddleware.create(item.cwd, {
-                                    route: item.path.dir, // eg: /some/web-path
+                                    route: item.route, // eg: /some/web-path
                                     dir: item.target // eg: src/local/sources
                                 });
                                 return ssActor.ask(ssInput[0], ssInput[1])
