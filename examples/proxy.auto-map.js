@@ -6,7 +6,7 @@ const {bs, init, stop} = create();
 
 init({
     proxy: [{
-        target: 'https://www.neomorganics.com',
+        target: 'https://nodejs.org',
         // proxiedFileOptions: {
             // matchFile: true,
             // baseDirectory: 'fixtures'

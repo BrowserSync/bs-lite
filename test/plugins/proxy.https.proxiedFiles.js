@@ -130,6 +130,7 @@ it('can track a single proxied file by creating a direct mapping', function (don
                 .do(() => {
                     const msg = messages[0].message.action.payload;
                     const dirMsg = dirs[0].message.action.payload;
+                    assert.equal(messages.length, 1);
                     assert.equal(msg.options.route, expectedRoute);
                     assert.equal(msg.options.dir, expectedDir);
                     assert.equal(dirMsg.baseDirectory, join(process.cwd(), 'fixtures'));

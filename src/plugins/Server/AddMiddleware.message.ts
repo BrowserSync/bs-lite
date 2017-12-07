@@ -18,10 +18,30 @@ export function addMiddlewareHandler(stream: IMethodStream<ServerAddMiddleware.I
         .do(({payload}) => debug(payload))
         .filter(({state}) => state.app && state.app.stack && state.app.stack.length)
         .map(({respond, payload, state}) => {
-            const firstProxy = state.app.stack.findIndex(x => x.type === MiddlewareTypes.proxy) || state.app.length;
+
             const nextStack = state.app.stack.slice();
-            nextStack.splice(firstProxy, 0, ...payload.middleware);
-            state.app.stack = nextStack;
+
+            const orders = [
+                MiddlewareTypes.other,
+                MiddlewareTypes.clientJs,
+                MiddlewareTypes.rewriteRules,
+                MiddlewareTypes.serveStatic,
+                MiddlewareTypes.proxy,
+            ];
+
+            // const items
+            const newOrderedStack = orders.reduce((acc, type) => {
+                const matchingItems = nextStack.filter(mw => mw.type === type);
+                const matchingIncoming = payload.middleware.filter(x => x.type === type);
+                if (matchingIncoming.length) {
+                    return acc.concat(matchingItems, matchingIncoming);
+                }
+                return acc.concat(matchingItems);
+            }, []);
+
+            // side effecting code. This replaces the middleware stack
+            state.app.stack = newOrderedStack;
+
             return respond([null, true], state);
         });
 }
