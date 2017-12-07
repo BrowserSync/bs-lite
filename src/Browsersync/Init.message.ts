@@ -56,7 +56,7 @@ export function initMessageHandler(context: IActorContext): any {
                             })();
 
 
-                            return merge(
+                            return Observable.concat(
                                 // start the server + sockets
                                 state.server
                                     .ask(ServerMessages.Init, payload)

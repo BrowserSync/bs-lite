@@ -22,6 +22,8 @@ it('handles incorrect input type (setup error)', function (done) {
                 `   Your Input: 1`,
                 `     Examples: 'http://example.com' or 'https://example.com'`,
             ].join('\n'), printedErrors);
-            done();
+            stop().subscribe(() => {
+                done();
+            })
         });
 });

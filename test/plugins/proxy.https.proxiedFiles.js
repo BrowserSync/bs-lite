@@ -1,6 +1,8 @@
 require('source-map-support').install();
+const {Observable} = require('rxjs');
 const {readFileSync} = require('fs');
 const {join} = require('path');
+const {async} = require('rxjs/scheduler/async');
 const serveStatic = require('serve-static');
 const {getHttpsApp} = require("../utils");
 const assert = require('assert');
@@ -67,7 +69,7 @@ it('can track proxied files by serving an entire directory', function (done) {
         })
 });
 
-it.only('can track a single proxied file by creating a direct mapping', function (done) {
+it('can track a single proxied file by creating a direct mapping', function (done) {
 
     const {create} = require('../../');
     const {app, server, url} = getHttpsApp();
@@ -111,27 +113,30 @@ it.only('can track a single proxied file by creating a direct mapping', function
         matchFile: true,
         baseDirectory: 'fixtures'
     }}]})
-        .subscribe(async ([errors, output]) => {
+        .subscribe(([errors, output]) => {
 
             if (errors && errors.length) {
                 return done(errors[0].errors[0]);
             }
 
-            await request(output.server).get(inputPath).set('accept', 'text/css');
-            await request(output.server).get(inputPath2).set('accept', 'text/css');
-
-            scheduler.flush();
-
-            stop().subscribe(() => {
-
-                const msg = messages[0].message.action.payload;
-                const dirMsg = dirs[0].message.action.payload;
-                assert.equal(msg.options.route, expectedRoute);
-                assert.equal(msg.options.dir, expectedDir);
-                assert.equal(dirMsg.baseDirectory, join(process.cwd(), 'fixtures'));
-
-                done();
-            });
+            Observable.merge(
+                request(output.server).get(inputPath).set('accept', 'text/css'),
+                request(output.server).get(inputPath2).set('accept', 'text/css')
+            )
+                .do(() => scheduler.flush())
+                .toArray()
+                .delay(1)
+                .flatMap((xs) => stop())
+                .do(() => {
+                    const msg = messages[0].message.action.payload;
+                    const dirMsg = dirs[0].message.action.payload;
+                    assert.equal(msg.options.route, expectedRoute);
+                    assert.equal(msg.options.dir, expectedDir);
+                    assert.equal(dirMsg.baseDirectory, join(process.cwd(), 'fixtures'));
+                })
+                .do(x => done())
+                .subscribeOn(async)
+                .subscribe();
         })
 });
 

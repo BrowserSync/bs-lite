@@ -141,8 +141,15 @@ function getNewServer(middleware: Middleware[], port: number, options: Options) 
 
     const server = require('http-shutdown')(createNewServer(options, app));
 
-    server.listen(port);
-    return Observable.of([server, app]);
+    // server.listen(port, function() {
+    //     console.log('lis cb');
+    // });
+    return Observable.create(obs => {
+        server.listen(port, function() {
+            obs.next(true);
+            obs.complete();
+        });
+    }).mapTo([server, app]);
 }
 
 function replaceMiddleware(middleware, app) {
