@@ -11,6 +11,8 @@ import {existsSync} from "fs";
 import {DirsGet, DirsMesages} from "../dirs";
 import {ServeStaticMiddleware, SSMesagges} from "../ServeStatic/ServeStatic";
 import {ServerAddMiddleware} from "../Server/AddMiddleware.message";
+import {ServedFilesAdd} from "../ServedFiles/ServedFiles";
+import {FileEvent} from "../Watcher/FileEvent.message";
 
 const debug = require('debug')('bs:ProxiedFiles');
 
@@ -72,6 +74,7 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                         const dirsActor = context.actorSelection(`/system/core/${CoreChildren.Dirs}`)[0];
                         const ssActor = context.actorSelection(`/system/core/serveStatic`)[0];
                         const serverActor = context.actorSelection(`/system/core/server`)[0];
+                        const servedFilesActor = context.actorSelection(`/system/core/servedFiles`)[0];
 
                         return dirsActor.ask(dirsPayload[0], dirsPayload[1]).map(([, dirs]) => dirs)
                             .withLatestFrom(cwd$)
@@ -90,13 +93,13 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                                     return of({ // full path to file
                                                         dir, parsedPath, cwd, input,
                                                         dirname: join(dir, parsedPath.dir),
-                                                        joined: join(dir, parsedPath.dir, parsedPath.base),
+                                                        absoluteFilepath: join(dir, parsedPath.dir, parsedPath.base),
                                                         target: join(dir, parsedPath.dir, parsedPath.base),
                                                         route: input,
                                                     }, {
                                                         dir, parsedPath, cwd, input,
                                                         dirname: join(dir),
-                                                        joined: join(dir, parsedPath.base),
+                                                        absoluteFilepath: join(dir, parsedPath.base),
                                                         target: join(dir, parsedPath.base),
                                                         route: input,
                                                     });
@@ -104,15 +107,15 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                                 return of({
                                                     dir, parsedPath, cwd, input,
                                                     dirname: join(dir, parsedPath.dir),
-                                                    joined: join(dir, parsedPath.dir, parsedPath.base),
+                                                    absoluteFilepath: join(dir, parsedPath.dir, parsedPath.base),
                                                     target: join(dir, parsedPath.dir),
                                                     route: parsedPath.dir
                                                 });
                                             })
                                             .filter(x => {
-                                                const exists = existsSync(x.joined);
+                                                const exists = existsSync(x.absoluteFilepath);
                                                 if (exists) {
-                                                    debug(`existsSync [${exists}]`, x.joined);
+                                                    debug(`existsSync [${exists}]`, x.absoluteFilepath);
                                                 }
                                                 return exists;
                                             })
@@ -156,7 +159,23 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                             // .toArray()
                             .flatMap(([item, mws]) => {
                                 const mwPayload = ServerAddMiddleware.create(mws);
-                                return serverActor.ask(mwPayload[0], mwPayload[1])
+                                const servedPayload = ServedFilesAdd.create(process.cwd(), item.absoluteFilepath);
+                                return Observable.merge(
+                                    serverActor.ask(mwPayload[0], mwPayload[1]),
+                                    servedFilesActor.tell(servedPayload[0], servedPayload[1])
+                                        .ignoreElements()
+                                )
+                                    .mapTo([item, mws])
+                            })
+                            .flatMap(([item, mws]) => {
+                                const watcher = context.actorSelection('/system/core/watcher')[0];
+                                const fileEvent: FileEvent.Input = {
+                                    event: 'change',
+                                    path: item.absoluteFilepath,
+                                    parsed: parse(item.absoluteFilepath),
+                                    ns: WatcherNamespace.FilesOption
+                                }
+                                return watcher.tell(WatcherMessages.FileEvent, fileEvent)
                                     .mapTo([item, mws])
                             })
                             .reduce((acc: Set<string>, [item, mws]) => {

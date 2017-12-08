@@ -3,7 +3,7 @@ import {IActorContext, MessageResponse} from "aktor-js";
 import {List} from "immutable";
 import {GetActorFn} from "../../Browsersync.init";
 import {
-    optionsHandler,
+    optionsHandler, ProxyOptions,
     ProxyOptionsInput
 } from "./Options.message";
 import {getMiddlewareHandler, ProxyMiddleware} from "./Middleware.message";
@@ -34,18 +34,20 @@ export function getProxyOption(input: any): ProxyOptionsInput[] {
     return List([]).concat(input).toJS().filter(Boolean);
 }
 
-export function askForProxyMiddleware (getActor: GetActorFn, proxyOption: ProxyOptionsInput[]): any {
+export function askForProxyMiddleware(getActor: GetActorFn, proxyOption: ProxyOptionsInput[]): any {
     if (proxyOption.length) {
+        const message = ProxyMiddleware.create(proxyOption);
         return getActor('proxy', BrowsersyncProxyFactory)
-            .ask(ProxyMessages.Middleware, proxyOption)
+            .ask(message[0], message[1])
     }
     return Observable.of([null, []]);
 }
 
 export function askForProxyOptions(getActor: GetActorFn, proxyOption: ProxyOptionsInput[]): any {
     if (proxyOption.length) {
+        const message = ProxyOptions.create(proxyOption);
         return getActor('proxy', BrowsersyncProxyFactory)
-            .ask(ProxyMessages.Options, proxyOption)
+            .ask(message[0], message[1])
     }
     return Observable.empty();
 }

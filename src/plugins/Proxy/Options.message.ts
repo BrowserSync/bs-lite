@@ -11,14 +11,19 @@ import {Scheme} from "../../options";
 import {BSError, BSErrorLevel, BSErrorType, ProxyInvalidInputError} from "../../errors";
 import {ProxiedFilesAdd} from "../ProxiedFiles/ProxiedFiles";
 import ProxiedFilesAddOptions = ProxiedFilesAdd.ProxiedFilesAddOptions;
+import {ProxyMessages} from "./Proxy";
 
 const {of} = Observable;
 
 export namespace ProxyOptions {
+    export type Input = ProxyOptionsInput[];
     export type Response = [null|BSError[], null|{
         rewriteRules: RewriteRule[],
         scheme: Scheme
     }]
+    export function create(input: Input): [ProxyMessages.Options, Input] {
+        return [ProxyMessages.Options, input];
+    }
 }
 
 /**
@@ -61,40 +66,48 @@ export type ProxyResFn = (proxyRes: http.IncomingMessage,
                           res: http.ServerResponse) => void;
 
 export type ProxyErrFn = (error: Error) => void;
-export type ProxyResult = {errors: BSError[], item?: ProxyItem };
+export type ProxyResult = {
+    errors: BSError[],
+    item: ProxyItem|null
+};
 
-export function optionsHandler(stream$: IMethodStream<any, ProxyOptions.Response, any>): any {
+export function optionsHandler(stream$: IMethodStream<ProxyOptions.Input, ProxyOptions.Response, any>) {
     return stream$.flatMap(({payload, respond}) => {
-        const proxyItems = payload.map((option): ProxyResult => {
+        const proxyItems = payload.map((option: ProxyOptionsInput): ProxyResult => {
             if (typeof option === 'string') {
                 return {
                     errors: [],
                     item: createItemFromString(option)
                 }
-            } else {
-                if (isPojo(option) && typeof option.target === 'string') {
+            }
+
+            if (isPojo(option)) {
+                const asObject = (option as ProxyItem);
+                if (asObject.target && typeof asObject.target === 'string') {
                     return {
                         errors: [],
-                        item: createItemFromObject(option)
+                        item: createItemFromObject(asObject)
                     }
                 }
-                const error: ProxyInvalidInputError = {
-                    type: BSErrorType.ProxyInvalidInput,
-                    level: BSErrorLevel.Fatal,
-                    errors: [{
-                        error: new Error('Incoming proxy option must contain at least a `target` property'),
-                        meta: () => {
-                            return [
-                                `   Your Input: ${option}`,
-                                `     Examples: 'http://example.com' or 'https://example.com'`
-                            ];
-                        }
-                    }]
-                };
-                return {
-                    errors: [error],
-                    item: option,
-                }
+            }
+
+            const error: ProxyInvalidInputError = {
+                type: BSErrorType.ProxyInvalidInput,
+                level: BSErrorLevel.Fatal,
+                errors: [{
+                    error: new Error('Incoming proxy option must contain at least a `target` property'),
+                    meta: () => {
+                        return [
+                            `   Your Input: ${option}`,
+                            `     Examples: 'http://example.com' or 'https://example.com'`
+                        ];
+                    }
+                }]
+            };
+
+            return {
+                errors: [error],
+                item: null,
             }
         });
 

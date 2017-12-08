@@ -6,13 +6,18 @@ import {Middleware, MiddlewareTypes} from "../Server/Server";
 import {IActorContext, IMethodStream, MessageResponse} from "aktor-js";
 import {ProxyChild, ProxyChildMessages} from "./ProxyChild/ProxyChild";
 import {gracefullyStopChildren} from "../../utils";
+import {ProxyMessages} from "./Proxy";
 
 export namespace ProxyMiddleware {
-    export type Response = [null|Error[], null|Middleware[]]
+    export type Input = ProxyOptionsInput[];
+    export type Response = [null|Error[], null|Middleware[]];
+    export function create(input: Input): [ProxyMessages.Middleware, Input] {
+        return [ProxyMessages.Middleware, input];
+    }
 }
 
 export function getMiddlewareHandler(context: IActorContext): any {
-    return function middlewareHandler(stream: IMethodStream<any, ProxyMiddleware.Response, any>): any {
+    return function middlewareHandler(stream: IMethodStream<ProxyMiddleware.Input, ProxyMiddleware.Response, any>): any {
         return stream.flatMap(({payload, respond}) => {
             return gracefullyStopChildren(context)
                 .flatMap(() => {

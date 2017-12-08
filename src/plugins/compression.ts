@@ -1,5 +1,18 @@
 import {Middleware, MiddlewareTypes} from "./Server/Server";
+import {BSError} from "../errors";
 const debug = require('debug')('bs:compression');
+
+export enum CompressionMessages {
+    Middleware = 'middleware',
+}
+
+export namespace CompressionMiddleware {
+    export type Input = boolean;
+    export type Response = [null|BSError[], null|Middleware[]];
+    export function create(input: Input): [CompressionMessages.Middleware, Input] {
+        return [CompressionMessages.Middleware, input];
+    }
+}
 
 export default function Compression() {
     return {
@@ -7,8 +20,8 @@ export default function Compression() {
             debug('-> postStart()');
         },
         receive(name, payload, respond) {
-            if (name === 'middleware') {
-                try {
+            switch (name) {
+                case CompressionMessages.Middleware: {
                     const mw : Middleware = {
                         id: 'Compression',
                         via: 'Compression',
@@ -16,12 +29,11 @@ export default function Compression() {
                         type: MiddlewareTypes.other,
                         handle: require('compression')()
                     };
-                    respond(mw);
-                } catch (e) {
-                    console.log(e);
+                    return respond(mw);
                 }
-            } else {
-                respond(':)');
+                default: {
+                    respond(':)');
+                }
             }
         }
     }

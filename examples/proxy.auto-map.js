@@ -1,17 +1,9 @@
 require('source-map-support').install();
 const {create, printErrors} = require('../');
-// const {Methods} = require('../');
-
 const {bs, init, stop} = create();
 
 init({
-    proxy: [{
-        target: 'https://nodejs.org',
-        // proxiedFileOptions: {
-            // matchFile: true,
-            // baseDirectory: 'fixtures'
-        // }
-    }],
+    proxy: 'http://dxnevent.com',
     strict: true,
     server: {port: 9001}
 })

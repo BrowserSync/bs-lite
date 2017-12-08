@@ -17,6 +17,9 @@ export enum ServedFilesMessages {
 export namespace ServedFilesAdd {
     export type Input = {cwd: string, path: string};
     export type Response = [null, boolean];
+    export function create(cwd: string, path: string): [ServedFilesMessages.AddFile, Input] {
+        return [ServedFilesMessages.AddFile, {cwd, path}]
+    }
 }
 
 

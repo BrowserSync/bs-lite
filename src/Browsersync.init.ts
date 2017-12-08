@@ -2,7 +2,7 @@ import {Observable} from 'rxjs';
 import serveStatic, {ServeStaticMiddleware} from './plugins/ServeStatic/serveStatic';
 import {Middleware} from './plugins/Server/Server';
 import clientJS from './plugins/ClientJS/clientJS';
-import compression from './plugins/compression';
+import compression, {CompressionMiddleware} from './plugins/compression';
 import {fromJS, Map, List} from "immutable";
 import {Options} from "./index";
 import {RespModifier, RespModifierMiddlewareInput} from "./resp-modifier";
@@ -72,24 +72,24 @@ export function getOptionsAndMiddleware(context: IActorContext, options: Options
             options: opts,
         };
 
-        const ssInput: ServeStaticMiddleware.Input = {
-            cwd: opts.get('cwd'),
-            options: serialise(opts.get('serveStatic'))
-        };
-
+        const ssInput = ServeStaticMiddleware.create(opts.get('cwd'), serialise(opts.get('serveStatic')));
+        const compressionMw = CompressionMiddleware.create(opts.get('compression') as boolean);
         const proxyOption = getProxyOption(opts.get('proxy'));
         const proxyMiddleware = askForProxyMiddleware(getActor, proxyOption);
 
-        return Observable.zip(
-            Observable.zip(
-                getActor('compression', compression).ask('middleware', opts.get('compression')),
-                getActor('clientJS', clientJS).ask('middleware', opts),
-                getActor('resp-mod', RespModifier).ask('middleware', respInput),
-                getActor('serveStatic', serveStatic).ask('middleware', ssInput).flatMap(throwForErrors),
-                proxyMiddleware.map(([, mw]) => mw),
-            ).map((mws: any[]) => {
+        const combinedMw = Observable.zip(
+            getActor('compression', compression).ask(compressionMw[0], compressionMw[1]),
+            getActor('clientJS', clientJS).ask('middleware', opts),
+            getActor('resp-mod', RespModifier).ask('middleware', respInput),
+            getActor('serveStatic', serveStatic).ask(ssInput[0], ssInput[1]).flatMap(throwForErrors),
+            proxyMiddleware.flatMap(throwForErrors),
+        )
+            .map((mws: any[]) => {
                 return mws.reduce((acc: Middleware[], item: Middleware[]) => acc.concat(item), [])
-            }),
+            });
+
+        return Observable.zip(
+            combinedMw,
             Observable.of(opts),
             (middleware, options) => {
                 return {

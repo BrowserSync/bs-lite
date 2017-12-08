@@ -47,12 +47,10 @@ export function ServeStatic (address: string, context: IActorContext): any {
                         const {cwd, options} = payload;
                         const [errors, mw] = createMiddleware(options, cwd, {
                             onFile: (path, stat) => {
-                                const payload: ServedFilesAdd.Input = {
-                                    cwd, path
-                                };
+                                const payload = ServedFilesAdd.create(cwd, path);
                                 debug(path);
                                 const served = context.actorSelection('/system/core/servedFiles')[0];
-                                served.tell(ServedFilesMessages.AddFile, payload).subscribe();
+                                served.tell(payload[0], payload[1]).subscribe();
                             }
                         });
                         if (errors.length) {
