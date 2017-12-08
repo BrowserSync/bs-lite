@@ -9,3 +9,9 @@ tasks:
       command: |
         cd client
         ./node_modules/.bin/webpack --config webpack.config.prod.js
+
+  build-client:
+    - adaptor: npm
+      command: |
+        cd client
+        webpack --config webpack.config.prod.js

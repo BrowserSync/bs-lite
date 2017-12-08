@@ -58,7 +58,11 @@ export function ProxyChild(address, context: IActorContext): any {
 
                     _proxy.on('proxyRes', (proxyRes, req, res) => {
                         if (res.statusCode === 200) {
-                            const ext = mime.extension(proxyRes['headers']['content-type']);
+
+                            const ext
+                                = mime.extension(proxyRes['headers']['content-type'])
+                                || mime.extension(mime.lookup(req.url));
+                            
                             if (mimeWhitelist.has(ext)) {
 
                                 const parsed = url.parse(req.url);
