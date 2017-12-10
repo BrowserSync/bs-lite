@@ -15,6 +15,7 @@ import {WatcherFactory} from "./plugins/Watcher/Watcher";
 import {ProxiedFilesFactory} from "./plugins/ProxiedFiles/ProxiedFiles";
 import {DirsFactory} from "./plugins/dirs";
 import ServeStatic from "./plugins/ServeStatic/ServeStatic";
+import {ExistsFactory} from "./Fs/Exists";
 
 export enum Methods {
     Init = 'init',
@@ -35,6 +36,7 @@ export interface Dependencies {
     timeScheduler?: any;
     findPort?: Function
     dirs?: Function
+    exists?: Function
 }
 
 export enum CoreChildren {
@@ -54,6 +56,7 @@ export function getBrowsersyncFactory(deps: Dependencies = {}): any {
             findPort: context.actorOf(deps.findPort ? deps.findPort : FindPortFactory, 'findPort'),
             server: context.actorOf(BrowserSyncServer, 'server'),
             watcher: context.actorOf(WatcherFactory, 'watcher'),
+            exists: context.actorOf(deps.exists || ExistsFactory, 'exists'),
         };
         return {
             initialState: {

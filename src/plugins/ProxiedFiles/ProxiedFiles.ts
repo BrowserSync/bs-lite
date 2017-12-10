@@ -13,6 +13,7 @@ import {ServeStaticMiddleware, SSMesagges} from "../ServeStatic/ServeStatic";
 import {ServerAddMiddleware} from "../Server/AddMiddleware.message";
 import {ServedFilesAdd} from "../ServedFiles/ServedFiles";
 import {FileEvent} from "../Watcher/FileEvent.message";
+import {ExistsSync} from "../../Fs/Exists";
 
 const debug = require('debug')('bs:ProxiedFiles');
 
@@ -60,6 +61,7 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                     .buffer(stream.debounceTime(1000, context.timeScheduler))
                     .do(xs => debug('buffered', xs.length, ProxiedFilesMessages.AddFile, 'messages'))
                     .concatMap((items) => {
+                        // console.log(items);
                         const last = items[items.length-1];
                         const {respond, state} = last;
                         const options: ProxiedFilesAdd.ProxiedFilesAddOptions = last.payload.options;
@@ -75,6 +77,7 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                         const ssActor = context.actorSelection(`/system/core/serveStatic`)[0];
                         const serverActor = context.actorSelection(`/system/core/server`)[0];
                         const servedFilesActor = context.actorSelection(`/system/core/servedFiles`)[0];
+                        const exists = context.actorSelection(`/system/core/exists`)[0];
 
                         return dirsActor.ask(dirsPayload[0], dirsPayload[1]).map(([, dirs]) => dirs)
                             .withLatestFrom(cwd$)
@@ -112,12 +115,19 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                                     route: parsedPath.dir
                                                 });
                                             })
-                                            .filter(x => {
-                                                const exists = existsSync(x.absoluteFilepath);
-                                                if (exists) {
-                                                    debug(`existsSync [${exists}]`, x.absoluteFilepath);
-                                                }
-                                                return exists;
+                                            .flatMap(x => {
+                                                const payload = ExistsSync.create(x.absoluteFilepath);
+                                                return exists.ask(payload[0], payload[1])
+                                                    .flatMap((result) => {
+                                                        if (result) {
+                                                            return of(x);
+                                                        }
+                                                        return empty();
+                                                    });
+                                                // if (exists) {
+                                                //     debug(`existsSync [${exists}]`, x.absoluteFilepath);
+                                                // }
+                                                // return exists;
                                             })
                                             .take(1)
                                     })

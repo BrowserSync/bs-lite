@@ -15,183 +15,201 @@ const inputcss = `fixtures/wearejh.com${inputPath}`;
 const inputcss2 = `fixtures/wearejh.com${inputPath2}`;
 const request = require('supertest-as-promised');
 
-it('can track proxied files by serving an entire directory', function (done) {
 
-    const {create} = require('../../');
-    const {app, server, url} = getHttpsApp();
-    const expected = '/Users/shakyshane/Sites/oss/bs-lite/fixtures/wearejh.com/content/themes/wearejh/assets/dist';
-    app.use(serveStatic('fixtures/wearejh.com'));
+describe('proxied files', function () {
 
-    const scheduler = new TestScheduler();
-    const {init, stop, system} = create('test', {
-        timeScheduler: scheduler,
-        dirs: function(address, context) {
-            return {
-                receive(name, payload, respond) {
-                    switch(name) {
-                        case 'Get': return respond([null, dirsJson]);
-                        case 'stop': return respond([null, 'ok']);
+    it('can track proxied files by serving an entire directory', function (done) {
+
+        const {create} = require('../../');
+        const {app, server, url} = getHttpsApp();
+        app.use(serveStatic('fixtures/wearejh.com'));
+
+        const {init, stop, system} = create('test', {
+            // timeScheduler: scheduler,
+            dirs: function (address, context) {
+                return {
+                    receive(name, payload, respond) {
+                        switch (name) {
+                            case 'Get':
+                                return respond([null, dirsJson]);
+                            case 'stop':
+                                return respond([null, 'ok']);
+                        }
+                    }
+                }
+            },
+            exists: function() {
+                return {
+                    receive(name, payload, respond) {
+                        switch (name) {
+                            case 'ExistsSync': {
+                                return respond(true);
+                            }
+                            case 'stop':
+                                return respond('ok');
+                        }
                     }
                 }
             }
-        }
+        });
+
+        const a = system.actorRegister.getValue();
+
+        init({proxy: [{target: url, proxiedFileOptions: {matchFile: false}}]})
+            .subscribe(([errors, output]) => {
+
+                if (errors && errors.length) {
+                    return done(errors[0].errors[0]);
+                }
+
+                Observable.zip(
+                    a['/system/core/serveStatic'].mailbox.incoming.take(1),
+                    Observable.merge(
+                        request(output.server).get(inputPath).set('accept', 'text/css'),
+                        request(output.server).get(inputPath2).set('accept', 'text/css')
+                    ).toArray()
+                )
+                    .do(([ss]) => {
+                        const msg = ss.message.action.payload;
+                        assert.equal(msg.options.route, '/content/themes/wearejh/assets/dist');
+                        assert.equal(msg.options.dir, `${process.cwd()}/content/themes/wearejh/assets/dist`);
+                    })
+                    .subscribe(() => {
+                        stop().subscribe(() => {
+                            done();
+                        })
+                    }, e => done(e));
+            })
     });
 
-    const a = system.actorRegister.getValue();
-    const messages = [];
+    it.only('can track a single proxied file by creating a direct mapping', function (done) {
 
-    a['/system/core/serveStatic'].mailbox.incoming
-        .skip(1)
-        .take(1)
-        .do(x => {
-            messages.push(x);
-        })
-        .subscribe();
+        const {create} = require('../../');
+        const {app, server, url} = getHttpsApp();
+        const expectedRoute = '/content/themes/wearejh/assets/dist/core.min.css';
+        const expectedDir = `${process.cwd()}/fixtures/wearejh.com/content/themes/wearejh/assets/dist/core.min.css`;
+        app.use(serveStatic('fixtures/wearejh.com'));
 
-    init({proxy: [{target: url, proxiedFileOptions: {matchFile: false}}]})
-        .subscribe(async ([errors, output]) => {
-
-            if (errors && errors.length) {
-                return done(errors[0].errors[0]);
-            }
-
-            await request(output.server).get(inputPath).set('accept', 'text/css');
-            await request(output.server).get(inputPath2).set('accept', 'text/css');
-
-            scheduler.flush();
-
-            stop().subscribe(() => {
-                const msg = messages[0].message.action.payload;
-                assert.equal(msg.options.route, '/content/themes/wearejh/assets/dist');
-                assert.equal(msg.options.dir, expected);
-                done();
-            });
-        })
-});
-
-it('can track a single proxied file by creating a direct mapping', function (done) {
-
-    const {create} = require('../../');
-    const {app, server, url} = getHttpsApp();
-    const expectedRoute = '/content/themes/wearejh/assets/dist/core.min.css';
-    const expectedDir = '/Users/shakyshane/Sites/oss/bs-lite/fixtures/wearejh.com/content/themes/wearejh/assets/dist/core.min.css';
-    app.use(serveStatic('fixtures/wearejh.com'));
-
-    const scheduler = new TestScheduler();
-    const {init, stop, system} = create('test', {
-        timeScheduler: scheduler,
-        dirs: function(address, context) {
-            return {
-                receive(name, payload, respond) {
-                    switch(name) {
-                        case 'Get': return respond([null, dirsJson]);
-                        case 'stop': return respond([null, 'ok']);
+        const scheduler = new TestScheduler();
+        const {init, stop, system} = create('test', {
+            dirs: function (address, context) {
+                return {
+                    receive(name, payload, respond) {
+                        switch (name) {
+                            case 'Get': {
+                                return respond([null, dirsJson]);
+                            }
+                            case 'stop':
+                                return respond([null, 'ok']);
+                        }
+                    }
+                }
+            },
+            exists: function() {
+                return {
+                    receive(name, payload, respond) {
+                        switch (name) {
+                            case 'ExistsSync': {
+                                if (payload.endsWith('/fixtures/wearejh.com/content/themes/wearejh/assets/dist/core.min.css')) {
+                                    return respond(true);
+                                }
+                                return respond(false);
+                            }
+                            case 'stop':
+                                return respond('ok');
+                        }
                     }
                 }
             }
-        }
+        });
+
+        const a = system.actorRegister.getValue();
+        const messages = [];
+        const dirs = [];
+
+        init({
+            proxy: [{
+                target: url, proxiedFileOptions: {
+                    matchFile: true,
+                    baseDirectory: 'fixtures'
+                }
+            }]
+        })
+            .subscribe(([errors, output]) => {
+
+                if (errors && errors.length) {
+                    return done(errors[0].errors[0]);
+                }
+
+                Observable.zip(
+                    a['/system/core/serveStatic'].mailbox.incoming,
+                    a['/system/core/dirs'].mailbox.incoming,
+                    Observable.merge(
+                        request(output.server).get(inputPath).set('accept', 'text/css'),
+                        request(output.server).get(inputPath2).set('accept', 'text/css')
+                    ).toArray()
+                )
+                    .take(1)
+                    .subscribe(() => {
+                        done();
+                    }, err => done(err));
+            })
     });
 
-    const a = system.actorRegister.getValue();
-    const messages = [];
-    const dirs = [];
+    it('can track proxied files in root', function (done) {
 
-    a['/system/core/serveStatic'].mailbox.incoming
-        .skip(1)
-        .take(1)
-        .do(x => {
-            messages.push(x);
-        })
-        .subscribe();
-    a['/system/core/dirs'].mailbox.incoming
-        .do(x => {
-            dirs.push(x);
-        })
-        .subscribe();
+        const {create} = require('../../');
+        const {app, server, url} = getHttpsApp();
+        const cwd = process.cwd();
+        app.use(serveStatic('.'));
 
-    init({proxy: [{target: url, proxiedFileOptions: {
-        matchFile: true,
-        baseDirectory: 'fixtures'
-    }}]})
-        .subscribe(([errors, output]) => {
-
-            if (errors && errors.length) {
-                return done(errors[0].errors[0]);
+        const scheduler = new TestScheduler();
+        const {init, stop, system} = create('test', {
+            timeScheduler: scheduler,
+            dirs: function (address, context) {
+                return {
+                    receive(name, payload, respond) {
+                        switch (name) {
+                            case 'Get':
+                                return respond([null, dirsJson]);
+                            case 'stop':
+                                return respond([null, 'ok']);
+                        }
+                    }
+                }
             }
+        });
 
-            Observable.merge(
-                request(output.server).get(inputPath).set('accept', 'text/css'),
-                request(output.server).get(inputPath2).set('accept', 'text/css')
-            )
-                .do(() => scheduler.flush())
-                .toArray()
-                .delay(1)
-                .flatMap((xs) => stop())
-                .do(() => {
+        const a = system.actorRegister.getValue();
+        const messages = [];
+
+        a['/system/core/serveStatic'].mailbox.incoming
+            .skip(1)
+            .take(1)
+            .do(x => {
+                messages.push(x);
+            })
+            .subscribe();
+
+        init({proxy: [url]})
+            .subscribe(async ([errors, output]) => {
+
+                if (errors && errors.length) {
+                    return done(errors[0].errors[0]);
+                }
+
+                await request(output.server).get('/example.js').set('accept', 'text/javascript');
+
+                scheduler.flush();
+
+                stop().subscribe(() => {
+                    // console.log(messages[0].message.action);
                     const msg = messages[0].message.action.payload;
-                    const dirMsg = dirs[0].message.action.payload;
-                    assert.equal(messages.length, 1);
-                    assert.equal(msg.options.route, expectedRoute);
-                    assert.equal(msg.options.dir, expectedDir);
-                    assert.equal(dirMsg.baseDirectory, join(process.cwd(), 'fixtures'));
-                })
-                .do(x => done())
-                .subscribeOn(async)
-                .subscribe();
-        })
-});
-
-it('can track proxied files in root', function (done) {
-
-    const {create} = require('../../');
-    const {app, server, url} = getHttpsApp();
-    const cwd = process.cwd();
-    app.use(serveStatic('.'));
-
-    const scheduler = new TestScheduler();
-    const {init, stop, system} = create('test', {
-        timeScheduler: scheduler,
-        dirs: function(address, context) {
-            return {
-                receive(name, payload, respond) {
-                    switch(name) {
-                        case 'Get': return respond([null, dirsJson]);
-                        case 'stop': return respond([null, 'ok']);
-                    }
-                }
-            }
-        }
+                    // console.log(msg);
+                    assert.equal(msg.options.route, '/');
+                    assert.equal(msg.options.dir, cwd + '/');
+                    done();
+                });
+            })
     });
-
-    const a = system.actorRegister.getValue();
-    const messages = [];
-
-    a['/system/core/serveStatic'].mailbox.incoming
-        .skip(1)
-        .take(1)
-        .do(x => {
-            messages.push(x);
-        })
-        .subscribe();
-
-    init({proxy: [url]})
-        .subscribe(async ([errors, output]) => {
-
-            if (errors && errors.length) {
-                return done(errors[0].errors[0]);
-            }
-
-            await request(output.server).get('/example.js').set('accept', 'text/javascript');
-
-            scheduler.flush();
-
-            stop().subscribe(() => {
-                // console.log(messages[0].message.action);
-                const msg = messages[0].message.action.payload;
-                // console.log(msg);
-                assert.equal(msg.options.route, '/');
-                assert.equal(msg.options.dir, cwd + '/');
-                done();
-            });
-        })
-});
+})
