@@ -21,7 +21,7 @@ export enum Scheme {
 
 export const defaultOptions: BsOptions = {
     debug: false,
-    cwd: process.cwd(),
+    cwd: '',
     strict: false,
     serveStatic: [],
     clientJS: [],

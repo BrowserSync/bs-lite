@@ -18,7 +18,7 @@ const request = require('supertest-as-promised');
 
 describe('proxied files', function () {
 
-    it('can track proxied files by serving an entire directory', function (done) {
+    it.only('can track proxied files by serving an entire directory', function (done) {
 
         const {create} = require('../../');
         const {app, server, url} = getHttpsApp();
@@ -55,7 +55,15 @@ describe('proxied files', function () {
 
         const a = system.actorRegister.getValue();
 
-        init({proxy: [{target: url, proxiedFileOptions: {matchFile: false}}]})
+        init({
+            proxy: [{
+                target: url,
+                proxiedFileOptions: {
+                    matchFile: false
+                }
+            }],
+            cwd: process.cwd(),
+        })
             .subscribe(([errors, output]) => {
 
                 if (errors && errors.length) {
@@ -82,7 +90,7 @@ describe('proxied files', function () {
             })
     });
 
-    it.only('can track a single proxied file by creating a direct mapping', function (done) {
+    it('can track a single proxied file by creating a direct mapping', function (done) {
 
         const {create} = require('../../');
         const {app, server, url} = getHttpsApp();
@@ -110,6 +118,7 @@ describe('proxied files', function () {
                     receive(name, payload, respond) {
                         switch (name) {
                             case 'ExistsSync': {
+                                console.log(payload);
                                 if (payload.endsWith('/fixtures/wearejh.com/content/themes/wearejh/assets/dist/core.min.css')) {
                                     return respond(true);
                                 }
@@ -150,7 +159,7 @@ describe('proxied files', function () {
                     ).toArray()
                 )
                     .take(1)
-                    .subscribe(() => {
+                    .subscribe((xs) => {
                         done();
                     }, err => done(err));
             })

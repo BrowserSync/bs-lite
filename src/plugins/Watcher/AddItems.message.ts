@@ -30,7 +30,7 @@ export namespace WatcherAddItems {
 export function getAddItemsHandler(context: IActorContext): any {
     return function addItemsHandler(stream: IMethodStream<WatcherAddItems.Input, WatcherAddItems.Response, WatcherState>) {
         return stream
-            // .do(({payload}) => console.log(payload))
+            // .do(({state}) => console.log(state))
             .flatMap(({payload, respond, state}) => {
 
                 if (payload.ns === WatcherNamespace.WatchOption && !state.active) {

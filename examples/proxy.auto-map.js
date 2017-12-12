@@ -3,9 +3,10 @@ const {create, printErrors} = require('../');
 const {bs, init, stop} = create();
 
 init({
-    proxy: 'http://dxnevent.com',
+    proxy: 'http://ce.demo.wearejh.com',
     strict: true,
-    server: {port: 9001}
+    server: {port: 9001},
+    cwd: process.cwd(),
 })
     .subscribe(([errors, output]) => {
         if (errors) {

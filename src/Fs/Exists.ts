@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 const debug = require('debug')('bs:fs:Exists');
 
-export namespace ExistsSync {
+export namespace Exists {
     export const Name = 'ExistsSync';
     export type Input = string;
     export type Response = boolean;
@@ -14,10 +14,9 @@ type R<Response, State> = (resp: Response, state?: State) => void;
 
 export function ExistsFactory() {
     return {
-        receive(name: string, payload: ExistsSync.Input, respond: R<ExistsSync.Response, void>) {
+        receive(name: string, payload: Exists.Input, respond: R<Exists.Response, void>) {
             switch(name) {
-                case ExistsSync.Name: {
-                    // debug(payload);
+                case Exists.Name: {
                     fs.access(payload, fs.constants.R_OK, function(err) {
                         if (err) {
                             return respond(false);
