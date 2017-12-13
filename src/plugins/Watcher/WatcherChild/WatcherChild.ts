@@ -1,6 +1,6 @@
 import {Observable} from 'rxjs';
 import chokidar = require('chokidar');
-import {createFileEvent} from "../FileEvent.message";
+import {FileEvent} from "../FileEvent.message";
 import {parse} from "path";
 import {WatcherAddItems} from "../AddItems.message";
 import {WatcherInput} from "../Init.message";
@@ -41,7 +41,7 @@ export function WatcherChildFactory(address, context) {
                             ns: incoming.ns,
                         };
                         debug('File Event', payload.event, payload.path);
-                        parent.tell(...createFileEvent(payload)).subscribe();
+                        parent.tell(...FileEvent.create(payload)).subscribe();
                     });
                     respond([null, 'done!']);
                     break;

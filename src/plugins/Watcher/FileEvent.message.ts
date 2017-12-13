@@ -16,10 +16,9 @@ export namespace FileEvent {
         ns: WatcherNamespace
     }
     export type Response = [null, string];
-}
-
-export function createFileEvent(payload: FileEvent.Input) {
-    return [WatcherMessages.FileEvent, payload];
+    export function create(input: Input): [WatcherMessages.FileEvent, Input] {
+        return [WatcherMessages.FileEvent, input];
+    }
 }
 
 export function getFileEventHandler(context: IActorContext): any {

@@ -190,13 +190,13 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                         const item: ProxiedFilesAdd.Result = incoming[0];
                                         const mws: Middleware[] = incoming[1];
                                         const watcher = context.actorSelection('/system/core/watcher')[0];
-                                        const fileEvent: FileEvent.Input = {
+                                        const fileEvent = FileEvent.create({
                                             event: 'change',
                                             path: item.absolutePath,
                                             parsed: parse(item.absolutePath),
                                             ns: WatcherNamespace.FilesOption
-                                        }
-                                        return watcher.tell(WatcherMessages.FileEvent, fileEvent)
+                                        });
+                                        return watcher.tell(fileEvent[0], fileEvent[1])
                                             .mapTo([item, mws])
                                     })
                                     .reduce((acc: Set<string>, [item, mws]) => {
