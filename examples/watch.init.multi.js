@@ -7,7 +7,8 @@ const {bs, init, stop, system} = create();
 ac({
     serveStatic: [join(__dirname, '..', 'fixtures')],
     scheme: 'https',
-    debug: true
+    debug: true,
+    cwd: process.cwd()
 });
 
 setTimeout(() => {
@@ -17,7 +18,8 @@ setTimeout(() => {
         debug: true,
         watch: {
             active: false
-        }
+        },
+        cwd: process.cwd()
     });
 }, 5000);
 
@@ -28,7 +30,8 @@ setTimeout(() => {
         debug: true,
         watch: {
             active: true
-        }
+        },
+        cwd: process.cwd()
     });
 }, 10000);
 

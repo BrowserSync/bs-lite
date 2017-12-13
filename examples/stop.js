@@ -4,7 +4,10 @@ const {join} = require('path');
 
 const {bs, init, stop} = browserSync.create();
 
-init({serveStatic: [join(__dirname, '..', 'fixtures')]})
+init({
+    serveStatic: [join(__dirname, '..', 'fixtures')],
+    cwd: process.cwd()
+})
     .subscribe(([errors, output]) => {
         if (errors) {
             return console.log('has errors', errors);

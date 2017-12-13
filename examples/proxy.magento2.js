@@ -10,6 +10,7 @@ const config = {
             return data.replace(`"domain": ".ce.demo.wearejh.com",`, '');
         }
     ],
+    cwd: process.cwd(),
 };
 
 init(config)

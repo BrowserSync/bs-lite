@@ -20,7 +20,8 @@ init({
     },
     files: [__dirname],
     // serveStatic: ['/Users/shakyshane/sites/jh/m2-perf/public'],
-    debug: true
+    debug: true,
+    cwd: process.cwd()
 })
     .subscribe(([errors,  output]) => {
         if (errors) {

@@ -3,7 +3,12 @@ const {create, printErrors} = require('../');
 
 const {bs, init, stop} = create();
 
-init({proxy: ['https://example.com'], server: {port: 3000}, strict: true})
+init({
+    proxy: ['https://example.com'],
+    server: {port: 3000},
+    strict: true,
+    cwd: process.cwd()
+})
     .subscribe(([errors, output]) => {
         if (errors) {
             return console.log(printErrors(errors));
