@@ -18,10 +18,11 @@ const request = require('supertest-as-promised');
 
 describe('proxied files', function () {
 
-    it.only('can track proxied files by serving an entire directory', function (done) {
+    it('can track proxied files by serving an entire directory', function (done) {
 
         const {create} = require('../../');
         const {app, server, url} = getHttpsApp();
+        const cwd = '/user/badger';
         app.use(serveStatic('fixtures/wearejh.com'));
 
         const {init, stop, system} = create('test', {
@@ -62,7 +63,7 @@ describe('proxied files', function () {
                     matchFile: false
                 }
             }],
-            cwd: process.cwd(),
+            cwd,
         })
             .subscribe(([errors, output]) => {
 
@@ -80,7 +81,7 @@ describe('proxied files', function () {
                     .do(([ss]) => {
                         const msg = ss.message.action.payload;
                         assert.equal(msg.options.route, '/content/themes/wearejh/assets/dist');
-                        assert.equal(msg.options.dir, `${process.cwd()}/content/themes/wearejh/assets/dist`);
+                        assert.equal(msg.options.dir, `${cwd}/content/themes/wearejh/assets/dist`);
                     })
                     .subscribe(() => {
                         stop().subscribe(() => {
@@ -94,8 +95,9 @@ describe('proxied files', function () {
 
         const {create} = require('../../');
         const {app, server, url} = getHttpsApp();
+        const cwd = '/users/badger';
         const expectedRoute = '/content/themes/wearejh/assets/dist/core.min.css';
-        const expectedDir = `${process.cwd()}/fixtures/wearejh.com/content/themes/wearejh/assets/dist/core.min.css`;
+        const expectedDir = `${cwd}/fixtures/wearejh.com/content/themes/wearejh/assets/dist/core.min.css`;
         app.use(serveStatic('fixtures/wearejh.com'));
 
         const scheduler = new TestScheduler();
@@ -118,7 +120,6 @@ describe('proxied files', function () {
                     receive(name, payload, respond) {
                         switch (name) {
                             case 'ExistsSync': {
-                                console.log(payload);
                                 if (payload.endsWith('/fixtures/wearejh.com/content/themes/wearejh/assets/dist/core.min.css')) {
                                     return respond(true);
                                 }
@@ -142,7 +143,8 @@ describe('proxied files', function () {
                     matchFile: true,
                     baseDirectory: 'fixtures'
                 }
-            }]
+            }],
+            cwd,
         })
             .subscribe(([errors, output]) => {
 
@@ -165,11 +167,11 @@ describe('proxied files', function () {
             })
     });
 
-    it('can track proxied files in root', function (done) {
+    it.only('can track proxied files in root', function (done) {
 
         const {create} = require('../../');
         const {app, server, url} = getHttpsApp();
-        const cwd = process.cwd();
+        const cwd = '/user/badger';
         app.use(serveStatic('.'));
 
         const scheduler = new TestScheduler();
@@ -200,7 +202,10 @@ describe('proxied files', function () {
             })
             .subscribe();
 
-        init({proxy: [url]})
+        init({
+            proxy: [url],
+            cwd,
+        })
             .subscribe(async ([errors, output]) => {
 
                 if (errors && errors.length) {
