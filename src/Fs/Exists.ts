@@ -2,7 +2,7 @@ import * as fs from 'fs';
 const debug = require('debug')('bs:fs:Exists');
 
 export namespace Exists {
-    export const Name = 'ExistsSync';
+    export const Name = 'Exists';
     export type Input = string;
     export type Response = boolean;
     export function create(path: Input): [typeof Name, string] {

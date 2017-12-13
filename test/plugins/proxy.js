@@ -32,7 +32,10 @@ describe('basic proxy tests', function () {
             assert.equal(resp.text.indexOf(`<h1><a href="//127.0.0.1:${bsPort}/about">About</a></h1>`) > -1, true)
         }
 
-        serverAssert({proxy: [url]}, '/', asserts)
+        serverAssert({
+            cwd: process.cwd(),
+            proxy: [url]
+        }, '/', asserts)
             .do(() => server.close())
             .subscribe(() => {
                 done();
@@ -66,7 +69,10 @@ describe('basic proxy tests', function () {
             assert.equal(resp.text.indexOf(`<h1><a href="//127.0.0.1:${bsPort}">EXX</a></h1>`) > -1, true)
         };
 
-        serverAssert({proxy: [url, 'http://example.com']}, '/', asserts)
+        serverAssert({
+            cwd: process.cwd(),
+            proxy: [url, 'http://example.com']
+        }, '/', asserts)
             .do(() => server.close())
             .subscribe(() => {
                 done();
@@ -101,6 +107,7 @@ describe('basic proxy tests', function () {
         };
 
         serverAssert({
+            cwd: process.cwd(),
             proxy: [
                 url,
                 {

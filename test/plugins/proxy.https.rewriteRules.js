@@ -28,6 +28,7 @@ it('can proxy + rewrite rules', function (done) {
     };
 
     serverAssert({
+        cwd: process.cwd(),
         proxy: [url],
         scheme: 'https',
         rewriteRules: [
@@ -64,6 +65,7 @@ it('can proxy + skip rewrite rules with predicate', function (done) {
     };
 
     serverAssert({
+        cwd: process.cwd(),
         proxy: [url],
         scheme: 'https',
         rewriteRules: [

@@ -1,53 +1,47 @@
 require('source-map-support').install();
 const {Observable} = require('rxjs');
-const {readFileSync} = require('fs');
-const {join} = require('path');
-const {async} = require('rxjs/scheduler/async');
 const serveStatic = require('serve-static');
 const {getHttpsApp} = require("../utils");
 const assert = require('assert');
-const serverAssert = require("../utils").serverAssert;
-const {TestScheduler, next} = require('@kwonoj/rxjs-testscheduler-compat');
+const {TestScheduler} = require('@kwonoj/rxjs-testscheduler-compat');
 const dirsJson = require('../../fixtures/stubs/dirs.json');
 const inputPath = '/content/themes/wearejh/assets/dist/core.min.css';
 const inputPath2 = '/content/themes/wearejh/assets/dist/core2.min.css';
-const inputcss = `fixtures/wearejh.com${inputPath}`;
-const inputcss2 = `fixtures/wearejh.com${inputPath2}`;
 const request = require('supertest-as-promised');
+const {ServeStaticMiddleware} = require('../../dist/plugins/ServeStatic/serveStatic.js');
 
+function dirsStub (address, context) {
+    return {
+        receive(name, payload, respond) {
+            switch (name) {
+                case 'Get': {
+                    return respond([null, dirsJson]);
+                }
+                case 'stop':
+                    return respond([null, 'ok']);
+            }
+        }
+    }
+}
 
 describe('proxied files', function () {
 
     it('can track proxied files by serving an entire directory', function (done) {
 
         const {create} = require('../../');
-        const {app, server, url} = getHttpsApp();
+        const {app, url} = getHttpsApp();
         const cwd = '/user/badger';
         app.use(serveStatic('fixtures/wearejh.com'));
 
         const {init, stop, system} = create('test', {
             // timeScheduler: scheduler,
-            dirs: function (address, context) {
-                return {
-                    receive(name, payload, respond) {
-                        switch (name) {
-                            case 'Get':
-                                return respond([null, dirsJson]);
-                            case 'stop':
-                                return respond([null, 'ok']);
-                        }
-                    }
-                }
-            },
+            dirs: dirsStub,
             exists: function() {
                 return {
                     receive(name, payload, respond) {
                         switch (name) {
-                            case 'ExistsSync': {
-                                return respond(true);
-                            }
-                            case 'stop':
-                                return respond('ok');
+                            case 'Exists': return respond(true);
+                            case 'stop': return respond('ok');
                         }
                     }
                 }
@@ -94,39 +88,23 @@ describe('proxied files', function () {
     it('can track a single proxied file by creating a direct mapping', function (done) {
 
         const {create} = require('../../');
-        const {app, server, url} = getHttpsApp();
+        const {app, url} = getHttpsApp();
         const cwd = '/users/badger';
-        const expectedRoute = '/content/themes/wearejh/assets/dist/core.min.css';
-        const expectedDir = `${cwd}/fixtures/wearejh.com/content/themes/wearejh/assets/dist/core.min.css`;
         app.use(serveStatic('fixtures/wearejh.com'));
 
-        const scheduler = new TestScheduler();
         const {init, stop, system} = create('test', {
-            dirs: function (address, context) {
-                return {
-                    receive(name, payload, respond) {
-                        switch (name) {
-                            case 'Get': {
-                                return respond([null, dirsJson]);
-                            }
-                            case 'stop':
-                                return respond([null, 'ok']);
-                        }
-                    }
-                }
-            },
+            dirs: dirsStub,
             exists: function() {
                 return {
                     receive(name, payload, respond) {
                         switch (name) {
-                            case 'ExistsSync': {
+                            case 'Exists': {
                                 if (payload.endsWith('/fixtures/wearejh.com/content/themes/wearejh/assets/dist/core.min.css')) {
                                     return respond(true);
                                 }
                                 return respond(false);
                             }
-                            case 'stop':
-                                return respond('ok');
+                            case 'stop': return respond('ok');
                         }
                     }
                 }
@@ -134,8 +112,6 @@ describe('proxied files', function () {
         });
 
         const a = system.actorRegister.getValue();
-        const messages = [];
-        const dirs = [];
 
         init({
             proxy: [{
@@ -161,30 +137,28 @@ describe('proxied files', function () {
                     ).toArray()
                 )
                     .take(1)
-                    .subscribe((xs) => {
+                    .flatMap(() => stop())
+                    .subscribe(() => {
                         done();
                     }, err => done(err));
             })
     });
 
-    it.only('can track proxied files in root', function (done) {
+    it('can track proxied files in root', function (done) {
 
         const {create} = require('../../');
-        const {app, server, url} = getHttpsApp();
+        const {app, url} = getHttpsApp();
         const cwd = '/user/badger';
         app.use(serveStatic('.'));
 
-        const scheduler = new TestScheduler();
         const {init, stop, system} = create('test', {
-            timeScheduler: scheduler,
-            dirs: function (address, context) {
+            dirs: dirsStub,
+            exists: function() {
                 return {
                     receive(name, payload, respond) {
                         switch (name) {
-                            case 'Get':
-                                return respond([null, dirsJson]);
-                            case 'stop':
-                                return respond([null, 'ok']);
+                            case 'Exists': return respond(true);
+                            case 'stop': return respond('ok');
                         }
                     }
                 }
@@ -192,38 +166,68 @@ describe('proxied files', function () {
         });
 
         const a = system.actorRegister.getValue();
-        const messages = [];
-
-        a['/system/core/serveStatic'].mailbox.incoming
-            .skip(1)
-            .take(1)
-            .do(x => {
-                messages.push(x);
-            })
-            .subscribe();
 
         init({
             proxy: [url],
             cwd,
         })
-            .subscribe(async ([errors, output]) => {
+            .subscribe(([errors, output]) => {
 
                 if (errors && errors.length) {
                     return done(errors[0].errors[0]);
                 }
 
-                await request(output.server).get('/example.js').set('accept', 'text/javascript');
+                Observable.zip(
+                    a['/system/core/serveStatic'].mailbox.incoming,
+                    a['/system/core/dirs'].mailbox.incoming,
+                    a['/system/core/exists'].mailbox.incoming,
+                    a['/system/core/servedFiles'].mailbox.incoming.skip(1), // skip init
+                    Observable.fromPromise(request(output.server).get('/example.js').set('accept', 'text/javascript'))
+                )
+                    .take(1)
+                    .do(([ss, dirs, exists, served]) => {
 
-                scheduler.flush();
+                        // ServeStatic Message
+                        {
+                            const [type, payload] = ServeStaticMiddleware.create(cwd, {
+                                "dir": "/user/badger/",
+                                "route": "/"
+                            });
+                            assert.equal(ss.message.action.type, type);
+                            assert.deepEqual(ss.message.action.payload, payload);
+                        }
 
-                stop().subscribe(() => {
-                    // console.log(messages[0].message.action);
-                    const msg = messages[0].message.action.payload;
-                    // console.log(msg);
-                    assert.equal(msg.options.route, '/');
-                    assert.equal(msg.options.dir, cwd + '/');
-                    done();
-                });
-            })
+                        // Dirs message
+                        {
+                            const {DirsGet} = require('../../dist/plugins/dirs');
+                            const [type, payload] = DirsGet.create(cwd, cwd);
+                            assert.equal(dirs.message.action.type, type);
+                            assert.deepEqual(dirs.message.action.payload, payload);
+                        }
+
+                        // Exists Message
+                        {
+                            const {Exists} = require('../../dist/Fs/Exists');
+                            const [type, payload] = Exists.create(`${cwd}/example.js`);
+                            assert.equal(exists.message.action.type, type);
+                            assert.deepEqual(exists.message.action.payload, payload);
+                        }
+
+                        {
+                            const {ServedFilesAdd} = require('../../dist/plugins/ServedFiles/ServedFiles');
+                            const [type, payload] = ServedFilesAdd.create(cwd, `${cwd}/example.js`);
+                            assert.equal(served.message.action.type, type);
+                            assert.deepEqual(served.message.action.payload, payload);
+                        }
+                    })
+                    .flatMap(() => stop())
+                    .subscribe(() => {
+                        done();
+                    }, err => {
+                        stop().subscribe(x => {
+                            done(err);
+                        })
+                    })
+            });
     });
-})
+});

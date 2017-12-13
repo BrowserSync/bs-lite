@@ -15,7 +15,12 @@ it('Gives errors about strict mode when no matching port is found', function (do
         }
     });
 
-    init({proxy: 'http://example.com', port: 3000, strict: true})
+    init({
+        proxy: 'http://example.com',
+        server: {port: 3000},
+        cwd: process.cwd(),
+        strict: true
+    })
         .subscribe(([errors, output]) => {
             const first = errors[0];
             const type = first.type;
@@ -42,7 +47,10 @@ it('Gives generic errors when port cannot be detected', function (done) {
         }
     });
 
-    init({proxy: 'http://example.com'})
+    init({
+        proxy: 'http://example.com',
+        cwd: process.cwd(),
+    })
         .subscribe(([errors, output]) => {
             const first = errors[0];
             const type = first.type;

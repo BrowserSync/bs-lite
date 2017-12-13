@@ -12,7 +12,7 @@ it('serveStatic simple', function (done) {
         assert.equal(resp.text.indexOf(options.get('snippet')) > -1, true, 'Snippet');
     };
 
-    serverAssert({serveStatic: ['fixtures']}, req, asserts)
+    serverAssert({cwd: process.cwd(), serveStatic: ['fixtures']}, req, asserts)
         .subscribe(() => done(), err => done(err));
 });
 
@@ -24,7 +24,7 @@ it('serveStatic with obj->dir', function (done) {
         assert.equal(resp.text.indexOf(options.get('snippet')) > -1, true, 'Snippet');
     };
 
-    serverAssert({serveStatic: [{dir: 'fixtures'}]}, req, asserts)
+    serverAssert({cwd: process.cwd(), serveStatic: [{dir: 'fixtures'}]}, req, asserts)
         .subscribe(() => done(), err => done(err));
 });
 
@@ -36,6 +36,6 @@ it('serveStatic with options', function (done) {
         assert.equal(resp.text.indexOf(options.get('snippet')) > -1, true, 'Snippet');
     };
 
-    serverAssert({serveStatic: [{dir: 'fixtures', options: {extensions: ['html']}}]}, req, asserts)
+    serverAssert({cwd: process.cwd(), serveStatic: [{dir: 'fixtures', options: {extensions: ['html']}}]}, req, asserts)
         .subscribe(() => done(), err => done(err));
 });

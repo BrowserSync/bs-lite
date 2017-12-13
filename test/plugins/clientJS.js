@@ -6,6 +6,7 @@ const serverAssert = require("../utils").serverAssert;
 it('converts ClientJS incoming options into a mw', function (done) {
     const path = '/browser-sync/browser-sync-client.js';
     const options = {
+        cwd: process.cwd(),
         clientJS: [
             'console.log("kittens 1")',
             () => 'console.log("kittens 2")',

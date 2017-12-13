@@ -18,7 +18,10 @@ it('can proxy https site', function (done) {
         assert.equal(resp.text, expected);
     };
 
-    serverAssert({proxy: [url], scheme: 'https'}, '/', asserts)
+    serverAssert({
+        cwd: process.cwd(),
+        proxy: [url],
+    }, '/', asserts)
         .do(() => server.close())
         .subscribe(() => done(), err => done(err));
 });
@@ -38,7 +41,10 @@ it('can auto-proxy https site when no scheme given', function (done) {
         assert.equal(resp.text, expected);
     };
 
-    serverAssert({proxy: [url]}, '/', asserts)
+    serverAssert({
+        cwd: process.cwd(),
+        proxy: [url]
+    }, '/', asserts)
         .do(() => server.close())
         .subscribe(() => done(), err => done(err));
 });
@@ -69,7 +75,10 @@ it('can proxy https site with multiple proxies', function (done) {
         assert.equal(resp.text, expected);
     };
 
-    serverAssert({proxy: [url, 'https://example.com'], scheme: 'https'}, '/', asserts)
+    serverAssert({
+        cwd: process.cwd(),
+        proxy: [url, 'https://example.com'],
+    }, '/', asserts)
         .do(() => server.close())
         .subscribe(() => done(), err => done(err));
 });
@@ -103,6 +112,7 @@ it('can proxy https sites with mixed schemes', function (done) {
     };
 
     serverAssert({
+        cwd: process.cwd(),
         proxy: [url, 'https://example.com', 'http://example.com'],
         scheme: 'https'
     }, '/', asserts)

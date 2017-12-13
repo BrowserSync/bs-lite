@@ -9,6 +9,7 @@ const {join} = require('path');
 
 it('will allow rewrite rules + core snippet', function (done) {
     const options = {
+        cwd: process.cwd(),
         rewriteRules: [(req, res, html) => html + '<!--oops!-->']
     };
     const req = '/';
@@ -31,6 +32,7 @@ it('allows rewrite rules on proxied serve static files', function (done) {
     app.use(require('serve-static')(join(__dirname, '..', '..', 'fixtures')));
 
     const options = {
+        cwd: process.cwd(),
         proxy: [url],
         rewriteRules: [{
             predicates: [(req) => req.url === '/js/react.js'],

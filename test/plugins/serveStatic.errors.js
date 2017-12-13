@@ -12,7 +12,10 @@ it('serveStatic', function (done) {
 
     const {bs, init, stop} = create('test');
 
-    init({serveStatic: () => {}})
+    init({
+        serveStatic: () => {},
+        cwd: process.cwd(),
+    })
         .subscribe(([errors]) => {
             assert.equal(errors[0].type, BSErrorType.ServeStaticInput);
             stop().subscribe(() => {

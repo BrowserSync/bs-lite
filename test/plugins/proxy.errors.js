@@ -7,7 +7,7 @@ it('handles incorrect input type (setup error)', function (done) {
 
     const {bs, init, stop} = browserSync.create();
 
-    init({proxy: 1})
+    init({proxy: 1, cwd: process.cwd()})
         .subscribe(([errors, output]) => {
             const first = errors[0];
             const type = first.type;
