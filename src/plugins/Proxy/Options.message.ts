@@ -9,7 +9,7 @@ import {isPojo} from "../../utils";
 import {RewriteRule} from "../../rewrite-rules";
 import {Scheme} from "../../options";
 import {BSError, BSErrorLevel, BSErrorType, ProxyInvalidInputError} from "../../errors";
-import {ProxiedFilesAdd} from "../ProxiedFiles/ProxiedFiles";
+import {ProxiedFilesAdd} from "../ProxiedFiles/AddFile.message";
 import ProxiedFilesAddOptions = ProxiedFilesAdd.ProxiedFilesAddOptions;
 import {ProxyMessages} from "./Proxy";
 

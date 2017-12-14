@@ -1,13 +1,12 @@
 import {Observable} from 'rxjs';
 import httpProxy = require('http-proxy');
 import {MiddlewareTypes} from "../../Server/Server";
-import {checkCookies} from "../proxy-utils";
 import {ProxyItem} from "../Options.message";
-import {ProxiedFilesAdd, ProxiedFilesMessages} from "../../ProxiedFiles/ProxiedFiles";
 import {CoreChildren} from "../../../Browsersync";
 import mime = require('mime-types');
 import {IActorContext} from "aktor-js";
 import * as url from 'url';
+import {ProxiedFilesAdd} from "../../ProxiedFiles/AddFile.message";
 
 const debug = require('debug')('bs:ProxyChild');
 const debugRes = require('debug')('bs:ProxyChild:res');
