@@ -60,7 +60,7 @@ export function getAddItemsHandler(context: IActorContext): any {
                  * /system/core/watcher/some-ns
                  * /system/core/watcher/some-plugin
                  */
-                const a = context.actorOf(WatcherChildFactory, payload.ns);
+                const a = context.actorOf(state.WatcherChildFactory || WatcherChildFactory, payload.ns);
                 const options = payload.options || state.options;
                 return a.tell(WatcherChildMessages.Start, {...payload, options})
                     .mapTo(respond([null, 'yay!'], state));

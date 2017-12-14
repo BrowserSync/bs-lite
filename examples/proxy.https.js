@@ -5,7 +5,6 @@ const {bs, init, stop} = create();
 
 init({
     proxy: ['https://example.com'],
-    server: {port: 3000},
     strict: true,
     cwd: process.cwd()
 })

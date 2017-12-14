@@ -72,6 +72,9 @@ export function FindPortFactory(address, context) {
     return {
         receive(name, payload, respond) {
             if (name === 'stop') return respond([null, 'ok']);
+            if (payload.start === 0) {
+                return respond([null, 0]);
+            }
             portscanner(payload.start, undefined, payload.opts, function (err, port) {
                 if (err) {
                     respond([err, null]);

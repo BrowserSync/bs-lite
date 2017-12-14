@@ -23,6 +23,13 @@ function dirsStub (address, context) {
         }
     }
 }
+function WatcherChildStub() {
+    return {
+        receive(n, p, respond) {
+            respond([null, 'ok']);
+        }
+    }
+}
 
 describe('proxied files', function () {
 
@@ -58,6 +65,9 @@ describe('proxied files', function () {
                 }
             }],
             cwd,
+            watch: {
+                WatcherChildFactory: WatcherChildStub
+            }
         })
             .subscribe(([errors, output]) => {
 
@@ -121,6 +131,9 @@ describe('proxied files', function () {
                 }
             }],
             cwd,
+            watch: {
+                WatcherChildFactory: WatcherChildStub
+            }
         })
             .subscribe(([errors, output]) => {
 
@@ -170,6 +183,9 @@ describe('proxied files', function () {
         init({
             proxy: [url],
             cwd,
+            watch: {
+                WatcherChildFactory: WatcherChildStub
+            }
         })
             .subscribe(([errors, output]) => {
 

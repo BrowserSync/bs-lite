@@ -8,7 +8,20 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 module.exports.serverAssert = function serverAssert(options, path, assertions, createOptions) {
     const {bs, server} = require('../').create('test', createOptions);
     // console.log(options);
-    return bs.ask(Methods.Init, options)
+    const withWatcherStub = {
+        ...options,
+        watch: {
+            ...options.watch,
+            WatcherChildFactory: function() {
+                return {
+                    receive(n, p, respond) {
+                        respond([null, 'ok']);
+                    }
+                }
+            }
+        }
+    }
+    return bs.ask(Methods.Init, withWatcherStub)
         .flatMap(([errors, output]) => {
             if (errors && errors.length) {
                 return Observable.throw(errors[0]);
@@ -18,9 +31,9 @@ module.exports.serverAssert = function serverAssert(options, path, assertions, c
                     .get(path)
                     .set('accept', 'text/html')
             )
-                .map((resp) => [resp, output.options])
+                .map((resp) => [resp, output.options, output.server])
         })
-        .do(([resp, options]) => assertions(resp, options))
+        .do(([resp, options, server]) => assertions(resp, options, server))
         .catch(err => Observable.concat(bs.ask(Methods.Stop), Observable.throw(err)))
         .flatMap(() => bs.ask(Methods.Stop))
 }

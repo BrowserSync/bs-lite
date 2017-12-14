@@ -15,8 +15,8 @@ it('can proxy + rewrite rules', function (done) {
         ].join(''));
     });
 
-    const asserts = (resp, options) => {
-        const bsPort = options.getIn(['server', 'port']);
+    const asserts = (resp, options, server) => {
+        const bsPort = server.address().port;
         const expectedUrl = `//127.0.0.1:${bsPort}`;
         const expected = [
             '<H1>',
@@ -52,8 +52,8 @@ it('can proxy + skip rewrite rules with predicate', function (done) {
         ].join(''));
     });
 
-    const asserts = (resp, options) => {
-        const bsPort = options.getIn(['server', 'port']);
+    const asserts = (resp, options, server) => {
+        const bsPort = server.address().port;
         const expectedUrl = `//127.0.0.1:${bsPort}`;
         const expected = [
             '<h1>', // unchanged here because of predicate

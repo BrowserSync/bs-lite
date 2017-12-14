@@ -11,8 +11,8 @@ it('can proxy https site', function (done) {
         res.end(`<h1><a href="${url}/about">About</a></h1>`);
     });
 
-    const asserts = (resp, options) => {
-        const bsPort = options.getIn(['server', 'port']);
+    const asserts = (resp, options, server) => {
+        const bsPort = server.address().port;
         const expectedUrl = `//127.0.0.1:${bsPort}`;
         const expected = `<h1><a href="${expectedUrl}/about">About</a></h1>`;
         assert.equal(resp.text, expected);
@@ -34,8 +34,8 @@ it('can auto-proxy https site when no scheme given', function (done) {
         res.end(`<h1><a href="${url}/about">About</a></h1>`);
     });
 
-    const asserts = (resp, options) => {
-        const bsPort = options.getIn(['server', 'port']);
+    const asserts = (resp, options, server) => {
+        const bsPort = server.address().port;
         const expectedUrl = `//127.0.0.1:${bsPort}`;
         const expected = `<h1><a href="${expectedUrl}/about">About</a></h1>`;
         assert.equal(resp.text, expected);
@@ -62,8 +62,8 @@ it('can proxy https site with multiple proxies', function (done) {
         ].join(''));
     });
 
-    const asserts = (resp, options) => {
-        const bsPort = options.getIn(['server', 'port']);
+    const asserts = (resp, options, server) => {
+        const bsPort = server.address().port;
         const expectedUrl = `//127.0.0.1:${bsPort}`;
         const expected = [
             '<h1>',
@@ -97,8 +97,8 @@ it('can proxy https sites with mixed schemes', function (done) {
         ].join(''));
     });
 
-    const asserts = (resp, options) => {
-        const bsPort = options.getIn(['server', 'port']);
+    const asserts = (resp, options, server) => {
+        const bsPort = server.address().port;
         const expectedUrl = `//127.0.0.1:${bsPort}`;
         const expected = [
             '<h1>',

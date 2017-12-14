@@ -18,7 +18,7 @@ import {Middleware} from "../Server/Server";
 
 const debug = require('debug')('bs:ProxiedFiles');
 
-const {of, empty} = Observable;
+const {of, empty, from} = Observable;
 
 export enum ProxiedFilesMessages {
     Init = 'Init',
@@ -68,7 +68,7 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                 return stream
                     .buffer(stream.debounceTime(1000, context.timeScheduler))
                     .do(xs => debug('buffered', xs.length, ProxiedFilesMessages.AddFile, 'messages'))
-                    .concatMap((items) => {
+                    .flatMap((items) => {
                         // console.log(items);
                         const last = items[items.length-1];
                         const {respond, state} = last;
@@ -92,7 +92,7 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                 const dirsPayload = DirsGet.create(baseDir || cwd, cwd);
                                 return dirsActor.ask(dirsPayload[0], dirsPayload[1]).map(([, dirs]) => dirs)
                                     .flatMap((dirs) => {
-                                        return Observable.from(items)
+                                        return from(items)
                                             .distinct(({payload}) => payload.path)
                                             .pluck('payload')
                                             .map((x: ProxiedFilesAdd.Input) => ({item: x, parsedPath: parse(x.path)}))
@@ -100,7 +100,7 @@ export function ProxiedFilesFactory(address: string, context: IActorContext): an
                                                 const input = item.path;
                                                 const options: ProxiedFilesAdd.ProxiedFilesAddOptions = item.options;
                                                 const dirsToCheck = baseDir ? [baseDir, ...dirs] : [cwd, ...dirs];
-                                                return Observable.from(<Array<string>>dirsToCheck)
+                                                return from(<Array<string>>dirsToCheck)
                                                     .flatMap((dir): Observable<ProxiedFilesAdd.Result> => {
 
                                                         const absoluteFilepath = join(dir, parsedPath.dir, parsedPath.base);

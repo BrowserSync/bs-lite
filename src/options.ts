@@ -35,7 +35,7 @@ export const defaultOptions: BsOptions = {
         debounce: 500,
     },
     server: {
-        port: 9000,
+        port: 0,
     },
     files: [],
     scheme: Scheme.http,
@@ -85,6 +85,7 @@ export interface BsOptions {
         active: boolean,
         options: WatchOptions,
         debounce: number,
+        WatcherChildFactory?: Function
     },
     files: FilesOption,
     serveStatic: string|string[];

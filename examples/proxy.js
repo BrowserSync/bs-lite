@@ -5,7 +5,6 @@ const {bs, init, stop} = create();
 
 init({
     proxy: ['http://example.com'],
-    port: 3000,
     cwd: process.cwd()
 })
     .subscribe(([errors, output]) => {

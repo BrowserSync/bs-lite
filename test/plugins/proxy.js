@@ -27,8 +27,8 @@ describe('basic proxy tests', function () {
     </html>`)
         });
 
-        const asserts = (resp, options) => {
-            const bsPort = options.getIn(['server', 'port']);
+        const asserts = (resp, options, server) => {
+            const bsPort = server.address().port;
             assert.equal(resp.text.indexOf(`<h1><a href="//127.0.0.1:${bsPort}/about">About</a></h1>`) > -1, true)
         }
 
@@ -63,8 +63,8 @@ describe('basic proxy tests', function () {
     </html>`)
         });
 
-        const asserts = (resp, options) => {
-            const bsPort = options.getIn(['server', 'port']);
+        const asserts = (resp, options, server) => {
+            const bsPort = server.address().port;
             assert.equal(resp.text.indexOf(`<h1><a href="//127.0.0.1:${bsPort}/about">About</a></h1>`) > -1, true)
             assert.equal(resp.text.indexOf(`<h1><a href="//127.0.0.1:${bsPort}">EXX</a></h1>`) > -1, true)
         };
@@ -100,8 +100,8 @@ describe('basic proxy tests', function () {
     </html>`)
         });
 
-        const asserts = (resp, options) => {
-            const bsPort = options.getIn(['server', 'port']);
+        const asserts = (resp, options, server) => {
+            const bsPort = server.address().port;
             assert.equal(resp.text.indexOf(`<h1><a href="//127.0.0.1:${bsPort}/about">About</a></h1>`) > -1, true)
             assert.equal(resp.text.indexOf(`<h1><a href="//127.0.0.1:${bsPort}">EXX</a></h1>`) > -1, true)
         };
